@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "paper-search": {
+      "command": "uvx",
+      "args": ["paper-search-mcp"],
+      "env": {
+        "SEMANTIC_SCHOLAR_API_KEY": "YOUR_SEMANTIC_SCHOLAR_API_KEY",
+        "CORE_API_KEY": "YOUR_CORE_API_KEY"
+      }
+    },
+    "zotero": {
+      "command": "uvx",
+      "args": ["zotero-mcp"],
+      "env": {
+        "ZOTERO_API_KEY": "YOUR_ZOTERO_API_KEY",
+        "ZOTERO_LIBRARY_ID": "YOUR_ZOTERO_LIBRARY_ID",
+        "ZOTERO_LIBRARY_TYPE": "user"
+      }
+    }
+  }
+}
