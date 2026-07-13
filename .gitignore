@@ -1,0 +1,33 @@
+# Секреты и окружение — НИКОГДА не коммитить
+.env
+.env.*
+*.env
+*credentials*
+*secret*
+*token*
+*.key
+*.pem
+
+# Кеши инструментов и агентов
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+.DS_Store
+.playwright-mcp/
+
+# Пользовательские материалы и медиа (складываются в materials/, но не версионируются)
+materials/*
+!materials/.gitkeep
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.mp4
+*.mov
+*.zip
