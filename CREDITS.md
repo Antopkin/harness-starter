@@ -40,7 +40,7 @@
 - `README.md`, `INSTALL.md`, `hello.md`, `runbooks.md`, `memory/`,
   README и runbooks академического трека.
 - Базовые навыки: `explain`, `review`, `test`, `tdd`, `diagnose`, `writing-guru`,
-  `style-extract`, `lit-search`, `pdf-digest`, `cite`.
+  `style-extract`, `lit-search`, `pdf-digest`, `cite`, `handoff`.
 - Навыки трека: `transcript-verbatim`, `transcript-polish` и общий файл
   `skills/shared/transcript-io.md`.
 - Конфигурация MCP: `tracks/academic/mcp/README.md` и `.mcp.json.example`
