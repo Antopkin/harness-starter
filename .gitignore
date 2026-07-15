@@ -34,3 +34,7 @@ materials/*
 skills/pdf-digest/references/*.pdf
 *.docx
 skills/digest/references/*.docx
+
+# Проприетарные навыки Anthropic (pdf, docx) — локально пользоваться можно, публиковать НЕЛЬЗЯ (их LICENSE.txt). Держим вне трекинга.
+skills/pdf/
+skills/docx/
