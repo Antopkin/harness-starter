@@ -32,3 +32,5 @@ materials/*
 *.mov
 *.zip
 skills/pdf-digest/references/*.pdf
+*.docx
+skills/digest/references/*.docx
