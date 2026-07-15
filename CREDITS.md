@@ -26,13 +26,22 @@
 
 ### `tracks/academic/skills/` — академическое семейство, Cheng-I Wu
 
-Навыки `academic-paper`, `academic-paper-reviewer`, `deep-research`, `paper-audit` —
-единое семейство академических навыков (написание статьи, симуляция рецензирования,
-глубокое исследование, аудит целостности); навыки перекрёстно ссылаются друг на друга
-как один конвейер. Мейнтейнер указан в метаданных самих навыков: **Cheng-I Wu**
-(`tracks/academic/skills/academic-paper-reviewer/SKILL.md`, раздел Version Info).
+Навыки `academic-paper`, `academic-paper-reviewer`, `deep-research`, `paper-audit`,
+`academic-pipeline` — единое семейство академических навыков (написание статьи,
+симуляция рецензирования, глубокое исследование, аудит целостности, оркестрация
+конвейера); навыки перекрёстно ссылаются друг на друга как один конвейер. Мейнтейнер
+указан в метаданных самих навыков: **Cheng-I Wu** (`tracks/academic/skills/academic-paper-reviewer/SKILL.md`
+и `tracks/academic/skills/academic-pipeline/SKILL.md`, раздел Version Info — совпадают
+дата обновления, формат таблицы и состав зависимостей).
 Отдельного файла лицензии в составе этих навыков нет; они включены с указанием
 авторства, версии и changelog'и авторов сохранены внутри `SKILL.md` как есть.
+
+### `tracks/academic/skills/latex-proofread` — LimHyungTae/awesome-claudecode-paper-proofreading
+
+Основан на открытом репозитории **LimHyungTae/awesome-claudecode-paper-proofreading**
+(источник указан в `SKILL.md`, поле `metadata.source`, и в описании навыка).
+Отдельного файла лицензии в составе навыка нет; атрибуция и версия сохранены внутри
+`SKILL.md` как есть. Лицензия/авторство — по исходному репозиторию.
 
 ## Оригинальные части (MIT, © 2026 Oleg Antopkin)
 
