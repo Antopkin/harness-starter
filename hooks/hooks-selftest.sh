@@ -194,6 +194,15 @@ check "Grep glob * BLOCK (cost)"      grepglob "*"                            bl
 check "Grep glob .env.example ALLOW"  grepglob ".env.example"                 allow
 check "Grep glob .env.sample ALLOW"   grepglob "**/.env.sample"               allow
 check "Grep glob {py,md} ALLOW"       grepglob "src/**/*.{py,md}"             allow
+# Grep globs split as Claude Code splits them; a negated part is refused
+check "Grep glob *.md,.env BLOCK"     grepglob "*.md,.env"                    block
+check "Grep glob *.md .env BLOCK"     grepglob "*.md .env"                    block
+check "Grep glob *.md,store BLOCK"    grepglob "*.md,$CJ"                     block
+check "Grep glob NBSP .env BLOCK"     grepglob "*.md$(printf '\302\240').env" block
+check "Grep glob !*.md BLOCK"         grepglob "!*.md"                        block
+check "Grep glob !README.md BLOCK"    grepglob "!README.md"                   block
+check "Grep glob **/*.py ALLOW"       grepglob "**/*.py"                      allow
+check "Grep glob *.md,*.txt ALLOW"    grepglob "*.md,*.txt"                   allow
 check "Read .env.sample ALLOW"        read "$ROOT/.env.sample"                allow
 
 echo "== BASH guard (dangerous) =="

@@ -38,6 +38,13 @@
 # glob with more than 512 brace expansions is refused as too complex to check.
 # This needs bash (the wiring runs the script with bash).
 #
+# Claude Code splits a Grep glob on whitespace, then each piece on commas unless
+# the piece holds braces, and passes each part to ripgrep as its own --glob. The
+# guard splits the same way and runs every part, as well as the whole glob,
+# through the checks above, so *.md,.env and "*.md .env" are refused. A part
+# that starts with ! is refused outright: ripgrep reads it as "every file but
+# these", hidden ones included.
+#
 # What this deliberately does NOT try to be: proof against a caller that already
 # has arbitrary code execution. `python3 -c`, a base64 pipe or a here-doc defeat
 # any text-level filter. The threat modelled here is an agent reading the file
@@ -51,6 +58,36 @@ command -v jq >/dev/null 2>&1 || { echo "guard inactive: install jq (brew instal
 IN=$(cat)
 P=$(printf '%s' "$IN" | jq -r '.tool_input | (.file_path, .path, .glob) | select(type == "string" and . != "")' 2>/dev/null) || { echo "guard: cannot parse hook input" >&2; exit 2; }
 G=$(printf '%s' "$IN" | jq -r '.tool_input.glob | select(type == "string" and . != "")' 2>/dev/null) || { echo "guard: cannot parse hook input" >&2; exit 2; }
+
+# Split the glob as Claude Code does. Whitespace is JavaScript's \s, so the
+# Unicode spaces (U+00A0, U+1680, U+2000-200A, U+2028/9, U+202F, U+205F,
+# U+3000, U+FEFF) become plain spaces first.
+PARTS=()
+if [ -n "$G" ]; then
+  S=$G
+  for u in $(printf '\302\240 \341\232\200 \342\200\200 \342\200\201 \342\200\202 \342\200\203 \342\200\204 \342\200\205 \342\200\206 \342\200\207 \342\200\210 \342\200\211 \342\200\212 \342\200\250 \342\200\251 \342\200\257 \342\201\237 \343\200\200 \357\273\277'); do
+    S=${S//"$u"/ }
+  done
+  OIFS=$IFS; IFS=$' \t\n\v\f\r'; set -f
+  for piece in $S; do
+    if [[ $piece == *[{]* && $piece == *[}]* ]]; then
+      PARTS+=("$piece")
+    else
+      rest="$piece,"
+      while [ -n "$rest" ]; do
+        a=${rest%%,*}; rest=${rest#*,}
+        [ -n "$a" ] && PARTS+=("$a")
+      done
+    fi
+  done
+  set +f; IFS=$OIFS
+  for a in "${PARTS[@]}"; do
+    case $a in
+      '!'*) echo "BLOCKED: negated Grep glob $a would search every other file, hidden ones included" >&2; exit 2 ;;
+    esac
+  done
+  P=$(printf '%s\n' "$P" "${PARTS[@]}")
+fi
 [ -z "$P" ] && exit 0
 
 if printf '%s\n' "$P" | grep -qEi '(^|/)\.claude\.json([.]|$)'; then
@@ -81,7 +118,9 @@ expand() {
   fi
 }
 if [ -n "$G" ]; then
-  expand "$G" || { echo "BLOCKED: Grep glob too complex to check: $G" >&2; exit 2; }
+  for a in "$G" "${PARTS[@]}"; do
+    expand "$a" || { echo "BLOCKED: Grep glob too complex to check: $G" >&2; exit 2; }
+  done
   shopt -s nocasematch
   for e in "${EXP[@]}"; do
     seg=${e##*/}
