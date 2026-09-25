@@ -1,120 +1,122 @@
-# Рецепт: своя библиотека Zotero через агента
+# Runbook: your own Zotero library through the agent
 
-Как через агента **искать**, **читать**, **сохранять заметки** и **аннотировать** в
-своей библиотеке Zotero. Работает через MCP-сервер `zotero` (подключение и ключи —
+How to **search**, **read**, **save notes** and **annotate** in your own Zotero library
+through the agent. It works through the `zotero` MCP server (connection and keys:
 `../mcp/README.md`).
 
-> **Что сервер умеет и чего не умеет.** Умеет: искать по библиотеке (по словам,
-> тегам, смыслу), читать метаданные/полный текст/заметки/аннотации, **писать**
-> заметки, аннотации и теги к существующим записям. **Не умеет:** заводить в
-> библиотеку **новую** запись (саму статью) — это ты делаешь Zotero Connector'ом или
-> импортом, а агент потом её находит и обогащает (см. ниже «Как добавить источник»).
+> **What the server can and cannot do.** It can: search the library (by words, tags,
+> meaning), read metadata/full text/notes/annotations, **write** notes, annotations and
+> tags to existing records. It **cannot** create a **new** record in the library (the
+> paper itself): you do that with the Zotero Connector or by importing, and the agent then
+> finds the record and enriches it (see "How to add a source" below).
 
 ---
 
-## Поиск по библиотеке
+## Searching the library
 
-**По словам / по автору / по теме:**
+**By words / by author / by topic:**
 
-> Найди в моей библиотеке Zotero работы про «`<тема / автор / ключевое слово>`».
-> Верни списком: авторы, год, название, теги, ключ записи.
+> Find works about "`<topic / author / keyword>`" in my Zotero library. Return a list:
+> authors, year, title, tags, record key.
 
-**По смыслу (семантический поиск)** — когда точных слов не знаешь:
+**By meaning (semantic search)** — when you do not know the exact words:
 
-> Семантическим поиском по Zotero найди то, что близко по смыслу к «`<описание
-> идеи>`», даже если этих слов в тексте нет.
+> Using semantic search in Zotero, find what is close in meaning to "`<description of
+> the idea>`", even if those words do not occur in the text.
 
-> Семантический поиск требует однократной сборки индекса. Если агент говорит, что
-> индекс пуст/устарел — попроси: «обнови поисковую базу Zotero» — и повтори запрос.
-> Поиск по словам и тегам работает и без индекса.
+> Semantic search requires building an index once. If the agent says the index is empty
+> or outdated, ask: "update the Zotero search database", and repeat the request. Search by
+> words and tags works without the index.
 
-**По тегу / расширенный поиск:**
+**By tag / advanced search:**
 
-> Покажи все записи Zotero с тегом `<тег>`. / Расширенным поиском: год после 2020 И
-> тег `<тема>` И тип «journalArticle».
+> Show all Zotero records with the tag `<tag>`. / With advanced search: year after 2020
+> AND tag `<topic>` AND type "journalArticle".
 
-**Что нового в библиотеке:**
+**What is new in the library:**
 
-> Покажи, что я недавно добавлял в Zotero (последние N записей).
+> Show what I added to Zotero recently (the last N records).
 
-## Чтение записи
+## Reading a record
 
-> По записи `<название / ключ>` из Zotero покажи метаданные (авторы, год, журнал,
-> DOI), затем её заметки и аннотации. Если есть полный текст вложения — вытащи его и
-> сделай краткий конспект со ссылками на страницы (навык `pdf-digest`).
+> For the record `<title / key>` in Zotero, show the metadata (authors, year, journal,
+> DOI), then its notes and annotations. If the attachment has full text, extract it and
+> make a short digest with page references (the `digest` skill).
 
-Полезно: у записи бывают «дети» — вложенный PDF, заметки, аннотации. Агент их читает
-через операции сервера (метаданные, полный текст вложения, дочерние заметки и
-аннотации).
+Useful to know: a record can have "children", an attached PDF, notes and annotations. The
+agent reads them through the server's operations (metadata, full text of the attachment,
+child notes and annotations).
 
-## Сохранение результата: заметки
+## Saving the result: notes
 
-Главный способ «положить работу обратно в Zotero» — прикрепить **заметку** к записи.
+The main way to "put work back into Zotero" is to attach a **note** to a record.
 
-> К записи `<название / ключ>` в Zotero прикрепи заметку с этим конспектом:
-> `<текст / результат pdf-digest>`. Сохрани как дочернюю заметку этой работы.
+> Attach a note with this digest to the record `<title / key>` in Zotero:
+> `<text / digest output>`. Save it as a child note of this work.
 
-Или отдельная самостоятельная заметка (например, синтез обзора):
+Or a separate standalone note (for example, the synthesis of a review):
 
-> Сохрани в Zotero отдельную заметку «Мини-обзор: `<тема>`» с этим текстом и
-> проставь ей тег `<тема>`.
+> Save a separate note "Mini-review: `<topic>`" in Zotero with this text and give it the
+> tag `<topic>`.
 
-## Аннотации
+## Annotations
 
-> К записи `<название / ключ>` добавь аннотацию: «`<моя пометка / выделенная мысль>`».
+> Add an annotation to the record `<title / key>`: "`<my remark / highlighted idea>`".
 
-Аннотации удобны как быстрые пометки к конкретной работе; развёрнутый разбор лучше
-класть заметкой.
+Annotations are handy as quick remarks on a specific work; a full analysis is better
+stored as a note.
 
-## Теги и порядок в библиотеке
+## Tags and order in the library
 
-> Проставь тег `<тема-обзора>` всем записям Zotero, которые я отобрал для обзора
-> `<тема>`: `<список названий / ключей>`.
+> Add the tag `<review-topic>` to all Zotero records I selected for the review on
+> `<topic>`: `<list of titles / keys>`.
 
-> Наведи порядок в тегах по теме `<тема>`: покажи текущие теги этих записей и
-> предложи единую схему (например, `метод/…`, `объект/…`, `статус/прочитано`), потом
-> проставь пачкой после моего «ок».
+> Tidy up the tags on `<topic>`: show the current tags of these records and propose a
+> single scheme (for example `method/…`, `object/…`, `status/read`), then apply it in one
+> batch after my "ok".
 
-Массовое обновление тегов агент делает одной операцией — удобно приводить библиотеку
-к единой схеме.
-
----
-
-## Как добавить источник (которого ещё нет в библиотеке)
-
-Сервер не заводит новые записи — это делаешь ты, быстро:
-
-1. **Zotero Connector** в браузере: на странице статьи (или в результатах базы)
-   нажми кнопку расширения — запись с метаданными и часто с PDF попадёт в библиотеку.
-2. **По DOI / идентификатору** в самом Zotero: «Add Item by Identifier» → вставь DOI
-   или arXiv ID.
-3. **Импортом** `.bib` / `.ris`, если у тебя уже есть библиография (её можно собрать
-   навыком `cite`).
-
-После этого:
-
-> В Zotero появилась новая запись «`<название>`». Найди её, сделай конспект по её PDF
-> (`pdf-digest`) и прикрепи заметкой, проставь тег `<тема>`.
-
-## Личная и групповая библиотека
-
-Если у тебя несколько библиотек (личная и групповые проекты):
-
-> Покажи мои библиотеки Zotero и переключись на `<название группы>`. Дальше ищи и
-> сохраняй в ней.
-
-По умолчанию сервер работает с библиотекой из конфига (`ZOTERO_LIBRARY_TYPE` +
-`ZOTERO_LIBRARY_ID`). Групповая — `type=group` и номер группы (см. `../mcp/README.md`).
+The agent updates tags in bulk with a single operation, which makes it easy to bring the
+library to one scheme.
 
 ---
 
-## Как это встраивается в обзор литературы
+## How to add a source (one that is not in the library yet)
 
-Zotero — финальное хранилище пайплайна из `lit-review.md`: нашли (`paper-search`) →
-законспектировали (`pdf-digest`) → оформили ссылки (`cite`) → **сложили заметки и
-теги в Zotero**, чтобы к обзору можно было вернуться через месяцы и всё было на месте,
-подписано и со ссылками.
+The server does not create new records; you do that, quickly:
 
-> **Анти-выдумка и здесь.** Агент сохраняет в Zotero только проверенное: конспекты со
-> страницами, реальные цитаты, подтверждённые метаданные. Ничего «правдоподобного» в
-> твою библиотеку не попадает — иначе она перестаёт быть надёжной.
+1. **Zotero Connector** in the browser: on the paper's page (or in a database's results)
+   click the extension button, and a record with metadata, often with the PDF, lands in
+   the library.
+2. **By DOI / identifier** in Zotero itself: "Add Item by Identifier" → paste the DOI or
+   arXiv ID.
+3. **By importing** a `.bib` / `.ris` file, if you already have a bibliography (you can
+   build one with the `digest` skill).
+
+After that:
+
+> A new record "`<title>`" has appeared in Zotero. Find it, make a digest of its PDF
+> (`digest`), attach it as a note and add the tag `<topic>`.
+
+## Personal and group libraries
+
+If you have several libraries (a personal one and group projects):
+
+> Show my Zotero libraries and switch to `<group name>`. From now on, search and save
+> in it.
+
+By default the server works with the library from the config (`ZOTERO_LIBRARY_TYPE` +
+`ZOTERO_LIBRARY_ID`). For a group library, use `type=group` and the group number (see
+`../mcp/README.md`).
+
+---
+
+## How this fits into a literature review
+
+Zotero is the final store of the pipeline from `lit-review.md`: found (`paper-search`) →
+digested (`digest`) → references formatted (`digest`) → **notes and tags stored in
+Zotero**, so that you can come back to the review months later and find everything in
+place, labelled and referenced.
+
+> **No fabrication here either.** The agent saves only verified material to Zotero:
+> digests with pages, real quotes, confirmed metadata. Nothing "plausible" gets into your
+> library; otherwise it stops being reliable.

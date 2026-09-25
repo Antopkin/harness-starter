@@ -1,18 +1,18 @@
 ---
 name: explain
-description: Структурированное объяснение кода, функции или концепции
+description: Structured explanation of code, a function or a concept
 ---
-# Объяснение кода
+# Explaining code
 
-Используй только инструменты Read, Grep, Glob. Не редактируй файлы.
+Use only the Read, Grep and Glob tools. Do not edit files.
 
-Объясни код или концепцию, о которых спрашивает пользователь. Следуй структуре:
+Explain the code or concept the user asks about. Follow this structure:
 
-1. **Что это** — одно предложение, суть
-2. **Как работает** — пошаговый разбор логики (по строкам/блокам)
-3. **Зачем** — мотивация: почему сделано именно так
-4. **Подводные камни** — неочевидное поведение, edge cases
-5. **Связи** — как это связано с остальным кодом (вызывающие/вызываемые)
+1. **What it is**: one sentence, the essence
+2. **How it works**: a step-by-step walk through the logic (by line or by block)
+3. **Why**: the motivation, why it was done this way
+4. **Pitfalls**: non-obvious behaviour, edge cases
+5. **Connections**: how it relates to the rest of the code (callers and callees)
 
-Если пользователь указал файл — прочитай его. Если указал функцию — найди её.
-Отвечай на русском.
+If the user named a file, read it. If they named a function, find it.
+Answer in the language of the user's request.

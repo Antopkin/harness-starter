@@ -1,134 +1,136 @@
-# Рецепт: обзор литературы от запроса до библиографии
+# Runbook: a literature review from question to bibliography
 
-Полный пайплайн: **вопрос → поиск → скрининг → скачать PDF → конспект → синтез →
-ссылки → сохранить в Zotero**. Каждый шаг — просьба к агенту, её можно копировать
-в чат почти как есть. Рецепт опирается на навыки `lit-search`, `pdf-digest`, `cite`
-и на MCP-серверы `paper-search` и `zotero` (см. `../mcp/README.md`).
+The full pipeline: **question → search → screening → download PDFs → digest → synthesis →
+references → save to Zotero**. Every step is a request to the agent that you can paste into
+the chat almost verbatim. The runbook relies on the `lit-search` and `digest` skills and on
+the `paper-search` and `zotero` MCP servers (see `../mcp/README.md`).
 
-> **Главное правило всего трека — не выдумывать источники.** Агент включает в обзор
-> только те работы, которые реально нашёл и открыл. У каждой — идентификатор (DOI,
-> arXiv ID или URL). Чего нет — помечается `[проверить]`, а не угадывается. Если по
-> теме ничего надёжного не нашлось, честный ответ — «не нашлось».
-
----
-
-## Шаг 1. Сформулируй вопрос и термины
-
-Из темы делаем проверяемый исследовательский вопрос и набор ключевых слов.
-
-> Помоги превратить тему «`<моя тема>`» в исследовательский вопрос и выпиши
-> 4–6 ключевых терминов с синонимами на русском и английском. Если тема
-> многозначна — покажи 2 трактовки и спроси, какая нужна.
-
-Зачем отдельным шагом: плохой запрос → шумная выдача → потерянное время. Синонимы
-на английском обязательны — большинство науки публикуется на нём.
-
-## Шаг 2. Поиск через `paper-search`
-
-Просим агента искать по нескольким базам сразу и вернуть кандидатов, а не готовый
-вывод.
-
-> Через `paper-search` найди работы по запросу `<термины>`. Пройди по arXiv,
-> Semantic Scholar, OpenAlex и `<PubMed — если медицина / SSRN — если соцнауки>`.
-> Верни 15–25 кандидатов таблицей: авторы, год, название, база, DOI/arXiv ID,
-> одна строка сути из аннотации. Ничего пока не скачивай.
-
-Полезно знать:
-- Базы под область: **arXiv / DBLP** — CS, физика, математика; **PubMed / Europe
-  PMC / PMC** — медицина и биология; **SSRN** — экономика, право, соцнауки;
-  **DOAJ / BASE / CORE / OpenAlex** — широкий открытый доступ; **CrossRef** — если
-  у тебя уже есть DOI и нужны метаданные.
-- Нет доступа к MCP — тот же шаг делает навык `lit-search` обычным веб-поиском.
-
-## Шаг 3. Скрининг (отсев)
-
-Сужаем воронку по названию и аннотации, до всякого скачивания.
-
-> Из этого списка отбери те, что прямо отвечают на вопрос `<вопрос>`. По каждой
-> отброшенной — одна причина. Красные флаги: нет автора/года/журнала, громкие
-> заявления без метода, работа не находится нигде, кроме одной странной страницы.
-> Оставь 5–8 самых релевантных.
-
-Держим воронку узкой: лучше 6 прочитанных работ, чем 25 непрочитанных ссылок.
-Спорные случаи агент должен показать, а не выкидывать молча.
-
-## Шаг 4. Скачать PDF в `materials/`
-
-Забираем полные тексты отобранного — сначала легально и из открытого доступа.
-
-> Скачай PDF отобранных работ в папку `materials/`. Бери открытый доступ:
-> `download_with_fallback` по arXiv/OpenAlex/Unpaywall. Что за пейволлом и без
-> открытой версии — не тяни, отметь отдельным списком «нужен доступ вуза».
-
-- Открытая версия за пейволлом часто есть: препринт на arXiv/SSRN, PDF на сайте
-  автора, репозиторий вуза, Unpaywall — агент проверяет их автоматически.
-- Что осталось за подпиской — переходим в `eresources.md` (браузер + логин вуза).
-  Теневые библиотеки в этом треке не используем.
-- Файлы в `materials/` не версионируются (см. `.gitignore`) — это твои личные копии.
-
-## Шаг 5. Конспект каждого PDF через `pdf-digest`
-
-Каждую скачанную статью превращаем в структурированный конспект.
-
-> Сделай `pdf-digest` по каждому PDF в `materials/` из этого обзора. Нужны: суть в
-> одну строку, проблема/пробел, метод, данные, результаты с числами, ограничения и
-> дословные цитаты — **у каждой цитаты и числа страница**. Чего в статье нет — так и
-> пиши «не указано», не досочиняй.
-
-Правило конспекта: цитата — только дословно и со страницей; голос автора и твой
-вывод — разными строками. Длинные PDF агент читает по диапазонам страниц и держит
-настоящие номера страниц. Скан или сложная вёрстка — сначала OCR через навык `pdf`.
-
-## Шаг 6. Синтез: собрать мини-обзор
-
-Отдельные конспекты сшиваем в связный обзор поля.
-
-> Собери мини-обзор по конспектам: 2–4 абзаца о том, что говорит поле — где
-> согласие, где спор, где пробел. Каждое утверждение подкрепи ссылкой на конкретную
-> работу [n]. Не обобщай сверх прочитанного. В конце — раздел «Пробелы и следующие
-> шаги» и раздел «Не подтверждено» для работ, которые не удалось открыть.
-
-Синтез — не пересказ пяти аннотаций подряд, а карта: линии работ, расхождения,
-белые пятна. Всё — со ссылками на прочитанное.
-
-## Шаг 7. Оформить ссылки через `cite`
-
-Из собранных метаданных — корректная библиография.
-
-> Через `cite` оформи список литературы по отобранным работам в `<APA 7 / ГОСТ Р
-> 7.0.100–2018 / BibTeX>`. Метаданные бери из конспектов; чего не хватает — помечай
-> `% TODO: проверить`, не выдумывай DOI, страницы и авторов.
-
-Если подключён `paper-search` — агент может добрать BibTeX по DOI через CrossRef,
-но авто-запись всё равно сверяется с источником: в ней бывают ошибки в авторах и
-страницах.
-
-## Шаг 8. Сохранить результат в Zotero
-
-Кладём конспекты и синтез обратно в библиотеку — как заметки к источникам.
-
-> Для работ, которые уже есть в моей библиотеке Zotero, найди их через `zotero` и
-> прикрепи к каждой заметку с её конспектом. Проставь общий тег `<тема-обзора>`.
-> Сам мини-обзор сохрани отдельной заметкой и тоже помечай тегом.
-
-Важно про «сохранить в Zotero»:
-- Сервер `zotero` **пишет заметки, аннотации и теги** к записям, которые уже в
-  библиотеке. **Новую** запись (саму статью) он не заводит.
-- Если работы ещё нет в Zotero — добавь её сам кнопкой **Zotero Connector** в
-  браузере (со страницы статьи или по DOI), затем повтори просьбу — агент найдёт
-  свежую запись и прикрепит конспект. Подробности — `zotero.md`.
+> **The main rule of all source work: never invent sources.** The agent includes in the
+> review only works it actually found and opened. Each one has an identifier (DOI, arXiv ID
+> or URL). Whatever is missing is marked `[verify]`, not guessed. If nothing reliable turned
+> up on the topic, the honest answer is "nothing found".
 
 ---
 
-## Короткая версия (одним сообщением)
+## Step 1. Formulate the question and the terms
 
-Когда хочется запустить весь конвейер сразу, а детали доверить агенту:
+We turn the topic into a testable research question and a set of keywords.
 
-> Сделаем обзор литературы по теме «`<тема>`». План: (1) уточни вопрос и термины;
-> (2) через `paper-search` найди 15–25 кандидатов по arXiv/Semantic Scholar/OpenAlex
-> `<+ профильная база>`; (3) отбери 5–8 релевантных, покажи причины отсева;
-> (4) скачай их открытые PDF в `materials/`, за пейволлом — отметь отдельно;
-> (5) сделай `pdf-digest` по каждому со страницами у цитат; (6) собери мини-обзор со
-> ссылками [n] и разделом «Пробелы»; (7) оформи список литературы через `cite` в
-> `<стиль>`; (8) заметки и синтез сложи в Zotero тегом `<тема>`. Показывай результат
-> после каждого шага и ничего не выдумывай — непроверенное помечай `[проверить]`.
+> Help me turn the topic "`<my topic>`" into a research question and list 4–6 key terms
+> with synonyms in English and in my working language. If the topic is ambiguous, show
+> 2 readings and ask which one I need.
+
+Why a separate step: a bad query → noisy results → wasted time. English synonyms are a
+must: most research is published in English.
+
+## Step 2. Search through `paper-search`
+
+We ask the agent to search several databases at once and return candidates, not a
+finished conclusion.
+
+> Using `paper-search`, find works for the query `<terms>`. Go through arXiv, Semantic
+> Scholar, OpenAlex and `<PubMed for medicine / SSRN for the social sciences>`. Return
+> 15–25 candidates as a table: authors, year, title, database, DOI/arXiv ID, a one-line
+> gist from the abstract. Do not download anything yet.
+
+Good to know:
+- Databases by field: **arXiv / DBLP** — CS, physics, mathematics; **PubMed / Europe
+  PMC / PMC** — medicine and biology; **SSRN** — economics, law, social sciences;
+  **DOAJ / BASE / CORE / OpenAlex** — broad open access; **CrossRef** — when you already
+  have a DOI and need the metadata.
+- No MCP access? The `lit-search` skill does the same step with ordinary web search.
+
+## Step 3. Screening
+
+We narrow the funnel by title and abstract, before any downloading.
+
+> From this list, keep the ones that directly answer the question `<question>`. Give one
+> reason for each one you drop. Red flags: no author/year/journal, loud claims with no
+> method, a work that exists nowhere except on one odd page. Keep the 5–8 most relevant.
+
+Keep the funnel narrow: 6 papers read beat 25 references unread. The agent must show
+borderline cases rather than drop them silently.
+
+## Step 4. Download the PDFs into `materials/`
+
+We fetch the full texts of what was kept: legally and from open access first.
+
+> Download the PDFs of the selected works into the `materials/` folder. Use open access:
+> `download_with_fallback` via arXiv/OpenAlex/Unpaywall. Anything behind a paywall with no
+> open version: do not pull it, list it separately under "needs university access".
+
+- A paywalled paper often has an open version: a preprint on arXiv/SSRN, a PDF on the
+  author's site, the university repository, Unpaywall; the agent checks them automatically.
+- Whatever remains behind a subscription goes to `eresources.md` (browser + university
+  login). Shadow libraries are not used.
+- Files in `materials/` are not versioned (see `.gitignore`): they are your personal copies.
+
+## Step 5. Digest every PDF with `digest`
+
+Every downloaded paper becomes a structured digest.
+
+> Run `digest` on every PDF in `materials/` from this review. I need: the gist in one line,
+> the problem/gap, method, data, results with numbers, limitations and verbatim quotes, with
+> **a page for every quote and every number**. Whatever the paper does not contain, write
+> "not stated"; do not make it up.
+
+The digest rule: a quote only verbatim and with a page; the author's voice and your
+conclusion on separate lines. The agent reads long PDFs in page ranges and keeps the real
+page numbers. For a scan or a complex layout, run OCR first (for example with the OCR mode of
+the `latex-document` skill or a tool such as `ocrmypdf`).
+
+## Step 6. Synthesis: assemble a mini-review
+
+We stitch the separate digests into a coherent review of the field.
+
+> Assemble a mini-review from the digests: 2–4 paragraphs on what the field says, where
+> it agrees, where it disagrees, where the gap is. Back every statement with a reference to
+> a specific work [n]. Do not generalise beyond what was read. At the end, add a "Gaps and
+> next steps" section and a "Not confirmed" section for works that could not be opened.
+
+A synthesis is not five abstracts retold in a row but a map: lines of work, disagreements,
+blank spots. All of it referenced to what was read.
+
+## Step 7. Format the references with `digest`
+
+From the collected metadata, a correct bibliography.
+
+> Using `digest`, format the reference list for the selected works in `<APA 7 / GOST R
+> 7.0.100-2018 / BibTeX>`. Take the metadata from the digests; where something is missing,
+> mark it `% TODO: verify`; do not invent DOIs, pages or authors.
+
+If `paper-search` is connected, the agent can fetch BibTeX by DOI through CrossRef, but the
+automatic record is still checked against the source: such records contain errors in
+authors and pages.
+
+## Step 8. Save the result to Zotero
+
+We put the digests and the synthesis back into the library, as notes attached to the
+sources.
+
+> For the works that are already in my Zotero library, find them through `zotero` and
+> attach to each a note with its digest. Add the common tag `<review-topic>`. Save the
+> mini-review itself as a separate note and tag it as well.
+
+Important about "save to Zotero":
+- The `zotero` server **writes notes, annotations and tags** to records that are already
+  in the library. It does not create a **new** record (the paper itself).
+- If a work is not in Zotero yet, add it yourself with the **Zotero Connector** button in
+  the browser (from the paper's page or by DOI), then repeat the request: the agent will
+  find the fresh record and attach the digest. Details are in `zotero.md`.
+
+---
+
+## The short version (one message)
+
+When you want to launch the whole pipeline at once and leave the details to the agent:
+
+> Let's do a literature review on "`<topic>`". Plan: (1) refine the question and the
+> terms; (2) using `paper-search`, find 15–25 candidates across arXiv/Semantic
+> Scholar/OpenAlex `<+ a field database>`; (3) keep 5–8 relevant ones and show the
+> reasons for exclusion; (4) download their open PDFs into `materials/` and list the
+> paywalled ones separately; (5) run `digest` on each, with pages for quotes; (6) assemble
+> a mini-review with references [n] and a "Gaps" section; (7) format the reference list
+> with `digest` in `<style>`; (8) put the notes and the synthesis into Zotero under the tag
+> `<topic>`. Show the result after each step and invent nothing; mark anything unverified
+> `[verify]`.

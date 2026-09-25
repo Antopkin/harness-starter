@@ -167,3 +167,5 @@ The synthesis agent produces the final Markdown report directly (not JSON), foll
 - [ ] Report follows review_report_template.md structure
 - [ ] No reviewer findings were suppressed or fabricated
 - [ ] Strengths and weaknesses are balanced
+
+**Output language:** the language of the paper under review — English for an English paper, Chinese for a Chinese paper; section headings, severity labels and the `[Script]`/`[LLM]` tags stay English so the template and the script output line up. **Length cap:** at most 2000 words plus the Revision Roadmap table — the template scaffolding you fill in is itself about 700 words, so the cap covers that plus your synthesis of the three Phase 1 reviewer reports and the Phase 0 automated findings. **Return shape:** the Markdown report of `templates/review_report_template.md`, with the sections listed in Step 7 above, and nothing outside it.

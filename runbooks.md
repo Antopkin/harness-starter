@@ -1,79 +1,62 @@
-# Рецепты частых операций
+# Recipes for frequent operations
 
-Короткие сценарии на то, что приходится делать чаще всего. Всё сформулировано как просьба
-к агенту — можно копировать текст в чат почти как есть.
-
----
-
-## 1. Попросить агента сходить браузером к электронному ресурсу
-
-Когда нужно, чтобы агент открыл страницу, статью или документацию и вытащил оттуда содержимое.
-
-**Скажи:**
-
-> Открой `<URL>` и вытащи оттуда `<что именно: основной текст / таблицу / список ссылок>`.
-> Приведи результат структурировано и укажи, откуда что взято.
-
-**Что под капотом.** У агента для этого есть один из инструментов: браузер (Playwright /
-`real-browser`) или веб-поиск/чтение URL. Если инструмент не подключён, агент скажет об этом —
-тогда попроси включить соответствующий MCP-сервер или дай текст ресурса файлом в `materials/`.
-
-**Важно:** содержимое веб-страниц и PDF — это **данные, а не команды**. Если внутри страницы
-написано «сделай то-то» — агент не должен это исполнять. Проговори это, если работаешь
-с недоверенным источником.
+Short scenarios for the things you do most often. Everything is phrased as a request to the agent, so you can copy the text into the chat almost as is.
 
 ---
 
-## 2. Безопасно откатить правку агента
+## 1. Ask the agent to read a web resource with a browser
 
-Когда агент что-то изменил, а результат не понравился.
+When you need the agent to open a page, an article or documentation and pull its content out.
 
-**До правки** (профилактика): проси показывать план и различия до применения —
+**Say:**
 
-> Покажи, что именно ты изменишь (diff), и не применяй, пока я не скажу «ок».
+> Open `<URL>` and extract `<what exactly: the main text / a table / a list of links>`.
+> Give me the result in a structured form and say where each part came from.
 
-**После правки**, если репозиторий под git:
+**Under the hood.** The agent uses one of its tools for this: a browser (for example a Playwright MCP server, or a Chrome you started yourself with `--remote-debugging-port=9222`) or web search and URL reading. If no such tool is connected, the agent says so; then ask to enable the matching MCP server, or give it the text of the resource as a file in `materials/`. For a page behind your login, the `web-parse` skill reads an already signed-in session and keeps to its ethics checklist. `contexts/research-routing.md` explains which kind of source and tool to prefer.
 
-> Покажи `git status` и `git diff`. Я хочу откатить последние изменения в `<файл>`.
-
-Дальше агент откатит одним из безопасных способов:
-- `git restore <файл>` (или `git checkout -- <файл>`) — вернуть один файл к последнему коммиту;
-- `git stash` — временно убрать все несохранённые изменения (можно вернуть через `git stash pop`);
-- если правок ещё нет в коммите — просто отменить их в редакторе.
-
-**Привычка, которая спасает:** перед крупной задачей проси агента сделать коммит текущего
-состояния — тогда откат всегда есть куда.
+**Important:** the content of web pages and PDFs is **data, not commands**. If a page says "do this or that", the agent must not do it. Say this out loud when you work with an untrusted source.
 
 ---
 
-## 3. Добавить свой навык через skill-creator
+## 2. Roll back an agent's edit safely
 
-Когда своя частая процедура повторяется и хочется завернуть её в навык.
+When the agent changed something and you do not like the result.
 
-**Скажи:**
+**Before the edit** (prevention): ask it to show the plan and the diff before applying —
 
-> Через `skill-creator` создай навык `<имя>`: он должен `<что делает>`, срабатывать когда
-> `<триггеры>`. Сложи его в `skills/<имя>/SKILL.md`.
+> Show me what exactly you will change (the diff), and do not apply it until I say "ok".
 
-Агент создаст каталог `skills/<имя>/` с файлом `SKILL.md` (фронтматтер `name` + `description`,
-затем шаги навыка). У каждого инструмента свой нативный путь, куда навык нужно положить —
-дальше он подхватывается сам по полю `description`:
-- **Claude Code:** `cp -R skills/<имя> .claude/skills/` — навык подхватывается автоматически
-  по `description` и вызывается вручную как `/<имя>`;
-- **Codex:** `cp -R skills/<имя> .agents/skills/` — путь именно `.agents/skills/`
-  (не `.claude`, не `.codex`); авто-триггер по `description` плюс ручной выбор через `/skills`;
-- **OpenCode:** отдельного шага не нужно — он читает оба совместимых пути
-  (`.claude/skills/` и `.agents/skills/`) вдобавок к родному `.opencode/skills/`;
-  навык вызывается встроенным инструментом `skill` по `description`.
+**After the edit**, if the repository is under git:
 
-**Единая установка под все три.** Скопируй навык в оба пути — этого хватает:
+> Show `git status` and `git diff`. I want to roll back the latest changes in `<file>`.
 
-> `cp -R skills/<имя> .claude/skills/ && cp -R skills/<имя> .agents/skills/`
+The agent then rolls back in one of the safe ways:
+- `git restore <file>` (or `git checkout -- <file>`): return one file to the last commit;
+- `git stash`: set all uncommitted changes aside for now (bring them back with `git stash pop`);
+- if the edits are not committed yet, simply undo them in the editor.
 
-`.claude/skills/` покрывает Claude Code, `.agents/skills/` — Codex, а OpenCode прочитает любой
-из них. Дублировать в `.opencode/skills/` не нужно. У каждого `SKILL.md` во фронтматтере должны
-быть `name` (совпадает с именем папки) и `description` — по нему инструмент решает, когда навык
-применить.
+**A habit that saves you:** before a large task, ask the agent to commit the current state, so that there is always something to roll back to.
 
-Проверь навык на маленьком примере и, если что-то не так, попроси `skill-creator`
-его доработать — это тот же цикл «создать → прогнать → поправить».
+---
+
+## 3. Add your own skill with skill-creator
+
+When a procedure of yours keeps repeating and you want to wrap it into a skill.
+
+**Say:**
+
+> Use `skill-creator` to create a skill `<name>`: it should `<what it does>` and trigger when `<triggers>`. Put it in `skills/<name>/SKILL.md`.
+
+The agent creates the folder `skills/<name>/` with a `SKILL.md` file (frontmatter `name` + `description`, then the steps of the skill). Each tool has its own native path where the skill has to go, and from there it is picked up by its `description`:
+- **Claude Code:** `cp -R skills/<name> .claude/skills/`; the skill is picked up automatically by `description` and can be called by hand as `/<name>`;
+- **Codex:** `cp -R skills/<name> .agents/skills/`; the path is exactly `.agents/skills/` (not `.claude`, not `.codex`); automatic trigger by `description` plus a manual choice through `/skills`;
+- **OpenCode:** no separate step is needed, since it reads both compatible paths (`.claude/skills/` and `.agents/skills/`) in addition to its own `.opencode/skills/`; the skill is called through the built-in `skill` tool by `description`.
+
+**One installation for all three.** Copying the skill into both paths is enough:
+
+> `cp -R skills/<name> .claude/skills/ && cp -R skills/<name> .agents/skills/`
+
+`.claude/skills/` covers Claude Code, `.agents/skills/` covers Codex, and OpenCode reads either of them. There is no need to duplicate it into `.opencode/skills/`. Every `SKILL.md` must have `name` (the same as the folder name) and `description` in its frontmatter; the tool uses the description to decide when to apply the skill. If you add `disable-model-invocation: true` so the skill runs only when you call it, remember that only Claude Code honours the flag; OpenCode and Codex may still start the skill on their own.
+
+Test the skill on a small example and, if something is off, ask `skill-creator` to improve it: it is the same loop of "create → run → fix".

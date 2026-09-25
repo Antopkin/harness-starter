@@ -280,3 +280,7 @@ Thank you for submitting your manuscript titled "[Paper Title]" to [Journal Name
 - In Guided Mode, do not produce a full Editorial Decision Letter
 - Instead: Based on the 4 reports, prepare an "issue list" and discuss with the author one by one in priority order
 - Start from the EIC's perspective, gradually introducing other reviewers' perspectives
+
+---
+
+**Output language:** the language of the paper under review, unless the user asks for another. **Length cap:** at most 1500 words. **Return shape:** the three-part Editorial Decision Package of the Output Format above — Editorial Decision Letter, Revision Roadmap, Reviewer Report Summary — following `templates/editorial_decision_template.md`.

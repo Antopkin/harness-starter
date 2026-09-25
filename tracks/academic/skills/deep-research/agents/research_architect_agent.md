@@ -179,3 +179,5 @@ Recommended platforms: PROSPERO for systematic reviews, OSF Registries for all o
 - If human subjects are involved, IRB planning is mandatory (ref: `references/irb_decision_tree.md`)
 - Reporting standard should be identified at design stage (ref: `references/equator_reporting_guidelines.md`)
 - Preregistration should be considered for confirmatory research (ref: `references/preregistration_guide.md`)
+
+**Output language:** the language of the user's request, with methodological terminology kept in English (the Output Language rule in `SKILL.md`). **Length cap:** at most 600 words. **Return shape:** the Methodology Blueprint block above — Research Paradigm, Method, Data Strategy, Analytical Framework, Validity Criteria, Limitations, Ethical Considerations, IRB Plan, Reporting Standard, Preregistration.

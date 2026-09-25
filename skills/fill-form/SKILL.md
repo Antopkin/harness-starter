@@ -1,145 +1,151 @@
 ---
 name: fill-form
 description: >
-  Заполнение произвольной веб-формы данными из записки или структурированного
-  входа (JSON/YAML) через CLI agent-browser поверх уже запущенного браузера. Поля
-  сопоставляются по роли и accessible-name (не по CSS-селекторам); после каждого
-  поля идёт read-back verify (значение перечитывается из живого DOM, а не берётся
-  на веру с успеха fill); перед отправкой — обязательный human-gate (сводка всех
-  значений плюс скриншот, СТОП до явного «да» человека); отправка идемпотентна
-  (ведётся лог, повторный submit вслепую запрещён). Браузер поднимает и логинится
-  человек в pre-flight — скилл только прицепляется по CDP и НЕ получает пароль.
-  Триггеры (RU): «заполни форму», «заполни анкету», «внеси данные в форму»,
-  «заполнить Google Form», «заполни заявку на сайте», «fill form», «fill the form».
-  NOT: извлечь или спарсить данные из готовой формы — это не заполнение; NOT:
-  сам поднять браузер или залогиниться за человека — это pre-flight дня 2; NOT:
-  автоматическая отправка без подтверждения человека — human-gate обязателен.
+  Fills an arbitrary web form with data from a memo or structured input
+  (JSON/YAML) through the agent-browser CLI on top of an already running browser.
+  Fields are matched by role and accessible name (not CSS selectors); every field
+  gets a read-back verify from the live DOM instead of trusting a successful fill;
+  before submitting there is a mandatory human gate (summary of all values plus a
+  screenshot, STOP until an explicit yes); submission is idempotent (a log is kept,
+  no blind repeat submit). The human starts the browser and logs in during
+  pre-flight; the skill only attaches over CDP and NEVER receives the password.
+  Triggers: "fill in the form", "fill out the questionnaire", "enter the data into
+  the form", "fill the Google Form", "fill form". NOT: extracting or scraping data
+  from a form; NOT: starting the browser or logging in for the human; NOT:
+  automatic submission without human confirmation.
 ---
 
-# fill-form — заполнение веб-формы из записки через agent-browser
+# fill-form — filling a web form from a memo through agent-browser
 
-Раннер, который заполняет ЛЮБУЮ веб-форму данными из входа: сопоставляет вход с
-полями по **роли и accessible-name**, читает каждое поле обратно из живого DOM,
-показывает человеку сводку и скриншот, и отправляет только после явного «да».
-Аудитория применения — не-технари: агент производит, человек ведёт и даёт добро
-на отправку.
+A runner that fills ANY web form with data from its input: it matches the input to
+the fields by **role and accessible name**, reads every field back from the live
+DOM, shows the human a summary and a screenshot, and submits only after an explicit
+"yes". It is built for non-technical users: the agent does the work, the human leads
+and gives the go-ahead to submit.
 
-Скилл — это ИНСТРУКЦИЯ агенту; он НЕ поднимает браузер сам. Браузер (Google Chrome
-Beta с открытым CDP-портом) поднимает и логинится **человек** на pre-flight —
-установка дня 2, репозиторий `browser-use-starter`. Агент лишь прицепляется по
-`--cdp 9222` к готовой авторизованной вкладке. Субстрат авторизованной сессии,
-проверка живости и честная граница антибота — в `references/real-browser-substrate.md`.
+The skill is an INSTRUCTION to the agent; it does NOT start a browser itself. The
+human starts Chrome with `--remote-debugging-port=9222` themselves during pre-flight
+and logs in; the agent merely attaches over `--cdp 9222` to the ready, logged-in
+tab. The substrate is a Chrome session attached over CDP; how to launch it, the
+liveness check and the honest limit on anti-bot detection are in
+`references/cdp-session-substrate.md`.
 
-Портативный, без Python и без скриптов: весь инструмент — CLI `agent-browser` и
-рассуждение агента. Синтаксис примитивов заземлён по справке установленного CLI
-(v0.26.0) в `references/agent-browser-primitives.md` — это источник истины, читай
-его перед первой командой.
+Portable, with no Python and no scripts: the whole tool is the `agent-browser` CLI
+plus the agent's reasoning. The syntax of the primitives is grounded in the help of
+the installed CLI (v0.26.0) in `references/agent-browser-primitives.md`; that file
+is the source of truth, so read it before the first command.
 
-## Что нужно до старта (pre-flight — проверить, не выполнять за человека)
+## What must be in place before you start (pre-flight: check it, do not do it for the human)
 
-1. Chrome Beta поднят с `--remote-debugging-port=9222` и `--user-data-dir` (флаг
-   обязателен), человек залогинен, если форма за авторизацией. Проверка живости:
-   `curl -s http://localhost:9222/json/version` вернул JSON браузера.
-2. `agent-browser` установлен; attach проверяется одной командой:
-   `timeout 15 agent-browser --cdp 9222 snapshot -i` вернул дерево с рефами `@eN`.
-3. Вход на руках: записка (проза) ИЛИ структурированный JSON/YAML с парами
-   «имя поля → значение». Демо-форму под записку подбирают так, чтобы её поля
-   выводились из записки (title/abstract/keywords/источники) — см. правило
-   Приложения Б в `references/mapping-contract.md`.
+1. Chrome is running with `--remote-debugging-port=9222` and `--user-data-dir` (the
+   flag is mandatory), and the human is logged in if the form sits behind a login.
+   Liveness check: `curl -s http://localhost:9222/json/version` returned the
+   browser's JSON.
+2. `agent-browser` is installed; the attach is checked with a single command:
+   `timeout 15 agent-browser --cdp 9222 snapshot -i` returned a tree with `@eN` refs.
+3. The input is at hand: a memo (prose) OR structured JSON/YAML with
+   "field name → value" pairs. A demo form for a memo is chosen so that its fields
+   follow from the memo (title/abstract/keywords/sources); see the Appendix B rule
+   in `references/mapping-contract.md`.
 
-Любой пункт не выполнен — остановись и скажи человеку, что поднять; не поднимай
-браузер и не логинься за него.
+If any item is not met, stop and tell the human what to start; do not start the
+browser and do not log in on their behalf.
 
-## Инвариант: `--cdp 9222` на КАЖДОЙ команде
+## Invariant: `--cdp 9222` on EVERY command
 
-Без `--cdp 9222` команда `agent-browser` поднимает **отдельный детектируемый
-Chromium без логинов** — не нашу авторизованную вкладку. Флаг обязателен на каждой
-команде. Каждую команду оборачивай в hard-timeout, чтобы зависший запрос не
-блокировал работу: `timeout 15 agent-browser --cdp 9222 <cmd>`.
+Without `--cdp 9222`, an `agent-browser` command launches **a separate, detectable
+Chromium with no logins**, not our logged-in tab. The flag is mandatory on every
+command. Wrap every command in a hard timeout so that a hung request does not block
+the work: `timeout 15 agent-browser --cdp 9222 <cmd>`.
 
-## Рабочая петля
+## The working loop
 
-Форма заполняется полем за полем по петле **snapshot → маппинг → ввод →
-re-snapshot/read-back → (после всех полей) human-gate → submit → лог отправки**.
-Ключевое свойство петли: рефы `@eN` протухают после любого изменения страницы, а
-успех `fill` НЕ означает, что значение действительно встало, — поэтому снимок
-берётся заново перед каждым шагом, а значение перечитывается из живого DOM.
+The form is filled field by field in the loop **snapshot → mapping → input →
+re-snapshot/read-back → (after all fields) human gate → submit → submission log**.
+The key property of the loop: `@eN` refs go stale after any change to the page, and
+a successful `fill` does NOT mean the value really landed, so the snapshot is taken
+again before every step and the value is re-read from the live DOM.
 
-**0. Открыть форму.** `agent-browser --cdp 9222 open <url>` — в уже авторизованной
-вкладке. Дождаться готовности: `wait <селектор-якоря>` или `wait --load networkidle`
-(см. примитивы), обёрнуто в `timeout`.
+**0. Open the form.** `agent-browser --cdp 9222 open <url>` in the tab that is
+already logged in. Wait until it is ready: `wait <anchor selector>` or
+`wait --load networkidle` (see the primitives), wrapped in `timeout`.
 
-**1. Discover — карта полей.** `snapshot -i` даёт a11y-дерево: у каждого поля видны
-роль (`textbox`, `checkbox`, `radio`, `combobox`…) и accessible-name (обычно = его
-подпись). Это и есть адреса полей — по роли и имени, не по CSS.
+**1. Discover: the field map.** `snapshot -i` returns the a11y tree: every field
+shows its role (`textbox`, `checkbox`, `radio`, `combobox`…) and its accessible name
+(usually its label). These are the field addresses, by role and name, not by CSS.
 
-**2. Маппинг входа на поля.** Сопоставь ключи входа с полями по контракту из
-`references/mapping-contract.md`: accessible-name → нормализация (trim, lowercase) →
-точное совпадение с ключом входа. Из прозы-записки значения извлекает сам агент
-(LLM-маппинг). **Неоднозначность или дубликаты accessible-names → human-gate**
-(спроси человека, какое поле), НЕ угадывай.
+**2. Map the input onto the fields.** Match the input keys to the fields by the
+contract in `references/mapping-contract.md`: accessible name → normalisation (trim,
+lowercase) → exact match with the input key. From a prose memo the agent extracts
+the values itself (LLM mapping). **Ambiguity or duplicate accessible names → human
+gate** (ask the human which field is meant); do NOT guess.
 
-**3. Ввод — по типу поля.** Сопоставляй по роли+имени нативно, не резолвя вручную
-в CSS:
-- текст: `find label "<Имя>" fill "<значение>"` (по подписи) или `fill @eN "<значение>"`
-  (по рефу из snapshot). Оба пути проверены на живом браузере. `find role textbox
-  --name "<Имя>"` для текстовых полей НЕ используй: у input accessible-name берётся из
-  `<label>`/`aria-label`, и на практике этот локатор их не находит («Element not found»),
-  хотя в snapshot поле видно как `textbox "<Имя>"` — надёжны `find label` и `@eN`;
-- флажок: `find label "<Имя>" check` / `check @eN` (идемпотентно); radio: `click @eN`;
-- выпадающий список: `select @eN "<value>"` или `select "<css>" "<value>"` — командой
-  `select`, а НЕ через `find` (у `find` действия `select` нет);
-- кнопка: `find role button click --name "<текст>"` (у кнопки name из текста — работает);
-- кастомное/React-поле, куда обычный `fill` не «встаёт»: лестница
-  `fill` → `type` (реальные нажатия) → `eval` с dispatchEvent — детали в
+**3. Input by field type.** Match by role and name natively, without resolving to
+CSS by hand:
+- text: `find label "<Name>" fill "<value>"` (by label) or `fill @eN "<value>"`
+  (by a ref from the snapshot). Both paths were tested on a live browser. Do NOT use
+  `find role textbox --name "<Name>"` for text fields: an input takes its accessible
+  name from `<label>`/`aria-label`, and in practice this locator does not find it
+  ("Element not found"), even though the snapshot shows the field as
+  `textbox "<Name>"`; `find label` and `@eN` are the reliable ones;
+- checkbox: `find label "<Name>" check` / `check @eN` (idempotent); radio: `click @eN`;
+- drop-down: `select @eN "<value>"` or `select "<css>" "<value>"`, using the
+  `select` command and NOT `find` (`find` has no `select` action);
+- button: `find role button click --name "<text>"` (a button takes its name from its
+  text, so this works);
+- a custom/React field where a plain `fill` does not "stick": the ladder
+  `fill` → `type` (real key presses) → `eval` with dispatchEvent; details in
   `references/failure-modes.md`.
 
-**4. Read-back verify — перечитай из живого DOM.** Успех `fill` доказательством НЕ
-считается. Пере-`snapshot -i` (освежает рефы `@eN`) и прочитай значение:
-- нативный `input`/`textarea`/`select`: `get value @eN` — живое DOM-значение;
-- React/кастом/contenteditable, где `.value` пуст или лжёт: **обязательно** `eval`
-  (напр. `eval 'document.querySelector(...)?.value'` или чтение `.textContent`/
-  `aria-checked`). Пере-snapshot как ЕДИНСТВЕННЫЙ источник = ложно-зелёный;
-  eval-fallback для кастомных полей обязателен.
+**4. Read-back verify: re-read from the live DOM.** A successful `fill` is NOT
+proof. Re-run `snapshot -i` (which refreshes the `@eN` refs) and read the value:
+- native `input`/`textarea`/`select`: `get value @eN`, the live DOM value;
+- React/custom/contenteditable, where `.value` is empty or lies: `eval` is
+  **mandatory** (for example `eval 'document.querySelector(...)?.value'`, or reading
+  `.textContent`/`aria-checked`). A re-snapshot as the ONLY source is a false green;
+  the eval fallback for custom fields is mandatory.
 
-Значение не совпало с задуманным — почини лестницей ввода из шага 3 и перечитай;
-не двигайся к следующему полю с неподтверждённым.
+If the value does not match what was intended, fix it with the input ladder from
+step 3 and read it again; do not move on to the next field with an unconfirmed one.
 
-**5. Многошаговые формы — чекпоинт после каждого шага.** После каждой страницы/шага
-зафиксируй, что заполнено. Переход к следующему шагу жди через `wait`. Сбой —
-ретрай **с последнего чекпоинта**, а не с нуля.
+**5. Multi-step forms: a checkpoint after every step.** After every page or step,
+record what has been filled. Wait for the next step with `wait`. On failure, retry
+**from the last checkpoint**, not from scratch.
 
-**6. human-gate ПЕРЕД submit (обязательно).** Собери сводку значений всех полей
-(поле → что вписано, из read-back шага 4) плюс `screenshot`, покажи человеку и
-**СТОП**. Отправляй только после явного «да». Молчание, «наверное», «ок кажется» —
-не «да»; переспроси. CAPTCHA на этом шаге → стоп человеку (`references/failure-modes.md`).
+**6. Human gate BEFORE submit (mandatory).** Collect a summary of the values of all
+fields (field → what was entered, taken from the read-back of step 4) plus a
+`screenshot`, show it to the human and **STOP**. Submit only after an explicit
+"yes". Silence, "probably", "ok I think" are not a "yes"; ask again. A CAPTCHA at
+this step → stop and hand over to the human (`references/failure-modes.md`).
 
-**7. Submit + лог отправки (идемпотентность).** После «да» — один клик по кнопке
-отправки (`find role button --name "<Отправить>" click`). Сразу запиши в лог факт
-отправки (url формы, время, отправленные значения). Подтверждение приёма проверь
-через `get url` или `wait --text "<текст-благодарности>"`. При любом ретрае **не
-кликай submit повторно вслепую** — сверься с логом; повторять только если лог и
-страница однозначно показывают, что отправка не прошла.
+**7. Submit + submission log (idempotency).** After the "yes", click the submit
+button once (`find role button --name "<Submit>" click`). Immediately write the fact
+of submission to the log (form URL, time, submitted values). Check the confirmation
+of receipt with `get url` or `wait --text "<thank-you text>"`. On any retry, **do
+not click submit again blindly**; check the log, and repeat only if the log and the
+page both show unambiguously that the submission did not go through.
 
-## Режимы отказа
+## Failure modes
 
-agent-browser из коробки их не чинит — обработку описывает
-`references/failure-modes.md`: протухший `@eN`; React onChange не триггерится
-обычным `fill`; совпадающие accessible-names; read-back ложно-зелёный; CAPTCHA и
-антибот на submit → стоп человеку. **Fallback при поломке в зале:** ручной режим —
-человек заполняет сам, агент подсказывает поле за полем (роль + имя + что вписать),
-плюс отсылка к памятке диагностики дня 2.
+agent-browser does not fix these out of the box; their handling is described in
+`references/failure-modes.md`: a stale `@eN`; React onChange not triggered by a plain
+`fill`; duplicate accessible names; a false-green read-back; CAPTCHA and anti-bot on
+submit → stop and hand over to the human. **Fallback when things break live:**
+manual mode, in which the human fills the form themselves and the agent prompts
+field by field (role + name + what to enter), plus the diagnostic checks for the
+CDP session.
 
-## Границы честно
+## Honest limits
 
-- Произвольная вузовская ПУД или силабус поле-в-поле из аргументативной записки
-  автоматически НЕ маппится — это ограничение, не баг (Приложение Б,
+- An arbitrary university course syllabus does NOT map field-to-field from an
+  argumentative memo automatically; this is a limitation, not a bug (Appendix B,
   `references/mapping-contract.md`).
-- Реальный профиль Chrome Beta снимает часть identity-сигналов, но CDP оставляет
-  detectable-следы (`Runtime.enable`, `cdc_`); Cloudflare/DataDome их видят. Не
-  патчить, останавливаться (`references/real-browser-substrate.md`).
+- A real Chrome profile removes some identity signals, but CDP leaves detectable
+  traces (`Runtime.enable`, `cdc_`); Cloudflare and DataDome see them. Do not patch,
+  stop (`references/cdp-session-substrate.md`).
 
-## Отвечай по-русски
+## Reply in the language of the user's request
 
-Сводки, вопросы человеку и пояснения — на русском. Значения в поля вписывай ровно
-как во входе (имена, номера, ссылки — как есть).
+Write summaries, questions to the human and explanations in the language of the
+user's request. Enter values into the fields exactly as they appear in the input
+(names, numbers, links as they are).

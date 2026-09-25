@@ -1,0 +1,99 @@
+# Self-test of the guard hooks and the OpenCode bridge on Linux and macOS.
+# The ubuntu-latest runner's awk is GNU awk and macOS ships BSD awk; the ubuntu
+# leg also re-runs the suite under mawk, so all three awks test the POSIX awk
+# program inside hooks/bash-guard.sh.
+name: selftest
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  selftest:
+    name: selftest (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Ensure jq
+        shell: bash
+        run: |
+          if ! command -v jq >/dev/null 2>&1; then
+            if [ "$RUNNER_OS" = "Linux" ]; then
+              sudo apt-get update
+              sudo apt-get install -y jq
+            else
+              echo "jq is missing on $RUNNER_OS" >&2
+              exit 1
+            fi
+          fi
+          command -v jq
+          jq --version
+
+      - name: Show the awk flavour
+        shell: bash
+        run: |
+          command -v awk || true
+          awk --version 2>/dev/null || awk -W version 2>/dev/null || true
+
+      # The self-test sets a local git identity in each throwaway repo it
+      # commits to, so the runner needs no global one.
+      - name: Hooks self-test
+        shell: bash
+        run: bash hooks/hooks-selftest.sh
+
+      - name: OpenCode guard bridge test
+        shell: bash
+        run: node hooks/opencode-guard-bridge.test.mjs
+
+      # The runner's own awk is GNU awk, so mawk goes into a shim dir put first
+      # on PATH and both tests run again against it.
+      - name: Re-run the tests under mawk
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        env:
+          SHIM: ${{ runner.temp }}/mawk-shim
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y mawk
+          mkdir -p "$SHIM"
+          ln -sf "$(command -v mawk)" "$SHIM/awk"
+          export PATH="$SHIM:$PATH"
+          command -v awk
+          awk -W version
+          bash hooks/hooks-selftest.sh
+          node hooks/opencode-guard-bridge.test.mjs
+
+      # The sync script reads agents/ and writes .opencode/ relative to its
+      # working directory, so it runs inside a copy and never touches the checkout.
+      - name: Agents sync smoke test
+        shell: bash
+        env:
+          COPY: ${{ runner.temp }}/agents-sync-copy
+        run: |
+          set -euo pipefail
+          mkdir -p "$COPY"
+          cp -R "$GITHUB_WORKSPACE/." "$COPY/"
+          cd "$COPY"
+          python3 hooks/opencode-agents-sync.py --apply
+          count=$(find .opencode/agent -type f | wc -l | tr -d ' ')
+          echo "generated agent files: $count"
+          if [ "$count" -ne 21 ]; then
+            echo "expected exactly 21 files in .opencode/agent, found $count" >&2
+            exit 1
+          fi

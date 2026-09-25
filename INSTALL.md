@@ -1,174 +1,213 @@
-# Установка обвязки — инструкция для агента
+# Installing the harness: instructions for the agent
 
-> **Для человека (прочти эти три строки и всё).**
-> Что это и зачем — в `README.md` рядом; этот файл — инструкция по установке.
-> Открой своего агента (Claude Code, OpenCode или Codex) прямо в этой папке и скажи ему:
-> **«прочитай INSTALL.md и настрой обвязку под мой инструмент»**. Дальше он всё сделает сам.
+> **For the human (read these lines and you are done).**
+> What this is and why is in `README.md` next to this file; this file is the installation guide.
+> Install jq first (brew install jq / apt install jq): the guards need it.
+> Open your agent (Claude Code, OpenCode or Codex) right in this folder and tell it:
+> **"read INSTALL.md and set up the harness for my tool"**. It does the rest itself.
 
 ---
 
-## Дальше — инструкция для агента
+## From here on: instructions for the agent
 
-Ты — кодинговый агент (Claude Code, OpenCode или Codex). Тебя открыли в этой папке
-и попросили «настроить обвязку». Обвязка — это три вещи: **правила** (как себя вести),
-**навыки** (готовые процедуры под частые задачи) и **память** (факты, переживающие сессии).
-Твоя работа — разложить их так, чтобы именно твой инструмент их подхватил, а потом
-по-человечески объяснить пользователю, что получилось.
+You are a coding agent (Claude Code, OpenCode or Codex). You were opened in this folder and asked to "set up the harness". The harness is four things plus a safety layer: **rules** (how to behave), **skills** (ready-made procedures for frequent tasks), **agent roles** (subagents you can delegate to), **memory** (facts that survive sessions) and **guards** (hooks that block the most dangerous actions). Your job is to put them where your tool picks them up, and then explain to the user in plain words what you did.
 
-Работай маленькими шагами. Перед тем как что-то писать или копировать — покажи пользователю
-план в одну-две строки. Ничего за пределами этой папки не трогай без спроса.
+Work in small steps. Before you write or copy anything, show the user a one- or two-line plan. Do not touch anything outside this folder without asking.
 
-### Шаг 0. Осмотрись — что уже лежит в стартере
+**At a glance.** The commands per tool, explained step by step below:
+
+| Step | Claude Code | OpenCode | Codex |
+|---|---|---|---|
+| skills | `mkdir -p .claude/skills && cp -R skills/. .claude/skills/` (academic overlay: `cp -R tracks/academic/skills/. .claude/skills/`) | reuses `.claude/skills/` or `.agents/skills/`; alone: `mkdir -p .opencode/skills && cp -R skills/. .opencode/skills/` | `mkdir -p .agents/skills && cp -R skills/. .agents/skills/` |
+| agent roles | `mkdir -p .claude/agents && cp agents/*.md .claude/agents/` | `python3 hooks/opencode-agents-sync.py --apply` | read `agents/<role>.md` as a persona file |
+| guards | ship in `.claude/settings.json`; prove with `bash hooks/hooks-selftest.sh` | `mkdir -p .opencode/plugins && cp hooks/opencode-guard-bridge.js .opencode/plugins/`; prove with `node hooks/opencode-guard-bridge.test.mjs` | this starter does not wire Codex hooks yet; the rules apply as AGENTS.md prose |
+
+### Step 0. Look around: what the starter already contains
 
 ```
-harness-starter/       ← корень репозитория
-├── README.md          ← лендинг для человека: что это и зачем
-├── INSTALL.md         ← этот файл (инструкция по установке)
-├── AGENTS.md          ← свод правил. ИСТОЧНИК ИСТИНЫ, его читают все три инструмента
-├── CLAUDE.md          ← тонкая обёртка правил для Claude Code (ссылается на AGENTS.md)
-├── hello.md           ← первое задание, чтобы проверить, что всё подключилось
-├── runbooks.md        ← рецепты частых операций (браузер, откат правки, свой навык)
+harness-starter/       ← repository root
+├── README.md          ← landing page for the human: what this is and why
+├── INSTALL.md         ← this file (installation guide)
+├── AGENTS.md          ← the rule set. SOURCE OF TRUTH, read by all three tools
+├── CLAUDE.md          ← thin wrapper of the rules for Claude Code (points to AGENTS.md)
+├── hello.md           ← first exercise, to check that everything is connected
+├── runbooks.md        ← recipes for frequent operations (browser, rollback, your own skill)
+├── contexts/          ← rules read on demand (git workflow, guards, orchestration, writing…)
+├── agents/            ← 21 agent roles, one Markdown file each
+├── hooks/             ← guards, their self-test, the OpenCode bridge and agents sync
+├── .claude/
+│   └── settings.json  ← Claude Code wiring of the guards
 ├── memory/
-│   └── MEMORY.md      ← индекс памяти проекта + пример записи
-├── materials/         ← сюда пользователь кладёт свои PDF и исходники
-├── skills/            ← готовые навыки, каталог на каждый: skills/<имя>/SKILL.md
+│   ├── MEMORY.md      ← project memory index plus a short tutorial
+│   └── feedback_example.md ← an example memory note
+├── materials/         ← the user puts their PDFs and sources here
+├── skills/            ← ready-made skills, one folder each: skills/<name>/SKILL.md
 ├── tracks/
-│   └── academic/      ← академический оверлей, ставится поверх базы (его README)
-├── LICENSE            ← лицензия репозитория (MIT для оригинальных частей)
-└── CREDITS.md         ← атрибуция: сторонние навыки и их лицензии
+│   └── academic/      ← academic overlay, installed on top of the base (see its README)
+├── LICENSE            ← repository licence (MIT for the original parts)
+└── CREDITS.md         ← attribution: third-party skills and roles and their licences
 ```
 
-Если какого-то файла из списка нет — не выдумывай его, просто скажи пользователю,
-чего не хватает, и продолжай с тем, что есть.
+If a file from this list is missing, do not invent it; tell the user what is missing and carry on with what is there.
 
-### Шаг 1. Определи свой инструмент
+**Check jq.** Run `jq --version`. jq is required: the guards that parse JSON (`bash-guard.sh`, `file-guard.sh`, `read-guard.sh`, `skip-ci-guard.sh`) start with a jq check and, without jq, block every call they see with "guard inactive: install jq"; a jq that fails blocks the call too. If jq is missing, ask the user to install it (brew install jq / apt install jq) before you go on. Only `pasted-key-guard.sh` works without jq.
 
-Пойми, в каком из трёх инструментов ты запущен — это видно из твоего окружения и системного
-промпта: **Claude Code**, **OpenCode** или **Codex**. От этого зависит и _куда_ класть файл
-правил, и _как_ инструмент находит навыки — у всех трёх это устроено по-своему, поэтому
-дальше в шагах 2 и 3 бери ветку под свой инструмент. По содержанию правила и навыки
-одинаковые для всех — различается только раскладка файлов.
+### Step 1. Work out your tool
 
-### Шаг 2. Установи правила
+Work out which of the three tools you are running in; your environment and system prompt make it clear: **Claude Code**, **OpenCode** or **Codex**. It decides _where_ the rules file goes and _how_ the tool finds skills, roles and guards. The three tools do this differently, so in steps 2 to 4 take the branch for your tool. The content of the rules and skills is the same for all; only the file layout differs.
 
-`AGENTS.md` в корне — единый свод правил и **источник истины**. Он остаётся на месте как есть;
-не дублируй его содержимое в другие файлы — пусть каждый инструмент читает его своим способом.
+### Step 2. Install the rules
 
-- **Claude Code** — сам `AGENTS.md` не читает. Ему нужен `CLAUDE.md`, который подключает
-  правила строкой `@AGENTS.md`. В стартере такой `CLAUDE.md` уже лежит в корне — проверь, что
-  он на месте и содержит `@AGENTS.md`. Если файла нет — создай его с одной строкой `@AGENTS.md`
-  (можно положить и в `.claude/CLAUDE.md` — это тот же «проектный» уровень).
-  - Личные правки только для себя, которые не коммитишь, — в `CLAUDE.local.md` в корне
-    (добавь его в `.gitignore`). Правила сразу для всех твоих проектов — в `~/.claude/CLAUDE.md`.
-  - Проверить, что реально загрузилось в сессию, можно командой `/memory`.
-- **OpenCode** — читает `AGENTS.md` из корня проекта **нативно** (и ищет его вверх по дереву
-  каталогов). Ничего дополнительно делать не нужно. `CLAUDE.md` OpenCode берёт лишь как запасной
-  вариант, когда `AGENTS.md` нет; раз `AGENTS.md` на месте — `CLAUDE.md` просто не читается,
-  оставь его для Claude Code. Правила для всех проектов — в `~/.config/opencode/AGENTS.md`.
-- **Codex** — читает `AGENTS.md` **нативно** (идёт от корня git-репозитория вниз до рабочей
-  папки). `CLAUDE.md` он не читает вообще — не рассчитывай на него. Отдельных действий не требуется.
-  - Правила для всех проектов — в `~/.codex/AGENTS.md`.
-  - У Codex есть лимит на размер правил (~32 КБ по умолчанию). Наш `AGENTS.md` сильно меньше, так
-    что беспокоиться не о чем; если он когда-нибудь разрастётся — подними `project_doc_max_bytes`
-    в `~/.codex/config.toml`.
+`AGENTS.md` at the root is the single rule set and the **source of truth**. It stays where it is; do not copy its content into other files, let each tool read it in its own way.
 
-### Шаг 3. Подключи навыки
+- **Claude Code** does not read `AGENTS.md` by itself. It needs a `CLAUDE.md` that pulls the rules in with the line `@AGENTS.md`. The starter already has such a `CLAUDE.md` at the root; check that it is there and contains `@AGENTS.md`. If the file is missing, create it with the single line `@AGENTS.md` (it may also live in `.claude/CLAUDE.md`, which is the same project level).
+  - Personal tweaks just for you that you do not commit go into `CLAUDE.local.md` at the root (it is already in `.gitignore`). Rules for all your projects go into `~/.claude/CLAUDE.md`.
+  - The `/memory` command shows what was actually loaded into the session.
+- **OpenCode** reads `AGENTS.md` from the project root **natively** (and looks for it up the directory tree). Nothing else is needed. OpenCode uses `CLAUDE.md` only as a fallback when there is no `AGENTS.md`; since `AGENTS.md` is present, `CLAUDE.md` is simply not read, so leave it for Claude Code. Rules for all projects go into `~/.config/opencode/AGENTS.md`.
+- **Codex** reads `AGENTS.md` **natively** (from the root of the git repository down to the working folder). It does not read `CLAUDE.md` at all, so do not count on it. No action is needed.
+  - Rules for all projects go into `~/.codex/AGENTS.md`.
+  - Codex caps the size of its rules (about 32 KB by default). Our `AGENTS.md` is well below that; if it ever grows past it, raise `project_doc_max_bytes` in `~/.codex/config.toml`.
 
-Навыки лежат в `skills/<имя>/SKILL.md`. У каждого во фронтматтере есть `name` (совпадает
-с именем папки — строчные буквы и дефисы) и `description` (по нему инструмент понимает, когда
-навык применить). У части навыков рядом лежит папка `references/` — это их справочные
-материалы, часть навыка; не трогай и не выкидывай их.
+### Step 3. Connect the skills
 
-Хорошая новость: у всех трёх инструментов навыки — **нативный механизм**, «читать `SKILL.md`
-вручную» не нужно. Различается только папка, куда их класть, и способ вызова.
+The skills live in `skills/<name>/SKILL.md`. Each has `name` in its frontmatter (the same as the folder name: lower case and hyphens) and `description` (the tool uses it to decide when to apply the skill). Some skills have a `references/`, `scripts/` or `agents/` folder next to `SKILL.md`; that is part of the skill, so do not touch or drop it. `skills/shared/` is not a skill but a helper file that the git skills read; copy it along with the rest.
 
-- **Claude Code** — копируем навыки туда, где инструмент находит их сам:
+Good news: all three tools support skills **natively**, so there is no need to "read `SKILL.md` by hand". Only the folder and the way of calling differ.
+
+- **Claude Code**: copy the skills to where the tool finds them:
   ```
-  mkdir -p .claude/skills
-  cp -R skills/. .claude/skills/
+  mkdir -p .claude/skills && cp -R skills/. .claude/skills/
   ```
-  После этого навыки вызываются по имени (`/ru-text`, `/review` и т.д.) и подхватываются
-  автоматически по `description`.
-  - Нюанс: если папки `.claude/skills/` не было на момент запуска сессии, Claude Code заметит
-    её только после перезапуска. Скопировал, а навыки не видны в `/` — перезапусти инструмент.
-    (Правки в уже существующей папке подхватываются на лету.)
-- **OpenCode** — тоже нативные навыки, и с раскладкой ему проще всех: OpenCode дополнительно
-  читает совместимые пути **`.claude/skills/` и `.agents/skills/`**. То есть какую бы копию ты
-  ни сделал для Claude Code (`.claude/skills/`) или для Codex (`.agents/skills/`, см. ниже) —
-  OpenCode переиспользует её оттуда, отдельная копия не нужна. Если OpenCode у тебя единственный
-  инструмент — положи навыки в его родной путь:
+  For the academic overlay, add `cp -R tracks/academic/skills/. .claude/skills/` afterwards (details in the track's README).
+  After this, skills are called by name (`/ru-text`, `/review` and so on) and are picked up automatically by `description`.
+  - Caveat: if `.claude/skills/` did not exist when the session started, Claude Code only notices it after a restart. If you copied the skills and they do not show up under `/`, restart the tool. (Edits inside an existing folder are picked up on the fly.)
+- **OpenCode**: native skills too, and the layout is easiest here: OpenCode also reads the compatible paths **`.claude/skills/` and `.agents/skills/`**. Whatever copy you made for Claude Code (`.claude/skills/`) or for Codex (`.agents/skills/`, see below), OpenCode reuses it from there, and it needs no copy of its own. If OpenCode is your only tool, put the skills in its own path:
   ```
-  mkdir -p .opencode/skills
-  cp -R skills/. .opencode/skills/
+  mkdir -p .opencode/skills && cp -R skills/. .opencode/skills/
   ```
-  - Как вызываются: OpenCode показывает агенту список навыков с их `description` через встроенный
-    инструмент `skill` и сам вызывает подходящий по описанию — навык триггерится по задаче, а не
-    через `/` (слэш-команды `/имя` в OpenCode — это отдельный механизм Commands, не навыки).
-  - `name` и `description` во фронтматтере обязательны — у наших навыков они уже проставлены.
-- **Codex** — нативные навыки, но путь **другой**: Codex ищет их в `.agents/skills/`
-  (не `.claude/skills` и не `.codex/skills`). Скопируй на уровень репозитория:
+  - How they are called: OpenCode shows the agent the list of skills with their `description` through the built-in `skill` tool and calls the matching one by description; a skill triggers by task, not through `/` (slash commands `/name` in OpenCode are a separate mechanism, Commands, not skills).
+  - `name` and `description` in the frontmatter are mandatory; our skills already have them.
+- **Codex**: native skills, but a **different** path: Codex looks for them in `.agents/skills/` (not `.claude/skills` and not `.codex/skills`). Copy them at repository level:
   ```
-  mkdir -p .agents/skills
-  cp -R skills/. .agents/skills/
+  mkdir -p .agents/skills && cp -R skills/. .agents/skills/
   ```
-  - Как вызываются: Codex сам подбирает навык по совпадению задачи с `description`, а посмотреть
-    список и выбрать вручную можно слэш-командой `/skills`.
-  - `name` и `description` во фронтматтере обязательны — они уже есть.
+  - How they are called: Codex picks a skill by matching the task against `description`, and the `/skills` slash command lists them for a manual choice.
+  - `name` and `description` in the frontmatter are mandatory; they are already there.
 
-**Если вдруг не подхватилось.** Версии инструментов разные, и на старой сборке автоподхват может
-не сработать. Тогда деградируй мягко: список навыков с триггерами есть в `AGENTS.md` и в таблице
-ниже — открой нужный `skills/<имя>/SKILL.md` и выполни его шаги руками. Это запасной путь,
-а не основной.
+For the academic overlay in OpenCode or Codex, copy `tracks/academic/skills/.` into the same skills folder you used above.
 
-### Шаг 4. Заведи память
+The overlay's rules addendum, `tracks/academic/AGENTS.academic.md`, is not copied to the repository root; it is imported in place. In Claude Code, add the line `@tracks/academic/AGENTS.academic.md` to `CLAUDE.md`. In OpenCode and Codex, add to `AGENTS.md` a line telling the agent to read `tracks/academic/AGENTS.academic.md` for academic work.
 
-Проверь, что есть `memory/MEMORY.md`. Это индекс фактов, которые должны переживать
-перезапуски: как собирается проект, где что лежит, какие решения уже приняты. Пока не
-дописывай туда ничего — первую запись сделаешь после `hello.md`. Формат записи — внутри файла.
+**User-invoked skills.** Some skills carry `disable-model-invocation: true` in their frontmatter, marked "user-invoked" in the table below. Only Claude Code honours that flag and runs such a skill solely when the user calls it. OpenCode and Codex ignore it and may still start the skill on their own; tell the user so, and in those tools run a user-invoked skill only on an explicit request.
 
-### Шаг 5. Объясни человеку, что получилось
+**If nothing gets picked up.** Tool versions differ, and an old build may not pick skills up automatically. Then degrade gracefully: the list of skills with their triggers is in the table below; open the needed `skills/<name>/SKILL.md` and follow its steps by hand. That is the fallback, not the main path.
 
-Коротко и без жаргона скажи пользователю примерно следующее (своими словами):
-- какой у него инструмент ты определил;
-- что правила теперь в `AGENTS.md` (и, для Claude Code, подключены через `CLAUDE.md`);
-- что доступно N навыков — перечисли 3–4 самых полезных для него;
-- что появилась память в `memory/MEMORY.md`;
-- одной фразой: **«теперь ты в обвязке»** — агент знает правила, умеет навыки, помнит факты.
+### Step 4. Connect the agent roles and the guards
 
-### Шаг 6. Предложи прогнать hello.md
+The role files in `agents/` describe focused subagents (a reader, a reviewer, an editor, a research analyst, engineering specialists). Their `tools:` and `model:` frontmatter fields are Claude Code mechanics and can be ignored elsewhere. The guards in `hooks/` block edits to secret and protected files (`.env*`, `.git/`, `secrets/`, credential and token files), destructive git commands, recursive forced deletes, a commit that skips CI while it touches code, and API keys pasted into a prompt. In Claude Code, and through the bridge in OpenCode, they also stop the Read and Grep tools from opening `.env*` files (except `.env.example` and `.env.sample`) or the Claude credential store; the Bash guard refuses any shell command that names the credential store, but a shell read such as `cat .env` is not guarded. The Bash guard reads the words of a command as written: it does not expand command substitution or aliases, so a command such as `$(which rm)` goes past it.
 
-Спроси, запустить ли первое задание из `hello.md`, — оно за минуту проверяет,
-что правила и навыки реально подключились.
+Three refinements matter in daily work. A heredoc body counts as data only when it feeds an allowlisted sink: `git commit` or `git tag` reading the message with `-F -`, or `cat` inside a quoted `"$( )"` message argument of `git` or `gh`. So a commit message that describes a dangerous command gets past the per-word pass, while any other heredoc body is scanned as commands; the checks for `--no-verify`, `sudo` and the credential store still read every word. `git reset --help`, spelled out exactly, is allowed. The read guard splits a Grep glob list the way Claude Code does, on whitespace and then on commas, checks every part, and refuses a part that starts with `!`; it also refuses a Grep with no glob whose root is the home directory or a parent of it, because Claude Code's Grep always searches hidden files and would reach the credential store.
+
+- **Claude Code**
+  - Agent roles:
+    ```
+    mkdir -p .claude/agents && cp agents/*.md .claude/agents/
+    ```
+  - Guards: they ship in `.claude/settings.json`, which wires every hook as `bash "$CLAUDE_PROJECT_DIR/hooks/<name>.sh"` and denies edits to `.env` files and `.ssh/`. Nothing to copy. Prove they work:
+    ```
+    bash hooks/hooks-selftest.sh
+    ```
+  - Known gap, tell the user: Claude Code blocks a call only when a guard exits with code 2. A guard that times out, is killed or exits with any other code is treated as non-blocking, so a hung guard fails open in Claude Code.
+- **OpenCode**
+  - Agent roles: sync them into `.opencode/agent/` of this project (the script never touches your home folder):
+    ```
+    python3 hooks/opencode-agents-sync.py --apply
+    ```
+  - Guards: install the bridge plugin, which runs the same guard scripts, wired in `.claude/settings.json` (and `.claude/settings.local.json` if present), before OpenCode's bash, edit, write, read and grep tools and before `multiedit`, `patch` and `apply_patch`, checking every path a patch names. For bash and the editing tools it fails closed: no guard wired, a guard that cannot start (exit 126 or 127), or one that does not finish (killed by a signal, an exit status of 128 or more, or still running after 60 seconds) refuses the call; for read and grep the same problems are logged and the call proceeds:
+    ```
+    mkdir -p .opencode/plugins && cp hooks/opencode-guard-bridge.js .opencode/plugins/
+    ```
+    Prove it works:
+    ```
+    node hooks/opencode-guard-bridge.test.mjs
+    ```
+  - Known gaps, tell the user: OpenCode has no pasted-key guard, because the bridge only sees tool calls and never the prompt, so a key pasted into the chat is not caught. OpenCode also does not apply the `permissions.deny` list of `.claude/settings.json`; keep secrets out of the project folder.
+- **Codex**
+  - Agent roles: Codex has no subagent files; when a task calls for a role, read `agents/<role>.md` as a persona file and follow it.
+  - Guards: this starter does not wire Codex hooks yet; the rules apply as AGENTS.md prose. Tell the user that in Codex nothing mechanically stops a destructive command, so the approval prompts of Codex itself are the last line of defence.
+
+The details of every guard, its known limits, and what to do when one blocks you, are in `contexts/hooks-overview.md`. CI runs the same tests: `.github/workflows/selftest.yml` runs the hooks self-test, the bridge test and an agents-sync smoke run on every pull request, so if you change a guard, run `bash hooks/hooks-selftest.sh` before you open one.
+
+### Step 5. Set up memory
+
+Check that `memory/MEMORY.md` exists. It is the index of facts that should survive restarts: how the project is built, where things are, which decisions are already made, and the corrections the user gave. Do not add anything yet; you will write the first note after `hello.md`. The note format and an example note (`memory/feedback_example.md`) are linked from the index.
+
+### Step 6. Explain to the human what you did
+
+Briefly and without jargon, tell the user roughly the following (in your own words):
+- which tool you detected;
+- that the rules now live in `AGENTS.md` (and, for Claude Code, are connected through `CLAUDE.md`);
+- that N skills are available, naming the three or four most useful for them, and which ones are user-invoked;
+- which agent roles and guards are connected, and the gaps of their tool (OpenCode: no pasted-key guard, and the `permissions.deny` list of `.claude/settings.json` is not applied; Codex: this starter does not wire Codex hooks yet, so the rules apply as AGENTS.md prose);
+- that memory is set up in `memory/MEMORY.md`;
+- in one sentence: **"you are now inside the harness"**: the agent knows the rules, has the skills, delegates to roles and remembers facts.
+
+### Step 7. Offer to run hello.md
+
+Ask whether to run the first exercise from `hello.md`; in a minute it checks that the rules and skills are really connected.
 
 ---
 
-## Навыки в стартере
+## Skills in the starter
 
-| Навык | Для чего | Как вызвать |
+"User-invoked" means the skill runs only when the user calls it, and only Claude Code honours that; OpenCode and Codex may still start it on their own.
+
+| Skill | What for | How to call |
 |---|---|---|
-| `ru-text` | Проверка и правка русского текста: типографика, инфостиль, редактура | по запросу «проверь текст» / `/ru-text` |
-| `explain` | Структурное объяснение кода, функции или концепции | «объясни этот код» / `/explain` |
-| `review` | Ревью кода: качество, корректность, безопасность | «сделай ревью» / `/review` |
-| `diagnose` | Дисциплинированная отладка трудных багов и регрессий | «продиагностируй баг» / `/diagnose` |
-| `test` | Генерация pytest-тестов для Python-кода | «напиши тесты» / `/test` |
-| `tdd` | Разработка через тесты (Red-Green-Refactor) | «сделаем через TDD» / `/tdd` |
-| `skill-creator` | Создание и улучшение собственных навыков | «создай навык …» / `/skill-creator` |
-| `writing-guru` | Выбор нарративной стратегии перед письмом | «подбери нарратив» / `/writing-guru` |
-| `style-extract` | Извлечение профиля авторского стиля из образцов текста | «извлеки стиль из этих текстов» / `/style-extract` |
-| `lit-search` | Систематический поиск литературы и источников | «найди литературу по …» / `/lit-search` |
-| `pdf-digest` | Извлечение и структурирование содержимого PDF (из `materials/`) | «сделай дайджест этого PDF» / `/pdf-digest` |
-| `cite` | Оформление ссылок и цитат | «оформи ссылки» / `/cite` |
-| `handoff` | Компактная передача работы следующей сессии: цель, состояние, открытые вопросы, следующий шаг | «сделай handoff» / `/handoff` |
+| `canvas-design` | Posters, art and other static visual pieces in .png or .pdf, from a design philosophy | "design a poster about…" / `/canvas-design` |
+| `claude-automation-recommender` | Recommends Claude Code automations (hooks, subagents, skills, MCP servers) for a codebase; user-invoked | `/claude-automation-recommender` |
+| `code-documenter` | Docstrings, OpenAPI specs, JSDoc and user guides | "document this module" / `/code-documenter` |
+| `diagnose` | Disciplined debugging of hard bugs and performance regressions | "diagnose this bug" / `/diagnose` |
+| `digest` | A source-anchored digest of a paper (PDF, docx, md, txt) with a reference entry | "make a digest of this PDF" / `/digest` |
+| `doc-coauthoring` | A structured workflow for co-writing documentation, proposals and specs | "let's write a design doc" / `/doc-coauthoring` |
+| `explain` | A structured explanation of code, a function or a concept | "explain this code" / `/explain` |
+| `fill-form` | Fills a web form from a memo or structured data, with read-back checks and a human gate before submitting; needs the agent-browser CLI and a Chrome started with `--remote-debugging-port=9222` | "fill in this form" / `/fill-form` |
+| `find-skills` | Finds and installs published agent skills | "is there a skill for…" / `/find-skills` |
+| `git-clean-gone` | Deletes local branches whose upstream is gone, and their worktrees | "clean up gone branches" / `/git-clean-gone` |
+| `git-finalize` | Commit, push, create or reuse a pull request, one CI check, stop before merge | "finalize this branch" / `/git-finalize` |
+| `git-worktree-status` | A read-only survey of worktrees and branches with a CI column | "show worktree status" / `/git-worktree-status` |
+| `grill-me` | An interview about a plan or design until you share an understanding | "grill me on this plan" / `/grill-me` |
+| `grill-with-docs` | The same grilling, checked against CONTEXT.md and ADRs, updating them inline | "grill this against the docs" / `/grill-with-docs` |
+| `handoff` | A compact handoff document so the next session can pick up the work; user-invoked | `/handoff` |
+| `improve-codebase-architecture` | Finds deepening and refactoring opportunities in a codebase | "how could this architecture improve" / `/improve-codebase-architecture` |
+| `init-architecture` | A wizard that writes a first CLAUDE.md, ADR-001 and path-scoped rules for a new project; user-invoked | `/init-architecture` |
+| `lit-search` | Systematic literature search and a short review with verifiable quotes | "find literature on…" / `/lit-search` |
+| `mck-summary` | A pyramid executive summary of finished material; user-invoked | `/mck-summary` |
+| `mckinsey` | Issue trees, market sizing and push-back on hypotheses in the Big-3 manner | "structure this problem" / `/mckinsey` |
+| `pickup` | Resumes work from the latest (or a named) handoff document; user-invoked | `/pickup` |
+| `retro` | A retrospective of a session that proposes cheap durable fixes; experimental, user-invoked | `/retro` |
+| `review` | Two-axis review of a branch or diff: standards and spec; user-invoked | `/review` |
+| `ru-text` | Checks and edits Russian text: typography, info-style, editing (in Russian) | "check this Russian text" / `/ru-text` |
+| `safe-reader` | A read-only mode for exploring code without changing it | "explore this safely" / `/safe-reader` |
+| `skill-creator` | Creates, improves and evaluates your own skills | "create a skill that…" / `/skill-creator` |
+| `style-extract` | Extracts an author's style profile from text samples into `memory/style-profiles/` | "extract the style of these texts" / `/style-extract` |
+| `tdd` | Spec-driven Red-Green-Refactor with pytest | "let's do this with TDD" / `/tdd` |
+| `test` | Generates pytest tests for a Python module or function | "write tests" / `/test` |
+| `to-questionnaire` | Turns open questions into a questionnaire for one recipient, in the recipient's language; user-invoked | `/to-questionnaire` |
+| `triage-issue` | Finds the root cause of a bug and files an issue with a TDD fix plan | "triage this bug" / `/triage-issue` |
+| `wayfinder` | Maps work too big for one session as decision tickets under `plans/wayfinder/`; user-invoked | `/wayfinder` |
+| `web-parse` | Structured capture from an already signed-in web session, with an ethics checklist | "collect the posts from this page" / `/web-parse` |
+| `wizard` | Writes an interactive bash wizard for steps only the user may perform, such as entering credentials; user-invoked | `/wizard` |
+| `write-from-digests` | Writes a memo only from finished digests, every claim anchored and verified | "write a memo from these digests" / `/write-from-digests` |
+| `writing-fragments` | Explores a piece of writing before it has a structure; experimental, user-invoked | `/writing-fragments` |
+| `writing-guru` | Chooses a narrative strategy before writing and checks tone along the way | "pick a narrative" / `/writing-guru` |
+| `zoom-out` | A broader, higher-level view of a section of code; user-invoked | `/zoom-out` |
 
-Каждый навык — это папка `skills/<имя>/` с файлом `SKILL.md` внутри. Открой любой `SKILL.md`,
-чтобы увидеть, что именно навык делает и по каким триггерам срабатывает.
+Every skill is a folder `skills/<name>/` with a `SKILL.md` inside. Open any `SKILL.md` to see what exactly the skill does and which triggers start it.
 
-## Куда дальше
+## Where next
 
-- `runbooks.md` — рецепты на частые операции (сходить браузером к ресурсу, безопасно
-  откатить правку, добавить свой навык).
-- `materials/` — складывай сюда свои PDF и файлы; навыки `pdf-digest`, `lit-search`, `cite`
-  берут материалы отсюда.
-- `tracks/academic/` — академический оверлей поверх базы: дисциплина источников,
-  крупные исследовательские навыки, MCP-серверы поиска статей и Zotero. Установка —
-  в его `README.md`.
+- `runbooks.md`: recipes for frequent operations (reading a web resource with a browser, rolling back an edit safely, adding your own skill).
+- `materials/`: put your PDFs and files here; `digest`, `lit-search` and `write-from-digests` take their material from this folder.
+- `contexts/`: the rules read on demand; `AGENTS.md` has a table of when to read which.
+- `tracks/academic/`: the academic overlay on top of the base: source discipline, large research skills, MCP servers for paper search and Zotero. Installation is in its `README.md`.

@@ -444,3 +444,7 @@ To ensure the verification process is reproducible:
 | Transparency | Audit Trail fully documented, available for third-party review |
 | Efficiency | Do existence batch checks first, then deep investigation on NOT_FOUND / MISMATCH items |
 | No overstepping | Do not make paper quality judgments, only factual verification |
+
+---
+
+**Output language:** the language of the paper under verification, with academic terminology kept in English. **Length cap:** at most 800 words outside the Verification Audit Trail, which carries one entry per reference checked. **Return shape:** the report template under `## Output Format` above.

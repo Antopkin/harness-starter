@@ -9,6 +9,12 @@ A discipline for hard bugs. Skip phases only when explicitly justified.
 
 When exploring the codebase, use the project's domain glossary to get a clear mental model of the relevant modules, and check ADRs in the area you're touching.
 
+## Redact
+
+This skill has you show commands, outputs and captured artifacts, so never paste a secret into any of them: write `<REDACTED>` in its place. Build loops that read credentials from environment variables, so the credential stays in the environment rather than in what you show. Captured artifacts and logs carry auth headers and tokens; quote only the signal lines of a log, the ones that carry the symptom.
+
+If the redacted output is not enough to diagnose the bug, say so and ask the user.
+
 ## Phase 1 — Build a feedback loop
 
 **This is the skill.** Everything else is mechanical. If you have a fast, deterministic, agent-runnable pass/fail signal for the bug, you will find the cause — bisection, hypothesis-testing, and instrumentation all just consume that signal. If you don't have one, no amount of staring at code will save you.
@@ -46,9 +52,18 @@ The goal is not a clean repro but a **higher reproduction rate**. Loop the trigg
 
 ### When you genuinely cannot build a loop
 
-Stop and say so explicitly. List what you tried. Ask the user for: (a) access to whatever environment reproduces it, (b) a captured artifact (HAR file, log dump, core dump, screen recording with timestamps), or (c) permission to add temporary production instrumentation. Do **not** proceed to hypothesise without a loop.
+Stop and say so explicitly. List what you tried. Ask the user for: (a) access to whatever environment reproduces it, (b) a redacted captured artifact (HAR file, log dump, core dump, screen recording with timestamps), or (c) permission to add temporary production instrumentation. Do **not** proceed to hypothesise without a loop.
 
-Do not proceed to Phase 2 until you have a loop you believe in.
+### Completion criterion: a tight loop that goes red
+
+Phase 1 ends only when one tight command has been run and goes red on the reported symptom. Name that one command (a script path, a test invocation, a curl), show its invocation and its redacted output, and check that it is:
+
+- [ ] **Red-capable**: it drives the actual bug code path and asserts the user's exact symptom, so it goes red on this bug and green once fixed. "Runs without erroring" does not count.
+- [ ] **Deterministic**: same verdict every run (flaky bugs: a pinned, high reproduction rate, as above).
+- [ ] **Fast**: seconds, not minutes.
+- [ ] **Agent-runnable**: you can run it unattended; a human in the loop only via `scripts/hitl-loop.template.sh`.
+
+Theorising before that is a stop signal. If you catch yourself reading code to build a theory before this command exists, stop: jumping straight to a hypothesis is the exact failure this skill prevents. No red command, no Phase 2.
 
 ## Phase 2 — Reproduce
 
@@ -60,7 +75,13 @@ Confirm:
 - [ ] The failure is reproducible across multiple runs (or, for non-deterministic bugs, reproducible at a high enough rate to debug against).
 - [ ] You have captured the exact symptom (error message, wrong output, slow timing) so later phases can verify the fix actually addresses it.
 
-Do not proceed until you reproduce the bug.
+### Minimise
+
+Once it is red, shrink the repro to the smallest scenario that still goes red. Remove one element at a time (an input, a caller, a config key, a data row, a step), re-running the loop after each cut, and keep only what the failure needs. A minimal repro shrinks the hypothesis space in Phase 3 and becomes the clean regression test in Phase 5.
+
+You are done when every remaining element is needed: removing any one of them turns the loop green.
+
+Do not proceed until you have reproduced **and** minimised.
 
 ## Phase 3 — Hypothesise
 
@@ -73,6 +94,8 @@ Each hypothesis must be **falsifiable**: state the prediction it makes.
 If you cannot state the prediction, the hypothesis is a vibe — discard or sharpen it.
 
 **Show the ranked list to the user before testing.** They often have domain knowledge that re-ranks instantly ("we just deployed a change to #3"), or know hypotheses they've already ruled out. Cheap checkpoint, big time saver. Don't block on it — proceed with your ranking if the user is AFK.
+
+**Output language:** the language of the user's request. **Length cap:** at most 250 words. **Return shape:** a ranked list of 3–5 entries, each naming the suspected cause and its falsifiable prediction in the format above.
 
 ## Phase 4 — Instrument
 
@@ -114,12 +137,16 @@ Required before declaring done:
 - [ ] Throwaway prototypes deleted (or moved to a clearly-marked debug location)
 - [ ] The hypothesis that turned out correct is stated in the commit / PR message — so the next debugger learns
 
-**Then ask: what would have prevented this bug?** If the answer involves architectural change (no good test seam, tangled callers, hidden coupling) capture it as a separate architectural-refactor task with the specifics — don't fold it into this fix. Make the recommendation **after** the fix is in, not before — you have more information now than when you started.
+**Then ask: what would have prevented this bug?** If the answer involves architectural change (no good test seam, tangled callers, hidden coupling) hand off to the `/improve-codebase-architecture` skill with the specifics. Make the recommendation **after** the fix is in, not before — you have more information now than when you started.
+
+**Output language:** the language of the user's request. **Length cap:** at most 200 words. **Return shape:** the checklist verdict, plus for the `/improve-codebase-architecture` handoff: confirmed root cause, missing or wrong test seam, the modules and callers involved, and the prevention proposed.
 
 ---
 
-## Related practices
+## Compatibility
 
-- **Test-driven development** — the Phase 5 regression test fits naturally with TDD discipline: one test = one behavior, exercised through the public interface, and it should survive refactoring.
-- **Architectural refactoring** — use the Phase 6 handoff when a bug reveals structural friction; record it as a separate refactor task rather than forcing it into the fix.
-- **Static error-handling audits** — a different scope: statically scanning for swallowed errors and bad fallbacks is complementary, but this skill needs a real failing signal first.
+- **`/tdd`** — Phase 5 regression test fits naturally with `/tdd` discipline (one test = one behavior, public interface, survives refactor).
+- **`/improve-codebase-architecture`** — Phase 6 handoff when bug reveals architectural friction.
+- **`silent-failure-hunter` agent** — different scope: that agent statically scans for swallowed errors / bad fallbacks. This skill needs a real failing signal first.
+
+Adapted from mattpocock/skills@c55ee46 engineering/diagnosing-bugs (MIT).

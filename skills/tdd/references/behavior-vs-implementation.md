@@ -1,13 +1,13 @@
 # Behavior vs Implementation Testing
 
-**Главный принцип:** тесты проверяют поведение через публичный интерфейс, а не детали реализации. Код может полностью измениться — тесты не должны.
+**Main principle:** tests check behavior through the public interface, not implementation details. The code may change entirely; the tests should not.
 
-## Хорошие тесты
+## Good tests
 
-**Integration-style:** тестируют через реальные интерфейсы, не через моки внутренних частей.
+**Integration-style:** they test through real interfaces, not through mocks of internal parts.
 
 ```python
-# GOOD: тестирует наблюдаемое поведение
+# GOOD: tests observable behavior
 def test_user_can_checkout_with_valid_cart():
     cart = create_cart()
     cart.add(product)
@@ -15,78 +15,78 @@ def test_user_can_checkout_with_valid_cart():
     assert result.status == "confirmed"
 ```
 
-Характеристики:
-- Проверяют поведение, важное пользователям/вызывающим
-- Используют только public API
-- Переживают внутренний рефакторинг
-- Описывают **ЧТО**, а не **КАК**
-- Одно логическое утверждение на тест
+Characteristics:
+- They check behavior that matters to users/callers
+- They use only the public API
+- They survive internal refactoring
+- They describe **WHAT**, not **HOW**
+- One logical assertion per test
 
-Имя теста читается как спецификация: `test_user_can_checkout_with_valid_cart` сразу говорит, какая возможность есть в системе.
+The test name reads like a specification: `test_user_can_checkout_with_valid_cart` tells you at once which capability the system has.
 
-## Плохие тесты
+## Bad tests
 
-**Implementation-detail tests:** связаны с внутренней структурой.
+**Implementation-detail tests:** tied to the internal structure.
 
 ```python
-# BAD: тестирует детали реализации
+# BAD: tests implementation details
 def test_checkout_calls_payment_service():
     mock_payment = Mock(spec=PaymentService)
     checkout(cart, payment)
     mock_payment.process.assert_called_with(cart.total)
 ```
 
-Красные флаги:
-- Мокают внутренних коллабораторов
-- Тестируют private методы
-- Утверждают на счётчики/порядок вызовов
-- Тест ломается при рефакторинге без изменения поведения
-- Имя теста описывает **КАК**, не **ЧТО**
-- Проверяют через внешние каналы вместо интерфейса
+Red flags:
+- They mock internal collaborators
+- They test private methods
+- They assert on call counts/order
+- The test breaks during refactoring without a behavior change
+- The test name describes **HOW**, not **WHAT**
+- They verify through external channels instead of the interface
 
 ```python
-# BAD: обходит интерфейс для верификации
+# BAD: bypasses the interface to verify
 def test_create_user_saves_to_database():
     create_user(name="Alice")
     row = db.execute("SELECT * FROM users WHERE name = ?", ("Alice",)).fetchone()
     assert row is not None
 
-# GOOD: верификация через интерфейс
+# GOOD: verifies through the interface
 def test_create_user_makes_user_retrievable():
     user = create_user(name="Alice")
     retrieved = get_user(user.id)
     assert retrieved.name == "Alice"
 ```
 
-Второй вариант переживёт миграцию с SQLite на Postgres, изменение схемы, ORM-слой. Первый — нет.
+The second version survives a migration from SQLite to Postgres, a schema change, an ORM layer. The first does not.
 
-## Тест должен пережить рефакторинг
+## A test must survive refactoring
 
-Простой checklist для проверки теста:
+A simple checklist for checking a test:
 
 ```
-[ ] Тест описывает поведение, не реализацию
-[ ] Тест использует только публичный интерфейс
-[ ] Тест переживёт внутренний рефакторинг (переименование, выделение helper'а)
-[ ] Имя теста описывает ЧТО, не КАК
-[ ] Один логический assertion
+[ ] The test describes behavior, not implementation
+[ ] The test uses only the public interface
+[ ] The test survives internal refactoring (a rename, extracting a helper)
+[ ] The test name describes WHAT, not HOW
+[ ] One logical assertion
 ```
 
-Если хотя бы один пункт нарушен — переписать тест.
+If even one item is violated, rewrite the test.
 
-## Когда мокать (и когда нет)
+## When to mock (and when not to)
 
-**Мокай только на системных границах:**
-- Внешние API (платежи, email, SMS)
-- Базы данных (иногда — лучше тестовая БД)
-- Время / случайность
-- Файловая система (иногда)
+**Mock only at system boundaries:**
+- External APIs (payments, email, SMS)
+- Databases (sometimes a test DB is better)
+- Time / randomness
+- The file system (sometimes)
 
-**НЕ мокай:**
-- Свои классы/модули
-- Внутренних коллабораторов
-- Что контролируешь сам
+**DON'T mock:**
+- Your own classes/modules
+- Internal collaborators
+- Anything you control yourself
 
-Если приходится мокать что-то своё, чтобы написать тест — это сигнал, что интерфейс плохо спроектирован. Перепроектируй, а не подмаскируй mock'ом.
+If you have to mock something of your own to write a test, that signals a badly designed interface. Redesign it rather than papering over it with a mock.
 
-Имя теста описывает ЧТО, но НЕ несёт прозу требования: ассерт + поведенческое имя, не дословный текст AC. Это держит изоляцию GREEN-контекста (`double-isolation.md`) — разработчик не может reverse-engineer спеку из теста.
+The test name describes WHAT but does NOT carry the requirement prose: an assertion plus a behavioral name, not the literal AC text. This keeps the GREEN context isolated (`double-isolation.md`): the developer cannot reverse-engineer the spec from the test.

@@ -1,14 +1,32 @@
-# Секреты и окружение — НИКОГДА не коммитить
+# Secrets and environment: NEVER commit
 .env
 .env.*
 *.env
 *credentials*
 *secret*
 *token*
+# Memory notes may carry those words in their names; the rule forbids secrets in them.
+!memory/*.md
 *.key
 *.pem
+# MCP configuration with your API keys (the template .mcp.json.example stays tracked)
+.mcp.json
 
-# Кеши инструментов и агентов
+# Personal, machine-local settings (Claude Code)
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Installed copies of skills and agent roles; the sources are skills/, agents/ and hooks/.
+# .claude/settings.json stays tracked: it wires the guards for Claude Code.
+.claude/skills/
+.claude/agents/
+.agents/
+.opencode/
+
+# Plans and wayfinder maps: remove to version your plans and maps
+plans/
+
+# Tool and agent caches
 .ruff_cache/
 .mypy_cache/
 .pytest_cache/
@@ -20,7 +38,7 @@ node_modules/
 .DS_Store
 .playwright-mcp/
 
-# Пользовательские материалы и медиа (складываются в materials/, но не версионируются)
+# Your own materials and media (they go into materials/ but are not versioned)
 materials/*
 !materials/.gitkeep
 *.pdf
@@ -31,10 +49,11 @@ materials/*
 *.mp4
 *.mov
 *.zip
-skills/pdf-digest/references/*.pdf
 *.docx
 skills/digest/references/*.docx
 
-# Проприетарные навыки Anthropic (pdf, docx) — локально пользоваться можно, публиковать НЕЛЬЗЯ (их LICENSE.txt). Держим вне трекинга.
+# Proprietary Anthropic skills (pdf, docx, pptx, xlsx): you may use them locally, but you may NOT publish them (see their LICENSE.txt). Keep them untracked.
 skills/pdf/
 skills/docx/
+skills/pptx/
+skills/xlsx/

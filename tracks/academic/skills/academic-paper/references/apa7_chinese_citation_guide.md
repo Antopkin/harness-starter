@@ -106,12 +106,12 @@ Author (Year). Thesis title (Unpublished master's/doctoral dissertation). Univer
 
 **Unpublished thesis/dissertation**:
 ```
-Chen, Liu (2024). The impact of AI-assisted instruction on student learning outcomes: A case study of National Taiwan University (Unpublished master's thesis). National Taiwan University.
+Chen, Liu (2024). The impact of AI-assisted instruction on student learning outcomes: A case study of Example National University (Unpublished master's thesis). Example National University.
 ```
 
 **Published (with DOI or database)**:
 ```
-Huang, Qi (2023). A case study of private university transformation strategies (Doctoral dissertation, National Chengchi University). National Digital Library of Theses and Dissertations in Taiwan. https://hdl.handle.net/11296/xxxxx
+Huang, Qi (2023). A case study of private university transformation strategies (Doctoral dissertation, Example National University). National Digital Library of Theses and Dissertations in Taiwan. https://hdl.handle.net/11296/xxxxx
 ```
 
 **In-text citations**:

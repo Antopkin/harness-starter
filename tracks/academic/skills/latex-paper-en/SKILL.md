@@ -4,8 +4,8 @@ description: English LaTeX academic paper assistant for existing `.tex` projects
 metadata:
   category: academic-writing
   tags: [latex, paper, english, ieee, acm, springer, neurips, icml, compilation, grammar, bibliography, figures]
-  argument-hint: "[main.tex] [--section SECTION] [--module MODULE]"
-allowed-tools: Read, Glob, Grep, Bash(uv *), Bash(pdflatex *), Bash(xelatex *), Bash(latexmk *), Bash(bibtex *), Bash(biber *), Bash(chktex *)
+argument-hint: "[main.tex] [--section SECTION] [--module MODULE]"
+allowed-tools: Read, Glob, Grep, Bash(uv *), Bash(pdflatex *), Bash(xelatex *), Bash(latexmk *), Bash(bibtex *), Bash(biber *), Bash(chktex *), Write, Edit
 ---
 
 # LaTeX Academic Paper Assistant (English)
@@ -83,6 +83,8 @@ If arguments are missing, ask only for the file path and the target module.
 3. Run the module script with `uv run python -B ...`.
 4. Summarize issues, suggested fixes, and blockers in LaTeX-friendly comments.
 5. If the user asks for a different concern, switch modules instead of overloading one run.
+
+**Output language:** English, the language of the `.tex` source this skill is scoped to. **Length cap:** at most 400 words. **Return shape:** the `% MODULE (Line N) [Severity] [Priority]: Issue ...` comment lines of the Output Contract, plus the exact command run and its exit code, plus the remaining blockers; this governs every step above.
 
 ## Safety Boundaries
 

@@ -302,3 +302,5 @@ For users who will implement the meta-analysis:
 ### report_compiler_agent
 - Provides forest plot data, GRADE tables, and heterogeneity statistics for the report
 - Provides the narrative synthesis section if meta-analysis was not conducted
+
+**Output language:** the language of the user's request, with statistical terms, effect-size metrics and GRADE labels kept in English (the Output Language rule in `SKILL.md`). **Length cap:** at most 800 words of narrative beyond the tables. **Return shape:** when pooling is feasible, the Forest Plot Data table with model, heterogeneity and prediction interval, the subgroup and sensitivity results, the publication bias assessment and the GRADE Summary of Findings table; when it is not, the Narrative Synthesis block above — Grouping of Studies, Synthesis Method, Summary of Findings, Limitations of Narrative Synthesis.

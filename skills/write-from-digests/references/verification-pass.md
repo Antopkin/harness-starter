@@ -1,77 +1,82 @@
-# Обратный проход сверки — чек-лист
+# Backward verification pass: a checklist
 
-Этот проход идёт **после того, как записка написана**, отдельным этапом. Сверка «по
-ходу письма» не считается: она вырождается в проверку по памяти. Здесь мы идём в
-обратную сторону — от готового текста к источнику — и ловим ровно то, что письмо
-пропускает: якорь на несуществующую строку, цитату, «улучшенную» по дороге, число,
-приписанное не той работе.
+This pass runs **after the memo is written**, as a separate stage. Checking "while
+writing" does not count: it degenerates into checking from memory. Here we go the
+other way, from the finished text back to the source, and catch exactly what writing
+lets slip: an anchor to a row that does not exist, a quote "improved" along the way, a
+number attributed to the wrong paper.
 
-Инструмент портативный: повторное чтение тех же файлов силами агента + детерминированный
-`grep -F`. Без внешних скриптов и Python внутри логики навыка.
+The tool is portable: the agent re-reads the same files itself, plus a deterministic
+`grep -F`. No external scripts and no Python inside the skill's logic.
 
-## Цепочка проверки одной цитаты
+## The chain for checking one quote
 
-Для **каждой** дословной цитаты в тексте записки пройди всю цепочку, не срезая углы:
+For **every** verbatim quote in the memo, walk the whole chain without cutting
+corners:
 
-1. **Текст → якорь.** У цитаты стоит якорь `[S<n>.<row>]`? Нет якоря → это нарушение
-   G1, поставь якорь или убери утверждение из тела.
-2. **Якорь → строка пула.** Открой evidence-таблицу источника `S<n>`, найди строку
-   `row`. Она существует? Она помечена ✓ (а не ⚠)? Цитата в тексте совпадает с
-   цитатой в этой строке?
-3. **Строка пула → digest по локатору.** Возьми локатор из строки (PDF — `с. N`;
-   docx — `§раздел, абз. N`; md/txt — `стр. N`) и **переоткрой это место в самом
-   digest** тем же рецептом, что и `digest`: перечитай страницу/секцию/диапазон строк.
-   Цитата стоит там?
-4. **grep -F (гейт G2).** Прогони детерминированную проверку дословности:
+1. **Text → anchor.** Does the quote carry an anchor `[S<n>.<row>]`? No anchor means a
+   G1 violation: add the anchor or remove the claim from the body.
+2. **Anchor → pool row.** Open the evidence table of source `S<n>` and find row
+   `row`. Does it exist? Is it marked ✓ (not ⚠)? Does the quote in the text match the
+   quote in that row?
+3. **Pool row → digest at the locator.** Take the locator from the row (PDF `p. N`;
+   docx `§section, para. N`; md/txt `line N`) and **re-open that place in the digest
+   itself** with the same recipe `digest` uses: re-read the page/section/line range.
+   Is the quote there?
+4. **grep -F (gate G2).** Run the deterministic verbatim check:
 
    ```
-   grep -F "точная цитата без кавычек-ёлочек" путь/к/исходному-digest.md
+   grep -F "exact quote without the surrounding quotation marks" path/to/source-digest.md
    ```
 
-   Код возврата 0 (строка найдена) → цитата дословна. `grep -F` трактует шаблон как
-   фиксированную подстроку, поэтому совпадение честное, а не переписанное.
-5. **Digest → исходник (по возможности).** Если исходный файл статьи ещё доступен —
-   переоткрой локатор уже в нём. Это верхняя ступень доверия; недоступен исходник —
-   остановись на digest, но пометь в логе, что дальше digest сверка не шла.
+   Exit code 0 (the line was found) → the quote is verbatim. `grep -F` treats the
+   pattern as a fixed substring, so the match is honest, not rewritten.
+5. **Digest → original source (where possible).** If the paper's source file is still
+   available, re-open the locator in it as well. That is the top rung of trust; if the
+   source is unavailable, stop at the digest, but note in the log that the check did
+   not go past the digest.
 
-## Что делать при расхождении
+## What to do on a mismatch
 
-Допуск нормализации, как в `digest`: расхождения только в пробелах, переносах строк,
-дефисах-переносах и лигатурах — норма. Замена слов, перефразировка, «улучшение»
-формулировки — **не** норма.
+Normalisation tolerance as in `digest`: differences only in whitespace, line breaks,
+hyphenation and ligatures are fine. Swapped words, paraphrase or "improved" wording
+are **not** fine.
 
-Если цитата не находится дословно (шаг 4 дал не-ноль или текст отличается):
+If a quote is not found verbatim (step 4 returned non-zero or the text differs):
 
-- **hedge** — ослабь утверждение до того, что доказательство реально поддерживает,
-  и сними якорь на ненайденное; **или**
-- **delete** — убери утверждение.
+- **hedge**: weaken the claim to what the evidence actually supports, and drop the
+  anchor to what was not found; **or**
+- **delete**: remove the claim.
 
-**Нельзя:** чинить цитату по памяти, подгонять текст под цитату, выдумывать локатор.
-Правится **утверждение**, не подгоняется цитата. Каждый такой случай — строка в
-verification log (что ослаблено/удалено и почему).
+**Never:** repair a quote from memory, bend the text to fit the quote, invent a
+locator. You fix **the claim**; you never bend the quote. Each such case is a line in
+the verification log (what was weakened or deleted, and why).
 
-## Контрольный взгляд назад
+## A look back
 
-При переоткрытии локатора проверь и обратное направление: нет ли рядом в источнике
-значимого утверждения, которое противоречит тезису записки или важно для вывода, но в
-записку не попало. Нашлось — либо учти его в аргументации, либо честно оговори в
-«Границах вывода».
+While a locator is open, also check the reverse direction: is there a significant
+statement nearby in the source that contradicts the memo's thesis or matters for the
+conclusion but did not make it into the memo? If so, either take it into account in
+the argument or name it honestly in "The limits of this conclusion".
 
-## Покрытие якорями (гейт G1)
+## Anchor coverage (gate G1)
 
-Отдельным заходом пройди по абзацам аргументации: у **каждого** несущего утверждения
-(фактического заявления, а не связки) стоит хотя бы один якорь `[S<n>.<row>]`. Ноль
-утверждений без якоря. Заявление, под которое в пуле нет строки, — не факт: уводи его
-в оговорку или в «Границы вывода».
+In a separate walk through the argument's paragraphs, make sure **every**
+load-bearing claim (a factual statement, not a connective) carries at least one
+anchor `[S<n>.<row>]`. Zero claims without an anchor. A statement with no row behind
+it in the pool is not a fact: move it into a caveat or into "The limits of this
+conclusion".
 
-## Сборка verification log
+## Building the verification log
 
-По итогам прохода собери сводку в Приложение А записки:
+When the pass is done, put a summary into the memo's Appendix A:
 
-- **Якорей в тексте:** сколько всего, на сколько различных строк пула ссылаются.
-- **Дословных цитат сверено:** сколько из скольких — все `grep -F` = найдено.
-- **Флагов ⚠:** сколько; если не ноль — перечисли, что ослаблено или удалено.
-- **Метод:** какие локаторы реально переоткрыты и чем; что `grep -F` прогнан по каждой
-  цитате. Это единственная защита от ложно-зелёных ✓.
+- **Anchors in the text:** how many in total, and how many distinct pool rows they
+  point to.
+- **Verbatim quotes checked:** how many out of how many; every `grep -F` = found.
+- **⚠ flags:** how many; if not zero, list what was weakened or deleted.
+- **Method:** which locators were actually re-opened and how; that `grep -F` was run
+  on every quote. This is the only protection against false-green ✓.
 
-Записка с неснятыми ⚠ не выдаётся как готовая: либо ✓, либо утверждение ослаблено/удалено.
+A memo with unresolved ⚠ is not handed over as finished: either ✓, or the claim is
+weakened or deleted.

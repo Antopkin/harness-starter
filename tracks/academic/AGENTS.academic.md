@@ -1,188 +1,206 @@
-# AGENTS.academic.md — аддендум академического трека
+# AGENTS.academic.md — the academic overlay addendum
 
-Это **надстройка** к `AGENTS.md` для трека «академические источники». Читается
-**вместе** с ним, не вместо: все базовые правила (думать до кода, простота,
-хирургические правки, доказывать результат, не трогать секреты) остаются в силе.
-Этот файл добавляет поверх один слой — **дисциплину исследовательской честности и
-метода** — и показывает, какими навыками трека её выполнять.
+This is an **add-on** to `AGENTS.md` for work with academic sources. It is read
+**together with** that file, not instead of it: all the base rules (think before
+coding, simplicity, surgical edits, prove the result, keep away from secrets) still
+apply. This file adds one layer on top, **the discipline of research integrity and
+method**, and shows which overlay skills carry it out.
 
-Всё рассчитано на **любого участника трека**, а не на конкретного человека:
-работает из коробки, ключи — твои личные, пути и библиотека — твои.
+Everything here is written for **anyone who uses the overlay**, not for a particular
+person: it works out of the box, the keys are your own, and so are the paths and the
+library.
 
-> **Зачем отдельный файл.** Базовый `AGENTS.md` учит агента вести себя аккуратно в
-> любой работе. Академический трек добавляет то, чего в общем своде нет: как
-> обращаться с источниками, данными и выводами так, чтобы работе можно было
-> **верить и её можно было воспроизвести**. Ниже — именно эти правила.
-
----
-
-## Как включить этот слой
-
-Аддендум лежит рядом с `AGENTS.md`. Чтобы агент его читал:
-
-- **Claude Code:** добавь в `CLAUDE.md` строку `@AGENTS.academic.md` под строкой
-  `@AGENTS.md`. Навыки трека скопируй туда, откуда инструмент их зовёт через `/`
-  (`cp -R tracks/academic/skills/. .claude/skills/` — как в README оверлея).
-- **OpenCode / Codex:** `AGENTS.md` эти инструменты читают напрямую; добавь в него
-  строку-указатель «в академическом треке действует также `AGENTS.academic.md`»
-  или вставь эти правила в `AGENTS.md`. Навыки подключаются нативно: Codex ищет их
-  в `.agents/skills/`, OpenCode читает и `.agents/skills/`, и `.claude/skills/` —
-  скопируй туда (`cp -R tracks/academic/skills/. .agents/skills/`), и оба зовут их
-  сами по `description`.
-- **В начале каждой сессии** прочитай этот файл вместе с `AGENTS.md` — правила
-  честности должны действовать с первого шага, а не постфактум.
+> **Why a separate file.** The base `AGENTS.md` teaches the agent to behave carefully
+> in any kind of work. Academic work adds what the general rule set lacks: how to
+> handle sources, data and conclusions so that the work can be **trusted and
+> reproduced**. Those rules follow below.
 
 ---
 
-## Правило поверх всех: доказуемость источника
+## How to switch this layer on
 
-Академическая работа существует, чтобы другой человек мог **пройти по твоим следам
-и прийти к тому же**. Ссылка нужна, чтобы читатель нашёл источник; цитата — чтобы
-он увидел то же, что ты; журнал поиска — чтобы он повторил поиск. Любой выдуманный
-источник, DOI или номер страницы ломает саму цель работы. Поэтому шесть правил
-ниже — не формальность, а суть трека.
+The addendum stays where it is, at `tracks/academic/AGENTS.academic.md`, and is imported
+in place rather than copied into the root; every path in it is written relative to the
+repository root. To make the agent read it:
 
-## 1. Цитируй всё, не выдумывай ничего
+- **Claude Code:** add the line `@tracks/academic/AGENTS.academic.md` to `CLAUDE.md`, below
+  the line `@AGENTS.md`. Copy the overlay skills to where the tool calls them with `/`
+  (`mkdir -p .claude/skills && cp -R tracks/academic/skills/. .claude/skills/`, as in
+  `tracks/academic/README.md`).
+- **OpenCode / Codex:** these tools read `AGENTS.md` directly; add a line to it telling the
+  agent to read `tracks/academic/AGENTS.academic.md` for academic work. Skills are wired in
+  natively: Codex looks for them in `.agents/skills/`,
+  OpenCode reads both `.agents/skills/` and `.claude/skills/`. Copy them there
+  (`mkdir -p .agents/skills && cp -R tracks/academic/skills/. .agents/skills/`), and both
+  call them on their own by `description`.
+- **At the start of every session** read this file together with `AGENTS.md`: the
+  integrity rules must hold from the first step, not after the fact.
 
-- **Каждый нетривиальный тезис несёт, откуда он.** Не «известно, что…», а «X
-  (Автор, год, DOI/arXiv ID/URL, с. N)». Общее место можно без ссылки; конкретный
-  факт, число, чужой вывод — только со ссылкой.
-- **Никогда не сочиняй библиографию.** Источник, DOI, номер страницы, авторов, год
-  берём только из реально открытого источника. Выдуманная «правдоподобная» ссылка —
-  худшая ошибка трека, дороже, чем ничего не найти.
-- **Нет источника — скажи прямо.** «По этому вопросу надёжного источника не нашёл»,
-  «не проверено», «источника нет» — это валидные, честные ответы. Пустоту не
-  заполняем догадкой. Ноль результатов — тоже результат.
-- **Подтверждай существование.** Источник в работе — тот, что ты открыл: увидел
-  страницу/аннотацию/PDF, забрал идентификатор (DOI, arXiv ID, стабильный URL). Не
-  смог открыть и подтвердить — **не включай**, вынеси в раздел «не подтверждено».
-- **Пропущенное поле помечай `[проверить]`,** не угадывай год и не достраивай
-  авторов «по памяти».
+---
 
-## 2. Утверждение ≠ источник
+## The rule above all: the source must be provable
 
-Разделяй **что сказано** и **откуда это**, а внутри — **что говорит источник** и
-**что домыслил ты**. Каждому нетривиальному утверждению — явный ярлык происхождения:
+Academic work exists so that another person can **follow your tracks and arrive at the
+same place**. A reference lets the reader find the source; a quote lets them see what
+you saw; a search log lets them repeat the search. Any invented source, DOI or page
+number breaks the very purpose of the work. That is why the six rules below are not a
+formality but the core of this overlay.
 
-- **ЕСТЬ В ИСТОЧНИКЕ** — прямо написано/показано в работе; несёт локатор (страница,
-  раздел, таблица).
-- **ВЫВЕДЕНО** — твоя интерпретация поверх источника. Помечай явно и **не
-  повышай молча** до факта. «В аннотации сказано X» ≠ «работа доказывает X».
-- **ОЦЕНКА / РЕКОМЕНДАЦИЯ** — твоё суждение, а не содержание источника.
+## 1. Cite everything, invent nothing
 
-Голос автора и твой вывод — **разными строками**. Пересказ — не цитата: дословный
-текст только в кавычках и со страницей (см. навык `pdf-digest`).
+- **Every non-trivial claim carries where it comes from.** Not "it is known that…" but
+  "X (Author, year, DOI/arXiv ID/URL, p. N)". Common knowledge can go without a
+  reference; a specific fact, number or someone else's conclusion only with one.
+- **Never make up a bibliography.** Source, DOI, page number, authors and year come
+  only from a source you actually opened. An invented "plausible" reference is the
+  worst mistake you can make here, worse than finding nothing.
+- **No source? Say so plainly.** "I found no reliable source on this", "not verified",
+  "no source" are valid, honest answers. We do not fill a gap with a guess. Zero
+  results is a result too.
+- **Confirm existence.** A source in the work is one you opened: you saw the page,
+  abstract or PDF and took its identifier (DOI, arXiv ID, stable URL). If you could not
+  open and confirm it, **leave it out** and move it to a "not confirmed" section.
+- **Mark a missing field `[verify]`;** do not guess the year or fill in authors "from
+  memory".
 
-## 3. Воспроизводимость: фиксируй след поиска
+## 2. Claim ≠ source
 
-Чтобы поиск можно было повторить, у каждого захода в литературу записывай:
+Keep apart **what is said** and **where it comes from**, and within that, **what the
+source says** and **what you inferred**. Give every non-trivial statement an explicit
+provenance label:
+
+- **IN THE SOURCE** — stated or shown directly in the work; carries a locator (page,
+  section, table).
+- **INFERRED** — your interpretation on top of the source. Mark it explicitly and **do
+  not quietly promote** it to fact. "The abstract says X" ≠ "the work proves X".
+- **ASSESSMENT / RECOMMENDATION** — your judgement, not the content of the source.
+
+The author's voice and your conclusion go on **separate lines**. A paraphrase is not a
+quote: verbatim text only in quotation marks and with a page (see the `digest` skill).
+
+## 3. Reproducibility: record the search trail
+
+So that a search can be repeated, write down for every pass through the literature:
 
 ```
-Запрос:    <точные термины/строка запроса, как вводил>
-Дата:      <ГГГГ-ММ-ДД>
-Где искал: <arXiv, Semantic Scholar, PubMed, Scopus, …>
-Версия:    <издание/препринт vX/дата обращения для онлайн-ресурса>
+Query:     <exact terms / query string, as typed>
+Date:      <YYYY-MM-DD>
+Searched:  <arXiv, Semantic Scholar, PubMed, Scopus, …>
+Version:   <edition / preprint vX / access date for an online resource>
 ```
 
-- **Запрос — дословно.** «Искал про эмоции» невоспроизводимо; `("emotion
-  regulation" AND adolescents) 2015..2024` — воспроизводимо.
-- **Дата обязательна:** выдача баз и веб-поиска меняется во времени.
-- **Версия источника имеет значение:** препринт ≠ опубликованная версия; 2-е
-  издание ≠ 1-е. Для онлайн-ресурса фиксируй дату обращения.
+- **The query, verbatim.** "Looked for stuff on emotions" cannot be reproduced;
+  `("emotion regulation" AND adolescents) 2015..2024` can.
+- **The date is mandatory:** database and web search results change over time.
+- **The version of a source matters:** a preprint ≠ the published version; a 2nd
+  edition ≠ the 1st. For an online resource, record the access date.
 
-## 4. Прозрачность метода
+## 4. Transparency of method
 
-- **И количественные, и качественные данные.** Не выбирай только те, что удобны
-  выводу. Противоречащий факт — показать, а не спрятать.
-- **Не подгоняй вывод под желаемое.** Вопрос и гипотезу формулируй **до** того, как
-  смотришь данные; сообщай и отрицательный/нулевой результат. Нашёл обратное
-  ожидаемому — так и напиши.
-- **Показывай воронку.** Сколько нашёл → сколько отсеял и почему → сколько
-  прочитал. Спорные отсевы показывай, не выкидывай молча (см. `runbooks/lit-review.md`).
-- **Разделяй описание → интерпретацию → рекомендацию.** Это три разных слоя, не
-  смешивай их в одном предложении.
+- **Both quantitative and qualitative data.** Do not pick only what suits the
+  conclusion. A contradicting fact is shown, not hidden.
+- **Do not bend the conclusion towards what you want.** Formulate the question and the
+  hypothesis **before** you look at the data; report negative and null results too. If
+  you found the opposite of what you expected, write exactly that.
+- **Show the funnel.** How many you found → how many you excluded and why → how many
+  you read. Show borderline exclusions instead of dropping them silently (see
+  `tracks/academic/runbooks/lit-review.md`).
+- **Separate description → interpretation → recommendation.** These are three
+  different layers; do not mix them in one sentence.
 
-## 5. Осторожно с переводом терминов
+## 5. Take care when translating terms
 
-- **Термин сохраняй, значение не подменяй.** У термина есть точный объём; русский
-  «почти-синоним» часто сдвигает смысл (`agency`, `validity`, `bias`, `framework`,
-  `salience`). Давай перевод как глоссу, а рядом — оригинал в скобках; не заменяй
-  молча.
-- **Перевод цитаты помечай «пер.»** и держи оригинал рядом. Дословную цитату в
-  кавычках оставляй на языке источника — перевод внутри кавычек искажает данные.
+- **Keep the term, do not swap the meaning.** A term has a precise scope; a
+  near-synonym in another language often shifts the meaning (`agency`, `validity`,
+  `bias`, `framework`, `salience`). Give the translation as a gloss with the original
+  in brackets next to it; do not replace it silently.
+- **Mark a translated quote "(trans.)"** and keep the original next to it. A verbatim
+  quote in quotation marks stays in the language of the source: a translation inside
+  quotation marks distorts the data.
 
-## 6. Осторожно с обобщением из единичного кейса
+## 6. Take care when generalising from a single case
 
-- **n=1 — это не поле и не популяция.** Одно интервью, одна статья, один датасет —
-  иллюстрация или гипотеза, а не доказательство. Масштаб вывода = масштабу
-  свидетельства.
-- **Не превращай реплику информанта в «люди считают X».** Один голос говорит за
-  себя. Обобщение требует либо выборки, либо явной оговорки «на материале одного
-  случая».
-- **«Свежий/нишевый» ≠ «незначимый», но и ≠ «установленный».** Отдельный результат
-  держи как отдельный результат, пока его не подтвердят другие.
+- **n=1 is neither a field nor a population.** One interview, one paper, one dataset
+  is an illustration or a hypothesis, not proof. The scope of the conclusion equals the
+  scope of the evidence.
+- **Do not turn one informant's remark into "people think X".** One voice speaks for
+  itself. A generalisation needs either a sample or an explicit caveat, "based on a
+  single case".
+- **"Recent/niche" ≠ "insignificant", but also ≠ "established".** Keep a single result
+  as a single result until others confirm it.
 
 ---
 
-## Навыки и инструменты трека
+## Overlay skills and tools
 
-Хребет работы с литературой уже есть в общей обвязке: **`lit-search`** (поиск и
-первичный обзор) → **`pdf-digest`** (конспект PDF со страницами у цитат) →
-**`cite`** (оформление ссылок, APA 7 / ГОСТ / BibTeX). Все три с антигаллюцинацией
-в основе. Полный конвейер по шагам — `runbooks/lit-review.md`; ускорители поиска
-(базы статей и Zotero) — `mcp/README.md`.
+The backbone of literature work already exists in the base harness: **`lit-search`**
+(search and first overview) → **`digest`** (a digest of a PDF or other document with a
+page or locator for every quote, ending with a formatted reference in APA 7 / GOST /
+BibTeX). Both are built around preventing hallucinated sources. The full step-by-step
+pipeline is `tracks/academic/runbooks/lit-review.md`; the search accelerators (paper
+databases and Zotero) are in `tracks/academic/mcp/README.md`.
 
-Поверх хребта трек добавляет более крупные навыки (лежат в `skills/`):
+On top of the backbone the overlay adds larger skills (they live in
+`tracks/academic/skills/`):
 
-| Навык | Для чего | Когда звать |
+| Skill | What it is for | When to call it |
 |---|---|---|
-| `deep-research` | Строгое исследование под вопрос: систематический обзор, мета-анализ, fact-check | Большой исследовательский вопрос, нужен протокол и синтез многих источников |
-| `academic-paper` | Написание самой статьи (IMRaD, обзор, кейс, policy brief), цитаты, двуязычный abstract | Материал собран — пора писать текст |
-| `academic-paper-reviewer` | Симуляция рецензирования (несколько независимых рецензентов) | Перед подачей — прогнать черновик через «рецензентов» |
-| `paper-audit` | Аудит целостности: тезисы без источника, выдуманные цитаты, запрещённые формулировки | Проверка честности готового текста перед сдачей |
-| `transcript-verbatim` | Verbatim-корректура ASR: править только ошибки распознавания, речь оставлять дословно | Расшифровка интервью/фокус-группы, где **речь = данные** |
-| `transcript-polish` | Читаемый связный текст из устной речи с сохранением смысла | Транскрипт нужно сделать читаемым для анализа |
+| `deep-research` | Rigorous research on a question: systematic review, meta-analysis, fact-check | A big research question that needs a protocol and a synthesis of many sources |
+| `academic-paper` | Writing the paper itself (IMRaD, review, case study, policy brief), citations, bilingual abstract | The material is gathered and it is time to write |
+| `academic-paper-reviewer` | Simulated peer review (several independent reviewers) | Before submission, to run the draft past "reviewers" |
+| `paper-audit` | Integrity audit: claims without a source, invented quotes, banned phrasing | Checking the honesty of a finished text before you hand it in |
+| `transcript-verbatim` | Verbatim correction of ASR output: fix recognition errors only, keep the speech word for word | Transcripts of interviews or focus groups where **speech is data** |
+| `transcript-polish` | Readable, coherent prose from spoken language that keeps the meaning | A transcript has to become readable for analysis |
 
-Общий поток: **исследование** (`deep-research` / `lit-search`) → **конспект**
-(`pdf-digest`) → **письмо** (`academic-paper`) → **самоаудит** (`paper-audit`) →
-**рецензия** (`academic-paper-reviewer`) → **ссылки** (`cite`). Качественная ветка:
-интервью → `transcript-verbatim` / `transcript-polish` → анализ → `cite`.
-Семейство `transcript-*` опирается на общий файл ввода `skills/shared/transcript-io.md`.
+The overlay's other skills (`academic-pipeline`, `transcript-docs` and the `latex-*`
+family) are listed in the overlay README, `tracks/academic/README.md`.
 
-**Как навык вызывается** (по инструменту):
+The overall flow: **research** (`deep-research` / `lit-search`) → **digest**
+(`digest`) → **writing** (`academic-paper`) → **self-audit** (`paper-audit`) →
+**review** (`academic-paper-reviewer`) → **references** (`digest`). The qualitative
+branch: interview → `transcript-verbatim` / `transcript-polish` → analysis → `digest`
+for the references. The `transcript-*` family relies on the shared input file
+`tracks/academic/skills/shared/transcript-io.md`.
 
-- **Claude Code:** по имени через `/` (`/deep-research`, `/paper-audit`, …) или
-  автоподхватом по описанию из фронтматтера.
-- **OpenCode:** встроенный инструмент `skill` сам подберёт навык по описанию из
-  фронтматтера (навыки — в `.agents/skills/` или совместимом `.claude/skills/`).
-- **Codex:** автоподхват по описанию + список `/skills` для ручного выбора
-  (навыки — в `.agents/skills/`).
-- **Навыка под рукой нет** — базовый цикл всё равно работает: держись правил 1–6
-  этого файла и делай шаги руками (для литературы — по `runbooks/lit-review.md`).
-  Навыки ускоряют и стандартизируют, но честность обеспечивают правила, а не тулза.
+**How a skill is invoked** (by tool):
 
-## Ключи и секреты
+- **Claude Code:** by name with `/` (`/deep-research`, `/paper-audit`, …) or
+  automatically from the description in the frontmatter.
+- **OpenCode:** the built-in `skill` tool picks a skill by the description in the
+  frontmatter (skills live in `.agents/skills/` or the compatible `.claude/skills/`).
+- **Codex:** automatic pick by description plus the `/skills` list for manual choice
+  (skills live in `.agents/skills/`).
+- A skill marked user-invoked (`disable-model-invocation: true`) stays manual only in
+  Claude Code; OpenCode and Codex may still invoke it on their own.
+- **No skill at hand?** The basic loop still works: stick to rules 1–6 of this file
+  and do the steps by hand (for literature, follow `tracks/academic/runbooks/lit-review.md`). Skills
+  speed things up and standardise them, but integrity comes from the rules, not from
+  the tooling.
 
-- **Ключи внешних сервисов — только плейсхолдерами в примерах.** MCP-серверам трека
-  (`zotero`, `paper-search` и провайдерам эмбеддингов) нужны **личные** ключи. В
-  любом примере и шаблоне — `YOUR_..._KEY` / `YOUR_..._ID`, никогда реальный ключ.
-  Настоящий ключ живёт только в локальном `.mcp.json`, который в git не попадает
-  (см. `mcp/README.md`).
-- **Базовые guardrail'ы `AGENTS.md` действуют.** Не читаем, не редактируем и не
-  коммитим `.env*`, `*token*`, `*secret*`, `*credentials*`; не печатаем ключи в
-  логи и сообщения об ошибках.
+## Keys and secrets
 
-## Память метода
+- **Keys of external services appear only as placeholders in examples.** The overlay's
+  MCP servers (`zotero`, `paper-search` and embedding providers) need **personal**
+  keys. Every example and template uses `YOUR_..._KEY` / `YOUR_..._ID`, never a real
+  key. The real key lives only in the local `.mcp.json` in the repository root, which
+  stays out of git (see `tracks/academic/mcp/README.md`).
+- **The base guardrails of `AGENTS.md` apply.** We do not read, edit or commit
+  `.env*`, `*token*`, `*secret*`, `*credentials*`; we do not print keys into logs or
+  error messages.
 
-По правилу памяти из `AGENTS.md`: после коррекции и по ходу работы записывай в
-`memory/` то, что переживёт сессию, — удачные поисковые запросы и базы, особенности
-доступа к ресурсам, выбранные переводы терминов, уже отсмотренные и отвергнутые
-источники. Так следующая сессия не переискивает то же и не спорит заново о том же
-термине. Секреты в память не пишем — только факты о работе.
+## Method memory
+
+Following the memory rule in `AGENTS.md`: after a correction and as the work goes on,
+write to `memory/` what should outlive the session: search queries and databases that
+worked, quirks of access to resources, the term translations you chose, sources you
+have already screened and rejected. That way the next session does not repeat the
+same search or reopen the argument about the same term. Secrets never go into memory,
+only facts about the work.
 
 ---
 
-**Коротко:** этот аддендум — слой честности поверх обычных правил. Цитируй всё и не
-выдумывай ничего; отделяй утверждение от источника; фиксируй след поиска; будь
-прозрачен в методе; осторожен в переводе и в обобщении. Инструменты, которыми это
-делается, — в `skills/`, `mcp/` и `runbooks/`.
+**In short:** this addendum is an integrity layer on top of the usual rules. Cite
+everything and invent nothing; keep the claim apart from the source; record the search
+trail; be transparent about method; take care with translation and with
+generalisation. The tools for doing so are in `tracks/academic/skills/`,
+`tracks/academic/mcp/` and `tracks/academic/runbooks/`.

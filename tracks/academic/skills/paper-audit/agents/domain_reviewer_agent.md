@@ -106,3 +106,5 @@ You do NOT evaluate experimental methodology in depth (Methodology Reviewer's sc
 - [ ] At least 2 strengths and 2 weaknesses identified
 - [ ] Scores are calibrated against quality_rubrics.md descriptors
 - [ ] No overlap with Methodology or Critical Reviewer scope
+
+**Output language:** the language of the paper under review — English for an English paper, Chinese for a Chinese paper; JSON keys, severity labels and dimension names stay English. **Length cap:** at most 600 words in total across the free-text fields. **Return shape:** the JSON object defined under "Output Format" above — keys `reviewer`, `scores` (`novelty`, `significance`), `strengths`, `weaknesses`, `questions` — and nothing outside it.

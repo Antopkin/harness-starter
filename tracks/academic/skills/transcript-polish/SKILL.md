@@ -1,102 +1,108 @@
 ---
 name: transcript-polish
-description: >
-  Глубокая редактура ASR-транскриптов: превращает устную речь в чистый связный
-  письменный текст — убирает слова-паразиты, реконструирует предложения и абзацы,
-  исправляет ASR-ошибки, СОХРАНЯЯ смысл и намерения говорящего. Для расшифровок,
-  которые нужно сделать читаемыми. Триггеры (RU): «вычисти транскрипт», «сделай
-  читаемым», «убери слова-паразиты», «причеши расшифровку», «отредактируй
-  расшифровку». EN: «polish transcript». NOT: дословная корректура / оставить речь
-  как есть → transcript-verbatim.
+description: "Not verbatim correction (transcript-verbatim), not a business document (transcript-docs). Deep editing of an ASR transcript in any language into clean written prose in the language of the recording: fillers removed, sentences and paragraphs rebuilt, meaning kept. Triggers: clean up the transcript, make it readable, polish transcript."
 ---
 
-# transcript-polish — глубокая редактура транскрипций
+# transcript-polish — deep editing of transcripts
 
-Превращает сырую ASR-расшифровку устной речи в чёткий, связный письменный текст.
-Чистит филлеры, реконструирует фрагментированные предложения, организует абзацы,
-исправляет ошибки распознавания — но СОХРАНЯЕТ оригинальный смысл, намерения,
-личный стиль, акценты, юмор и тон говорящего.
+Turns a raw ASR transcript of speech into clear, coherent written text. It
+removes fillers, rebuilds fragmented sentences, organises paragraphs and fixes
+recognition errors — but keeps the speaker's original meaning, intent, personal
+style, emphasis, humour and tone. It works on a recording in any language, and
+the edited text stays in the language of the recording.
 
-**Иерархия приоритетов** (нерушима): смысл > полнота обработки > грамматика и
-исправление ASR > читаемость и стиль.
+**Priority hierarchy** (inviolable): meaning > completeness of processing >
+grammar and ASR correction > readability and style.
 
-Это глубокая редактура, не корректура. Если нужно оставить речь дословно и править
-ТОЛЬКО ASR-ошибки — это `transcript-verbatim`.
+This is deep editing, not proofreading. If the speech must stay word for word and
+only ASR errors should be fixed, that is `transcript-verbatim`. If a business
+document (decisions, action items) is needed from a call, that is
+`transcript-docs`.
 
-## Вход и делегирование
+## Input and delegation
 
-Распознавание формата входа (`*_dialog.txt`, `*_transcript.json` Deepgram, plain
-`*_text.txt`, текст в чате), нейтральный `speaker_glossary`, модель «один субагент
-на файл, один проход, батч по файлам» — всё в `skills/shared/transcript-io.md`. НЕ
-дублировать здесь, читать оттуда. main сам транскрипт не обрабатывает — делегирует
-субагенту, чтобы не засорять контекст координатора объёмным текстом.
+Input-format recognition (`*_dialog.txt`, a Deepgram-style `*_transcript.json`,
+plain `*_text.txt`, text in the chat), the neutral `speaker_glossary`, and the
+"one subagent per file, one pass, batch by file" model all live in
+`../shared/transcript-io.md`. Do not duplicate them here; read them there. main
+does not process the transcript itself — it delegates to a subagent (the harness
+rule "Delegate, and keep the main context clean").
 
-Маппинг нейтрального глоссария в метку этого скилла: `display_name` → `{Имя}:`.
+Mapping the neutral glossary onto this skill's label: `display_name` → `{Name}:`.
 
-## Промпт субагенту
+**Output language:** the language of the recording (the "Typography" section below relies on this). **Length limit:** at most 150 words for the accompanying part of the subagent's answer; the edited text itself is not subject to the limit and is never shortened. **Output format:** the edited text, then the fields `glossary`, `unresolved_roles`, `annotations` (spelled out in "Prompt for the subagent"). The contract applies to every delegation from this section.
 
-Дай субагенту иерархию приоритетов (выше) и пять шагов редактуры:
+## Prompt for the subagent
 
-1. **Базовая очистка** — удалить ВСЕ слова-паразиты и повторы, исправить
-   грамматику/орфографию/пунктуацию.
-2. **Структурное редактирование** — реконструировать фрагменты, разбить длинные
-   предложения, организовать абзацы и переходы.
-3. **Семантическая доработка** — разрешить двусмысленности сохраняя смысл, уточнить
-   выражения, согласовать терминологию.
-4. **Финальная полировка** — естественность, единство стиля и тона, проверка, что
-   все ASR-ошибки устранены.
-5. **Редакторские аннотации** — отмечать вмешательства в `[...]`: `[восстановлено
-   по контексту]`, `[неразборчиво]`, `[возможно имеется в виду X]`, вставка
-   пропущенных слов в скобках (`Он сказал, [что] придёт`).
+Give the subagent the priority hierarchy (above) and the five editing steps:
 
-Детали по шагам, особым случаям (имена, числа, списки, цитаты, термины),
-русскоязычным конструкциям, запреты и ВСЕ ЧЕТЫРЕ примера с thought_process — в
-`references/editing-rules.md`. Субагент читает этот файл целиком перед работой.
+1. **Basic cleanup** — remove ALL fillers and repetitions, fix
+   grammar/spelling/punctuation.
+2. **Structural editing** — rebuild fragments, split long sentences, organise
+   paragraphs and transitions.
+3. **Semantic refinement** — resolve ambiguities while keeping the meaning,
+   clarify expressions, make terminology consistent.
+4. **Final polish** — naturalness, a unified style and tone, a check that all ASR
+   errors are gone.
+5. **Editorial annotations** — mark interventions in `[...]`, written in the
+   language of the recording: `[restored from context]`, `[inaudible]`,
+   `[possibly meaning X]`, inserting missing words in brackets
+   (`He said [that] he'd come`; in Russian, `Он сказал, [что] придёт`).
 
-**speaker_glossary (инлайн для субагента):** строй из самопрезентаций в первых 3–5
-репликах ИЛИ из переданного ростера; запись `Спикер N → {role?, display_name?,
-evidence_turn}`. Если роли не определяются и ростера нет — пометь `[Роли не
-определены]` и подними в main, НЕ угадывай.
+Details per step, special cases (names, numbers, lists, quotes, terms),
+language-specific constructions, the prohibitions and ALL FOUR examples with
+thought_process are in `references/editing-rules.md`. The subagent reads that
+file in full before it starts.
 
-**Множественные говорящие:** ставь метку `{Имя}:` (фигурные скобки) и делай разрыв
-абзаца при КАЖДОЙ смене говорящего, даже для очень коротких реплик.
+**speaker_glossary (inline for the subagent):** build it from self-introductions
+in the first 3–5 turns OR from a roster that was passed in; the entry is
+`Speaker N → {role?, display_name?, evidence_turn}`. If the roles cannot be
+determined and there is no roster, mark `[Roles not determined]` and escalate to
+main; do NOT guess.
 
-**Один проход:** обработать ВЕСЬ файл за один ответ. Маркер `[ПРОДОЛЖЕНИЕ СЛЕДУЕТ]`
-в выводе ЗАПРЕЩЁН — файл влезает в контекст (`skills/shared/transcript-io.md` §5).
-Принцип полноты при этом нерушим: не сокращать, не пропускать части, обработать
-весь текст.
+**Multiple speakers:** put a `{Name}:` label (curly braces) and start a new
+paragraph at EVERY change of speaker, even for very short turns.
 
-## Типографика
+**One pass:** process the WHOLE file in one response. A continuation marker such
+as `[TO BE CONTINUED]` in the output is FORBIDDEN — the file fits in the context
+(`../shared/transcript-io.md` §5). The completeness principle stays inviolable:
+do not shorten, do not skip parts, process the whole text.
 
-Выход — связная русская проза, поэтому при компоновке результата применяй
-типографику: ёлочки «», тире — с пробелами, en-dash для диапазонов, неразрывные
-пробелы после однобуквенных предлогов — всё РЕАЛЬНЫМИ символами Unicode (не
-литералами ` `, `&nbsp;` или `--`). Полный минимум:
-кавычки-ёлочки «» как основные и „лапки“ для вложенных; длинное тире — с пробелами
-вокруг; среднее тире – для числовых диапазонов без пробелов (10–15); неразрывный
-пробел (U+00A0) после однобуквенных предлогов и союзов (в, к, с, о, у, и, а) и
-внутри сокращений (т. д., т. е.); многоточие одним символом …; без двойных пробелов
-и без пробела перед знаком препинания. Неразрывный пробел вставляй как сам символ
-Unicode, а не как его запись.
+**Output language:** the language of the recording; the result is a deliverable for a reader of that language, so a global rule such as "answer in English" does not apply to it, and the language named by the skill body takes precedence. **Length limit:** at most 150 words for the accompanying part of the subagent's answer (glossary, fields, remarks); the edited text itself is not subject to the limit — "One pass" above forbids shortening or truncating it. **Output format:** the edited text, then the fields `glossary:` (Speaker N → display_name, evidence_turn), `unresolved_roles:` (yes/no), `annotations:` (count by type: restored / inaudible / guess); the `[Roles not determined]` marker also stays in the text, but main decides on escalation from the `unresolved_roles` field. The contract covers the whole prompt of this section.
 
-Если в вашей установке есть отдельный инструмент проверки русского текста и
-инфостиля (например, скилл `ru-text`), в конце можно порекомендовать прогнать
-результат через него для чистки стоп-слов — это уже за рамками редактуры
-транскрипта.
+## Typography and ru-text
 
-## Вывод
+The output is coherent prose, so apply the always-on typography of the
+recording's language when you compose the result: its proper quotation marks,
+spaced or unspaced dashes as that language requires, an en dash for ranges,
+non-breaking spaces where the language needs them. Write these typography
+characters (the no-break space, the em dash and the rest) as real Unicode
+characters, never as escape sequences or ASCII stand-ins such as ` `,
+`&nbsp;` or `--`. For a Russian recording
+`skills/ru-text/SKILL.md` is the single source of typography (guillemets «», a
+spaced em dash —, non-breaking spaces after one-letter prepositions); read it
+there and do not copy the rules.
 
-В конце спроси пользователя, КУДА сохранить (см. `skills/shared/transcript-io.md`
-§6):
+For a Russian recording, add a recommendation at the end of the output: "If you
+like, run the result through `/ru-text` for information style and stop-word
+cleanup" (that is already beyond transcript editing).
 
-- (а) рядом с источником → суффикс `*_dialog_polished.txt`;
-- (б) по указанному пользователем пути;
-- (в) только в чат.
+## Output
 
-## Навигатор
+At the end, ask the user WHERE to save (see `../shared/transcript-io.md` §6):
 
-| Задача | Файл |
+- (a) next to the source → suffix `*_dialog_polished.txt`;
+- (b) at a path the user gives;
+- (c) in the chat only.
+
+## Navigator
+
+| Task | File |
 |---|---|
-| Полные правила редактуры + 4 примера с thought_process | `references/editing-rules.md` |
-| Формат входа, speaker_glossary, делегирование, один проход, вопрос о выводе | `skills/shared/transcript-io.md` |
-| Типографика (минимум) | секция «Типографика» выше |
+| Full editing rules + 4 examples with thought_process | `references/editing-rules.md` |
+| Input format, speaker_glossary, delegation, one pass, output question | `../shared/transcript-io.md` |
+| Typography of a Russian recording (always-on, single source) | `skills/ru-text/SKILL.md` |
+
+## Triggers
+
+Use this skill when a transcript has to become readable: "clean up the transcript", "make it readable", "remove the filler words", "tidy up the transcript", "edit the transcript", "polish transcript", or the same request in the language of the recording (for example «вычисти транскрипт», «причеши расшифровку»). The edit preserves the speaker's meaning and intent while the spoken debris goes away. Keeping the speech word for word belongs to transcript-verbatim, and a business document from the call belongs to transcript-docs.

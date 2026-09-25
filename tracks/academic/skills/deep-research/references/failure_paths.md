@@ -101,6 +101,8 @@ This document lists all failure scenarios that may be encountered across all mod
 - Adjust RQ → return to research_question_agent → redo Phase 1
 - Maximum 2 retries; if still mismatched on the 3rd attempt → suggest the user consult their advisor
 
+**Output language:** the language the user writes in, academic terminology kept in English (the `## Output Language` rule in `SKILL.md`). **Length cap:** at most 600 words — the blueprint's five components, one short paragraph each. **Return shape:** the regenerated Methodology Blueprint with its five components — research paradigm, method selection, data strategy, analytical framework, validity and reliability criteria.
+
 ---
 
 ### F4: Devil's Advocate CRITICAL
@@ -156,6 +158,8 @@ This document lists all failure scenarios that may be encountered across all mod
 - Modify research design → return to Phase 1
 - Issues are irremediable → suggest abandoning this research direction, provide alternative direction suggestions
 
+**Output language:** the language the user writes in, academic terminology kept in English (the `## Output Language` rule in `SKILL.md`). **Length cap:** at most 300 words. **Return shape:** the re-review verdict CLEARED / CONDITIONAL / BLOCKED, plus per remaining issue its reason and the remediation step still outstanding.
+
 ---
 
 ### F6: Socratic Dialogue Does Not Converge
@@ -183,6 +187,8 @@ This document lists all failure scenarios that may be encountered across all mod
 - Continue with focus → restrict discussion scope, converge within 5 rounds
 - Switch to full mode → pass extracted INSIGHTs to research_question_agent
 - Pause → save INSIGHT list; user can re-enter at any time
+
+**Output language:** the language the user writes in, academic terminology kept in English (the `## Output Language` rule in `SKILL.md`). **Length cap:** at most 400 words. **Return shape:** an RQ Brief built from the extracted INSIGHTs — FINER criteria scoring, scope boundaries (in-scope / out-of-scope), 2-3 sub-questions.
 
 ---
 
@@ -327,3 +333,21 @@ This document lists all failure scenarios that may be encountered across all mod
 **Recovery Paths**:
 - Focus on a single framework → continue workflow
 - User insists on interdisciplinary → suggest switching to mixed-methods or narrative review
+
+---
+
+## Failure Paths
+
+
+Key failure path summary:
+
+| Failure Scenario | Trigger Condition | Recovery Strategy |
+|---------|---------|---------|
+| RQ cannot converge | Phase 1 / Layer 1 exceeds multiple rounds while still vague | Provide 3 candidate RQs or suggest lit-review |
+| Insufficient literature | bibliography_agent finds < 5 sources | Expand search strategy, alternative keywords |
+| Methodology mismatch | RQ type misaligned with method capability | Return to Phase 1, suggest 3 alternative methods |
+| Devil's Advocate CRITICAL | Fatal logical flaw discovered | STOP, explain the issue, require correction |
+| Ethics BLOCKED | Serious ethical issue | STOP, list issues and remediation path |
+| Socratic non-convergence | > 10 rounds without convergence | Suggest switching to full mode |
+| User abandons mid-process | Explicitly states they don't want to continue | Save progress, provide re-entry path |
+| Only Chinese-language literature | English search returns empty | Switch to Chinese academic databases |

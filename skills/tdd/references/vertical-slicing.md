@@ -1,78 +1,78 @@
 # Vertical Slicing (Tracer Bullets)
 
-## Что это
+## What it is
 
-**Vertical slice** — одно тонкое поведение от тестового интерфейса до реализации, законченное за один Red→Green→Refactor цикл. Не "сначала весь скелет, потом мясо", а "одно работающее end-to-end поведение, потом следующее".
+A **vertical slice** is one thin behavior, from the test interface down to the implementation, finished in a single Red→Green→Refactor cycle. Not "the whole skeleton first, then the meat", but "one working end-to-end behavior, then the next".
 
-Аналогия из стрельбы: tracer bullet (трассирующая пуля) светится в полёте — ты сразу видишь, попал ли в цель. В разработке: первая vertical slice проверяет, что весь путь от ввода до результата в принципе работает. Дальнейшие slices добавляют поведение поверх работающей основы.
+The analogy comes from shooting: a tracer bullet glows in flight, so you see at once whether you hit the target. In development, the first vertical slice checks that the whole path from input to result works at all. Further slices add behavior on top of a working base.
 
-## Почему vertical, а не horizontal
+## Why vertical rather than horizontal
 
-**Horizontal slicing** разбивает работу по слоям: сначала все тесты, потом вся реализация (или: сначала все БД-таблицы, потом весь backend, потом весь frontend). Проблемы:
+**Horizontal slicing** splits the work by layers: first all the tests, then the whole implementation (or: first all the DB tables, then the whole backend, then the whole frontend). The problems:
 
-1. **Тесты, написанные пачкой, оторваны от реальности.** Ты не знаешь, как ведёт себя код, пока не написал реализацию. Тесты получаются про воображаемое поведение.
-2. **Долго до первой работающей фичи.** Нужно закрыть весь слой, прежде чем что-то заработает.
-3. **Изменения в дизайне дороги.** Если на 4-м тесте понимаешь, что интерфейс должен быть другим — переписываешь предыдущие 3 теста и их реализации.
+1. **Tests written in a batch are detached from reality.** You don't know how the code behaves until you have written the implementation. The tests end up being about imagined behavior.
+2. **A long wait for the first working feature.** You have to close the whole layer before anything works.
+3. **Design changes are expensive.** If on the 4th test you realise the interface should be different, you rewrite the previous 3 tests and their implementations.
 
-**Vertical slicing** разбивает по поведениям. Каждый slice — самодостаточный. После каждого цикла у тебя есть **рабочая частичная фича**, которую можно показать.
+**Vertical slicing** splits by behaviors. Each slice is self-contained. After every cycle you have a **working partial feature** that you can show.
 
-## Правильный flow
+## The right flow
 
 ```
-Поведение 1: пользователь может добавить товар в корзину
+Behavior 1: the user can add a product to the cart
   RED:    test_add_to_cart_increases_count
-  GREEN:  cart.add(product) увеличивает len(cart.items)
+  GREEN:  cart.add(product) increases len(cart.items)
 
-Поведение 2: пустая корзина считается невалидной
+Behavior 2: an empty cart counts as invalid
   RED:    test_empty_cart_invalid
-  GREEN:  cart.is_valid() возвращает False для пустой
+  GREEN:  cart.is_valid() returns False for an empty one
 
-Поведение 3: checkout с валидной корзиной возвращает confirmed
+Behavior 3: checkout with a valid cart returns confirmed
   RED:    test_checkout_returns_confirmed_for_valid_cart
-  GREEN:  checkout() вызывает payment, возвращает Result(status="confirmed")
+  GREEN:  checkout() calls payment, returns Result(status="confirmed")
 ```
 
-Каждый шаг работает независимо. После шага 1 корзина уже умеет принимать товары — этого хватит для какого-то use case. После шага 3 — minimum viable checkout.
+Each step works on its own. After step 1 the cart can already accept products, which is enough for some use case. After step 3 you have a minimum viable checkout.
 
-## Tracer bullet — первый shot
+## Tracer bullet: the first shot
 
-Первая slice особенно важна. Её цель — **доказать, что путь работает end-to-end**, а не покрыть все случаи. Hardcoded return values — нормально на этом этапе. Smoke test — нормально.
+The first slice matters most. Its goal is to **prove that the path works end-to-end**, not to cover every case. Hardcoded return values are fine at this stage. A smoke test is fine.
 
-Пример: если делаешь API-эндпойнт, первая slice — "POST /checkout возвращает 200". Не валидация ввода, не error handling, не proper response body. Просто 200. После этого добавляешь поведения.
+Example: if you are building an API endpoint, the first slice is "POST /checkout returns 200". Not input validation, not error handling, not a proper response body. Just 200. After that you add behaviors.
 
 ```python
-# Первый tracer bullet — минимально работает
+# The first tracer bullet - minimally works
 def test_checkout_endpoint_returns_200():
     response = client.post("/checkout", json={"cart_id": "abc"})
     assert response.status_code == 200
 
-# Реализация может быть hardcoded
+# The implementation may be hardcoded
 @app.post("/checkout")
 def checkout_endpoint(payload):
     return {"status": "ok"}
 ```
 
-Это позорный код. Но он работает. После этого следующий тест требует реальной валидации — добавляешь, и реализация эволюционирует естественно.
+This is embarrassing code. But it works. After it, the next test demands real validation; you add it, and the implementation evolves naturally.
 
-## Как разбивать на slices
+## How to split into slices
 
-Хороший slice = одно наблюдаемое поведение, описуемое одним предложением.
+A good slice = one observable behavior that can be described in one sentence.
 
-Признаки правильного slice:
-- Описывается через "пользователь может ..." или "система делает ..."
-- Не зависит от других slices в этом же цикле
-- Реализуется за 5-15 минут (не 2 часа)
-- Можно демонстрировать без объяснений: "вот это работает"
+Signs of a right slice:
+- It is described as "the user can ..." or "the system does ..."
+- It does not depend on other slices in the same cycle
+- It takes 5-15 minutes to implement (not 2 hours)
+- It can be demonstrated without explanation: "this works"
 
-Признаки неправильного slice:
-- Описывается через "и ... и ... и ..." (несколько поведений в одном)
-- Требует одновременных изменений в 5 файлах
-- Невозможно объяснить без диаграммы
+Signs of a wrong slice:
+- It is described as "and ... and ... and ..." (several behaviors in one)
+- It needs simultaneous changes in 5 files
+- It cannot be explained without a diagram
 
-Если slice большой — разбивай. Если slice сделался за 30 секунд — следующий может быть жирнее.
+If a slice is big, split it. If a slice took 30 seconds, the next one can be meatier.
 
-## После TDD-сессии
+## After the TDD session
 
-После завершения всех slices код может выглядеть наивно (hardcoded ветки, дублирование, неоптимальные структуры). Это нормально — для этого Refactor phase. Когда все behaviors покрыты тестами, можно безопасно улучшать дизайн: тесты ловят регрессии.
+Once all the slices are done, the code may look naive (hardcoded branches, duplication, sub-optimal structures). That is normal; that is what the Refactor phase is for. When all behaviors are covered by tests, you can improve the design safely: the tests catch regressions.
 
-Каждый slice соответствует одному критерию спеки (AC/EC/ERR, см. `spec-phase.md`): один наблюдаемый behavior = один тег = один Red→Green→Refactor.
+Each slice corresponds to one spec criterion (AC/EC/ERR, see `spec-phase.md`): one observable behavior = one tag = one Red→Green→Refactor.

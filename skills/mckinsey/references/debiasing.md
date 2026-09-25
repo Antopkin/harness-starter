@@ -1,114 +1,114 @@
 # Debiasing Toolkit
 
-Протоколы для борьбы с типичными bias'ами в анализе и рекомендациях. Подгружается перед крупной рекомендацией или по явному запросу пользователя на сильный challenge («оспорь», «найди слабые места», «разнеси», «адвокат дьявола», «red team», и т.п.).
+Protocols against the typical biases in analysis and recommendations. Load it before a major recommendation or on an explicit request from the user for a strong challenge ("challenge this", "find the weak spots", "tear it apart", "devil's advocate", "red team", and so on).
 
 ---
 
 ## 1. Premortem
 
-**Когда:** перед каждой рекомендацией (встроено в текст, 3-5 строк). Для крупных deliverables - отдельная микро-секция.
+**When:** before every recommendation (built into the text, 3-5 lines). For major deliverables, a separate micro-section.
 
-**Протокол:**
-1. Представить: «прошло 6 месяцев с момента, когда мы выполнили эту рекомендацию. Она провалилась.»
-2. Ответить на вопросы:
-   - Какая наиболее вероятная причина провала?
-   - Какое допущение, если окажется неверным, ломает всю логику?
-   - Что мы сейчас игнорируем, потому что не хотим думать?
-3. Сформулировать 2-3 наиболее правдоподобных failure mode
+**Protocol:**
+1. Imagine: "6 months have passed since we carried out this recommendation. It failed."
+2. Answer the questions:
+   - What is the most likely cause of the failure?
+   - Which assumption, if it turns out wrong, breaks the whole logic?
+   - What are we ignoring right now because we don't want to think about it?
+3. Formulate the 2-3 most plausible failure modes
 
-**Пример встройки:**
+**Example of building it in:**
 
-> Рекомендация - переход на usage-based pricing для трёх ключевых контрактов.
+> Recommendation - move three key contracts to usage-based pricing.
 >
-> *Premortem:* через 6 мес это может провалиться, если (а) объём окажется ниже прогноза - тогда usage-based даст меньший cash flow; (б) X пересмотрит предложение после того, как Y подпишет, и поднимет ставку; (в) операционная команда не успеет перестроить процессы под переменное выставление счетов. Mitigations: floor pricing в контракте; параллельные переговоры со всеми тремя; pre-work с finance ops.
+> *Premortem:* in 6 months this may fail if (a) volume turns out below forecast - then usage-based gives a smaller cash flow; (b) X revises its offer after Y signs and raises the rate; (c) the operations team does not manage to rebuild its processes for variable invoicing. Mitigations: floor pricing in the contract; parallel negotiations with all three; pre-work with finance ops.
 
-**Анти-паттерн:** premortem ради формы («может быть, что-то пойдёт не так»). Должно быть конкретно и attackable.
+**Anti-pattern:** a premortem for form's sake ("something might go wrong"). It has to be concrete and attackable.
 
 ---
 
 ## 2. Outside View (Reference Class Forecasting)
 
-**Когда:** оценка длительности проекта, ROI инициативы, успешности входа на рынок, M&A synergies, любая прогностическая оценка где есть прецеденты.
+**When:** estimating project duration, the ROI of an initiative, the success of a market entry, M&A synergies, any forecast where precedents exist.
 
-**Протокол:**
-1. Inside view (обычный): «вот наши специфические факторы, поэтому будет X»
-2. **Outside view:** найти reference class - похожие проекты / инициативы / сделки в индустрии или у компании. Какова base rate?
-3. Сравнить: ваш inside-view прогноз vs base rate. Если разлёт >20% - почему вы думаете, что вы исключение?
+**Protocol:**
+1. Inside view (the usual one): "here are our specific factors, so it will be X"
+2. **Outside view:** find a reference class - similar projects / initiatives / deals in the industry or at the company. What is the base rate?
+3. Compare: your inside-view forecast vs the base rate. If the gap is >20%, why do you think you are the exception?
 
-**Примеры reference classes:**
-- M&A synergies: 70-90% сделок не достигают объявленных synergies на 100%; средняя реализация - 40-60%
-- IT-проекты в крупных корпорациях: ~50% превышают бюджет в 2×, ~30% не доходят до production
-- Market entry в новую географию: средний break-even - 2-3× от первоначального плана
-- Time to MVP в стартапах: middle estimate × 1.6-2.2
+**Example reference classes:**
+- M&A synergies: 70-90% of deals do not reach 100% of the announced synergies; average realisation is 40-60%
+- IT projects in large corporations: ~50% overrun the budget by 2×, ~30% never reach production
+- Market entry into a new geography: the average break-even is 2-3× the original plan
+- Time to MVP in start-ups: middle estimate × 1.6-2.2
 
-**Защита от planning fallacy** (систематическая недооценка длительности / переоценка успеха).
+**Protection against the planning fallacy** (systematic underestimation of duration / overestimation of success).
 
 ---
 
 ## 3. Red Team / Blue Team
 
-**Когда:** крупное стратегическое решение, инвестиция, готовность к публичной защите рекомендации.
+**When:** a major strategic decision, an investment, readiness to defend a recommendation in public.
 
-**Протокол:**
-1. **Blue team** - твоя текущая позиция, со всеми её аргументами
-2. **Red team** - сильнейший контр-кейс. Не strawman; задача - **проиграть** Blue team на дебатах
-   - Найти 3 strongest contrarian аргументы
-   - Указать, какие данные Blue team игнорирует / интерпретирует favorably
-   - Предложить альтернативную интерпретацию тех же фактов
-3. Сравнить: где Blue team держится, где Red team пробивает
-4. Принять решение: либо усилить Blue team (закрыть найденные слабости), либо пересмотреть позицию
+**Protocol:**
+1. **Blue team** - your current position, with all its arguments
+2. **Red team** - the strongest counter-case. Not a strawman; the task is to make Blue team **lose** the debate
+   - Find the 3 strongest contrarian arguments
+   - Point out which data Blue team ignores / interprets favourably
+   - Offer an alternative interpretation of the same facts
+3. Compare: where Blue team holds, where Red team breaks through
+4. Decide: either strengthen Blue team (close the weaknesses found) or revise the position
 
-**Critical:** Red team должен быть честным. Если делается ради формы - бессмысленно. Тест: после Red team хочется ли тебе пересмотреть рекомендацию хотя бы по одному пункту? Если нет - либо позиция действительно несокрушимая (редко), либо Red team был слабым.
+**Critical:** Red team has to be honest. Done for form's sake, it is pointless. Test: after Red team, do you want to revise the recommendation on at least one point? If not, either the position really is unbreakable (rare) or Red team was weak.
 
 ---
 
 ## 4. Devil's Advocate
 
-**Когда:** пользователь явно попросил («оспорь», «покритикуй», «жёстче», «адвокат дьявола», «не убедил», «сомневаюсь», «разнеси»).
+**When:** the user explicitly asked for it ("challenge this", "critique it", "be harsher", "devil's advocate", "not convinced", "I doubt it", "tear it apart").
 
-**Отличие от Red Team:** менее структурно, более агрессивно; задача - максимально расшатать позицию пользователя.
+**Difference from Red Team:** less structured, more aggressive; the task is to shake the user's position as hard as possible.
 
-**Протокол:**
-1. Принять контрарианскую позицию полностью; не хеджить «с одной стороны / с другой стороны»
-2. Сформулировать 3-5 strongest аргументов **против** позиции пользователя
-3. Указать, что должно быть истиной, чтобы позиция пользователя оказалась ошибочной
-4. Назвать самое слабое место его аргументации
-5. **В конце** - честная оценка: «если эти контр-аргументы тебя не пробили, твоя позиция выдержала; если хоть один зацепил - вот что переосмыслить»
+**Protocol:**
+1. Take the contrarian position fully; do not hedge with "on the one hand / on the other hand"
+2. Formulate the 3-5 strongest arguments **against** the user's position
+3. State what would have to be true for the user's position to turn out wrong
+4. Name the weakest point of their argument
+5. **At the end** - an honest assessment: "if these counter-arguments did not get through to you, your position held; if even one caught, here is what to rethink"
 
-**Не делать:**
-- Не превращать в Q&A («может быть, ты учёл X?»). Devil's advocate - утверждения, не вопросы
-- Не оставлять «безопасные» оговорки («скорее всего ты прав, но просто на всякий случай...»)
-- Не идти по straw man'ам - атаковать сильнейшую версию аргументации пользователя
+**Don't:**
+- Don't turn it into Q&A ("maybe you took X into account?"). Devil's advocate makes statements, not questions
+- Don't leave "safe" caveats ("you are most likely right, but just in case...")
+- Don't go after straw men - attack the strongest version of the user's argument
 
 ---
 
-## 5. Bias Busters (типичные ловушки)
+## 5. Bias Busters (typical traps)
 
-Чек-лист на проход перед финальной рекомендацией. Не все применимы каждый раз - выбирать релевантные.
+A checklist to run before the final recommendation. Not all of them apply every time - pick the relevant ones.
 
-| Bias | Как проявляется | Как проверить |
+| Bias | How it shows up | How to check |
 |------|----------------|---------------|
-| **Anchoring** | Первая названная цифра (план, оценка, цена) задаёт диапазон всех последующих | Назвать цифру независимо, до того как услышал чужую; пересчитать from scratch |
-| **Confirmation** | Ищем подтверждения гипотезы, игнорируем опровержения | Killer fact искать первым; явно спросить «какие данные опровергли бы это?» |
-| **Sunk cost** | «Уже вложили X, надо продолжать» | Игнорировать прошлые затраты; решать с нуля «вложил бы я сейчас Y, чтобы получить Z?» |
-| **Availability** | Недавние / яркие случаи кажутся более частыми | Спросить «какова base rate?» (см. Outside View) |
-| **Overconfidence** | Узкий диапазон оценок без признания неизвестного | 90% confidence interval - пусть будет реально широкий; explicit Low/Med/High calibration |
-| **Halo effect** | Хорошее впечатление от X переносится на оценку всего, что связано с X | Оценивать каждый аспект отдельно; не позволять «компания крутая» → «их идея крутая» |
-| **Sunflower bias** | Команда подстраивается под мнение лидера / клиента | Каждый формулирует позицию **до** обсуждения; pre-mortem индивидуально, потом обсуждать |
-| **Loss aversion** | Переоцениваем потенциальные потери vs equivalent gains | Переформулировать: вместо «может потерять X» - «может не получить эквивалент X» |
-| **Status quo bias** | Сохранять текущее по умолчанию | Сравнить «продолжать как сейчас» vs «начать с нуля сегодня - выбрал бы я это?» |
-| **Framing** | Та же ситуация в позитивной vs негативной формулировке даёт разные решения | Переформулировать problem statement и рекомендацию; смотрит ли всё ещё ок? |
+| **Anchoring** | The first figure named (plan, estimate, price) sets the range for everything that follows | Name your figure independently, before you hear anyone else's; recalculate from scratch |
+| **Confirmation** | We look for confirmation of the hypothesis and ignore refutations | Look for the killer fact first; ask explicitly "what data would refute this?" |
+| **Sunk cost** | "We already invested X, we have to keep going" | Ignore past costs; decide from zero: "would I invest Y now to get Z?" |
+| **Availability** | Recent / vivid cases seem more frequent | Ask "what is the base rate?" (see Outside View) |
+| **Overconfidence** | A narrow range of estimates with no admission of the unknown | Let the 90% confidence interval be really wide; explicit Low/Med/High calibration |
+| **Halo effect** | A good impression of X carries over to the assessment of everything linked to X | Assess each aspect separately; do not let "the company is great" → "their idea is great" |
+| **Sunflower bias** | The team adjusts to the opinion of the leader / client | Everyone formulates a position **before** the discussion; pre-mortem individually, then discuss |
+| **Loss aversion** | We overweight potential losses vs equivalent gains | Reframe: instead of "may lose X" - "may not gain the equivalent of X" |
+| **Status quo bias** | Keeping the current state by default | Compare "carry on as now" vs "starting from zero today - would I choose this?" |
+| **Framing** | The same situation framed positively vs negatively leads to different decisions | Reframe the problem statement and the recommendation; does everything still look fine? |
 
 ---
 
-## Когда применять что
+## When to use what
 
-| Ситуация | Инструмент |
+| Situation | Tool |
 |----------|-----------|
-| Любая рекомендация (всегда) | **Premortem** (краткий, встроенный) |
-| Прогноз времени / ROI / успеха | **Outside View** (reference class) |
-| Крупное решение, готовность к защите | **Red Team / Blue Team** |
-| Пользователь явно просит оспорить | **Devil's Advocate** (strong-form) |
-| Финальная проверка перед deliverable | **Bias Busters** (chek-list) |
+| Any recommendation (always) | **Premortem** (short, built in) |
+| Forecast of time / ROI / success | **Outside View** (reference class) |
+| A major decision, readiness to defend it | **Red Team / Blue Team** |
+| The user explicitly asks to challenge | **Devil's Advocate** (strong-form) |
+| Final check before a deliverable | **Bias Busters** (checklist) |
 
-Не применять всё сразу - утомляет и ломает поток. Выбирать инструмент под уровень ставок.
+Do not apply everything at once - it tires the reader and breaks the flow. Pick the tool to match the stakes.

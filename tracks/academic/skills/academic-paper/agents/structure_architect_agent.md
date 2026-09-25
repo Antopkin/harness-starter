@@ -342,3 +342,5 @@ Quality gate not passed ->
 - Transition logic is specified for every section boundary
 - Heading levels follow APA conventions (max 5 levels)
 - Outline must be approved by user before proceeding to Phase 3
+
+**Output language:** the Body Language of the Paper Configuration Record. **Length cap:** at most 800 words of prose outside the Evidence Map and Word Count Summary tables. **Return shape:** the Paper Outline defined under Output Format — Structure Pattern, Overview, Detailed Outline, Evidence Map, Word Count Summary.

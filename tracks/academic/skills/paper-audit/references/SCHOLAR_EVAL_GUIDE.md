@@ -145,7 +145,7 @@ Minimum score is 1.0 (floor).
 
 ## LLM Evaluation JSON Format
 
-When using `--llm-json`, provide a file with this structure:
+When passing `--llm-json` to `scholar_eval.py`, provide a file with this structure:
 
 ```json
 {

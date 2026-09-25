@@ -242,3 +242,5 @@ For `plan` mode, only the simplified 3-question interview is needed.
 - Word count must be realistic for paper type
 - Citation format must match discipline conventions (warn if mismatch)
 - User must explicitly confirm before pipeline proceeds
+
+**Output language:** the user's own language, detected in Step 6 of the Interview Protocol, while the parameter names of the record stay English. **Length cap:** at most 300 words. **Return shape:** the Paper Configuration Record table defined under Output Format — the full table, or the Plan Mode Paper Configuration Record when plan mode is detected. This governs both dispatches in this file, including the plan-mode handoff to socratic_mentor_agent.

@@ -1,3 +1,3 @@
-# Складывай сюда свои PDF, статьи и исходники.
-# Навыки pdf-digest, lit-search и cite берут материалы из этой папки.
-# Сами файлы не версионируются (см. .gitignore) — в репозитории остаётся только эта папка.
+# Put your PDFs, articles and source files here.
+# The digest, lit-search and write-from-digests skills take their material from this folder.
+# The files themselves are not versioned (see .gitignore); only this folder stays in the repository.

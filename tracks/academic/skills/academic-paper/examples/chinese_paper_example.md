@@ -20,8 +20,8 @@ The following is a complete Chinese academic paper example produced by `full mod
 
 **Authors**: Chia-Hui Lin ¹, Chih-Ming Chen ²
 
-¹ Department of Education, National Chengchi University, Taipei, Taiwan
-² Graduate Institute of Higher Education, Tamkang University, New Taipei, Taiwan
+¹ Department of Education, Example National University, Taipei, Taiwan
+² Graduate School of Higher Education, Example Private University, New Taipei, Taiwan
 
 **Corresponding Author**: Chia-Hui Lin (jiahuei.lin@nccu.edu.tw)
 
@@ -51,7 +51,7 @@ Taiwan is facing a severe demographic crisis, with the number of first-year coll
 
 Taiwan's annual births plummeted from 305,000 in 2000 to 135,000 in 2023, and the tsunami of declining birth rates is impacting the higher education system with a force that is predictable yet difficult to resist (National Development Council, 2024). According to MOE statistics, the number of first-year postsecondary students in the 2024 academic year was 198,000, a decrease of approximately 27.5% from a decade earlier, and this trend is projected to continue until the mid-2030s before reaching bottom (MOE, 2024). Among all institutions, private universities bear the greatest pressure. As of 2024, 12 private postsecondary institutions have ceased operations or undergone exit transitions (MOE, 2024), with many more facing enrollment shortfalls and financial difficulties threatening their survival.
 
-The impact of declining birth rates on private universities is not uniform. Resource-rich, highly reputed private universities (such as Chang Gung University and Fu Jen Catholic University) have maintained stable enrollment, but mid-to-lower-tier regional private universities face cliff-like losses in student sources (Huang, 2023). This polarization means that enrollment strategy transformation is not merely a management issue but a strategic decision with existential implications.
+The impact of declining birth rates on private universities is not uniform. Resource-rich, highly reputed private universities (such as the fictional Northfield University and Lakeview University of this synthetic example) have maintained stable enrollment, but mid-to-lower-tier regional private universities face cliff-like losses in student sources (Huang, 2023). This polarization means that enrollment strategy transformation is not merely a management issue but a strategic decision with existential implications.
 
 ### 2. Research Questions
 
@@ -123,7 +123,7 @@ This study employed an explanatory sequential design (Creswell & Creswell, 2023)
 
 ### 4. Research Ethics
 
-This study was approved by the Institutional Review Board of National Chengchi University (Approval No.: NCCU-IRB-2024-0123). All participants signed informed consent forms, and interview data use coded identifiers (U1-U12) in place of institution names to protect anonymity.
+This study was approved by the Institutional Review Board of Example National University (Approval No.: ENU-IRB-2024-0123). All participants signed informed consent forms, and interview data use coded identifiers (U1-U12) in place of institution names to protect anonymity.
 
 ---
 

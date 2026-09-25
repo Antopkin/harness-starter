@@ -1,176 +1,178 @@
-# MCP для академического трека — два сервера
+# MCP for the academic overlay: two servers
 
-Этот каталог подключает к твоему агенту два внешних инструмента («MCP-сервера»).
-После подключения агент умеет **искать научные статьи по десяткам баз** и **работать
-с твоей личной библиотекой Zotero** — не выходя из чата.
+This folder connects two external tools ("MCP servers") to your agent. Once they are
+connected, the agent can **search for research papers across dozens of databases** and
+**work with your personal Zotero library**, without leaving the chat.
 
-Всё рассчитано на участника трека «академические источники», а не на конкретного
-человека: ставится из коробки, ключи — твои личные, в примере вместо них плейсхолдеры.
+Everything is written for anyone who works with academic sources, not for a particular
+person: it installs out of the box, the keys are your own, and the example has placeholders
+instead of them.
 
-> **MCP простыми словами.** MCP (Model Context Protocol) — это стандартный «переходник»,
-> через который агент получает новые способности. Один сервер = один набор способностей.
-> Мы подключаем два: поиск статей и Zotero.
+> **MCP in plain words.** MCP (Model Context Protocol) is a standard "adapter" through which
+> the agent gains new abilities. One server = one set of abilities. We connect two: paper
+> search and Zotero.
 
 ---
 
-## Что дают эти два сервера
+## What the two servers give you
 
-### 1. `paper-search` — поиск и скачивание научных статей
+### 1. `paper-search` — searching and downloading research papers
 
-Открывает агенту прямой доступ к академическим базам, минуя ручной веб-поиск:
+It gives the agent direct access to academic databases, bypassing manual web search:
 
-- **Препринты и открытый доступ:** arXiv, bioRxiv, medRxiv, SSRN, HAL, IACR, Zenodo,
+- **Preprints and open access:** arXiv, bioRxiv, medRxiv, SSRN, HAL, IACR, Zenodo,
   DOAJ, BASE, CORE, OpenAlex, OpenAIRE.
-- **Медицина и биология:** PubMed, PMC, Europe PMC.
-- **Метаданные и связи:** CrossRef (по DOI), Semantic Scholar, DBLP (CS), Google
-  Scholar, Unpaywall (открытая версия за пейволлом).
-- **Операции над каждой базой:** `search_*` — найти по запросу; `read_*_paper` —
-  прочитать полный текст; `download_*` — скачать PDF. Есть `download_with_fallback` —
-  попытаться забрать PDF из нескольких источников по очереди.
+- **Medicine and biology:** PubMed, PMC, Europe PMC.
+- **Metadata and links:** CrossRef (by DOI), Semantic Scholar, DBLP (CS), Google
+  Scholar, Unpaywall (the open version of a paywalled paper).
+- **Operations on each database:** `search_*` finds by query; `read_*_paper` reads the
+  full text; `download_*` downloads the PDF. There is also `download_with_fallback`, which
+  tries to fetch the PDF from several sources in turn.
 
-Зачем: агент за один заход ищет по нескольким базам, отсеивает нерелевантное,
-вытаскивает метаданные (авторы, год, DOI) и кладёт PDF к тебе в `materials/` — без
-копипаста ссылок вручную.
+Why: in one pass the agent searches several databases, filters out what is irrelevant,
+extracts the metadata (authors, year, DOI) and puts the PDFs into your `materials/`, with
+no copying and pasting of links by hand.
 
-> **Правовая рамка.** Сервер технически умеет тянуть тексты и из теневых библиотек.
-> В этом треке мы так **не делаем**: используем открытый доступ, Unpaywall,
-> подписку вуза и межбиблиотечный запрос. Подробнее — `runbooks/eresources.md`.
+> **The legal frame.** The server is technically able to pull texts from shadow libraries
+> too. We **do not do that**: we use open access, Unpaywall, your university's
+> subscription and interlibrary loan. More in `runbooks/eresources.md`.
 
-### 2. `zotero` — твоя личная библиотека
+### 2. `zotero` — your personal library
 
-Подключает **твою** библиотеку Zotero (менеджер источников) к агенту:
+It connects **your** Zotero library (a reference manager) to the agent:
 
-- **Поиск по своей библиотеке:** по словам, по тегам, расширенный поиск и
-  семантический поиск (по смыслу, а не по точному слову).
-- **Чтение:** метаданные записи, полный текст вложения, дочерние заметки и
-  аннотации, недавно добавленное.
-- **Запись:** создать заметку к источнику, добавить аннотацию, проставить/обновить
-  теги пачкой.
+- **Searching your library:** by words, by tags, advanced search and semantic search (by
+  meaning rather than by exact word).
+- **Reading:** a record's metadata, the full text of an attachment, child notes and
+  annotations, recently added items.
+- **Writing:** create a note on a source, add an annotation, add or update tags in bulk.
 
-Зачем: агент отвечает на вопросы по твоим уже собранным источникам, складывает
-конспекты и синтез обратно в Zotero как заметки, приводит библиотеку в порядок тегами.
+Why: the agent answers questions about the sources you have already collected, puts
+digests and syntheses back into Zotero as notes, and tidies the library with tags.
 
-> **Что Zotero-сервер НЕ делает:** он не добавляет в библиотеку **новые** записи
-> (саму статью). Новый источник ты кладёшь в Zotero сам — кнопкой Zotero Connector
-> в браузере или импортом; агент потом эту запись находит, конспектирует и аннотирует.
-> Детали — `runbooks/zotero.md`.
+> **What the Zotero server does NOT do:** it does not add **new** records (the paper
+> itself) to the library. You put a new source into Zotero yourself, with the Zotero
+> Connector button in the browser or by importing; the agent then finds that record,
+> digests it and annotates it. Details: `runbooks/zotero.md`.
 
 ---
 
-## Как подключить (пошагово)
+## How to connect (step by step)
 
-### Шаг 1. Поставь то, что запускает серверы
+### Step 1. Install what runs the servers
 
-Оба сервера — на Python и удобнее всего запускаются через **`uv`** (быстрый
-установщик, команда `uvx` качает и запускает пакет одним вызовом).
+Both servers are written in Python and are easiest to run through **`uv`** (a fast
+installer; the `uvx` command downloads and runs a package in one call).
 
-- Поставь `uv` по официальной инструкции: <https://docs.astral.sh/uv/> (короткая
-  команда установки есть на первой странице).
-- Проверь: в терминале `uvx --version` должен что-то ответить.
+- Install `uv` following the official instructions: <https://docs.astral.sh/uv/> (the
+  short install command is on the front page).
+- Check: `uvx --version` in the terminal should print something.
 
-Если `uv` не хочешь — подойдёт обычный `pip install paper-search-mcp` /
-`pip install zotero-mcp`; тогда в конфиге вместо `uvx` укажи прямой запуск (см. ниже).
-Точный модуль запуска сверь в README самого сервера — имена пакетов иногда меняются.
+If you would rather not use `uv`, plain `pip install paper-search-mcp` /
+`pip install zotero-mcp` works too; in that case put the direct launch command in the
+config instead of `uvx` (see below). Check the exact launch module in the server's own
+README: package names change from time to time.
 
-### Шаг 2. Скопируй конфиг и вставь свои ключи
+### Step 2. Copy the config and put in your keys
 
-Рядом лежит `.mcp.json.example` — готовый шаблон на оба сервера с плейсхолдерами.
+Next to this file is `.mcp.json.example`, a ready template for both servers with
+placeholders.
 
-1. Скопируй его в корень своей рабочей папки (корень репозитория, где стоит база)
-   под именем `.mcp.json`:
+1. Copy it to the root of your working folder (the repository root, where the base is
+   installed) under the name `.mcp.json`:
    ```
    cp tracks/academic/mcp/.mcp.json.example .mcp.json
    ```
-2. Открой `.mcp.json` и замени все `YOUR_..._KEY` / `YOUR_..._ID` на свои значения
-   (где их взять — ниже). Строки с ключами, которые тебе не нужны, можно удалить.
-3. `.mcp.json` в корне проекта Claude Code подхватывает автоматически при следующем
-   запуске в этой папке. Для OpenCode / Codex — см. их доку по MCP, формат тот же
-   (`command` + `args` + `env`).
+2. Open `.mcp.json` and replace every `YOUR_..._KEY` / `YOUR_..._ID` with your own values
+   (where to get them is below). You can delete the lines with keys you do not need.
+3. Claude Code picks up `.mcp.json` in the project root automatically the next time it
+   starts in this folder. For OpenCode / Codex, see their MCP documentation; the format is
+   the same (`command` + `args` + `env`).
 
-> **Секреты не коммить.** `.mcp.json` с реальными ключами не должен попадать в git.
-> Проверь, что `.mcp.json` и `*token*`/`*secret*` есть в `.gitignore` (в стартере они
-> уже там). В репозиторий кладём только `.mcp.json.example` с плейсхолдерами.
+> **Do not commit secrets.** A `.mcp.json` with real keys must never get into git. Check
+> that `.mcp.json` and `*token*`/`*secret*` are in `.gitignore` (this kit already lists
+> them). Only `.mcp.json.example` with placeholders goes into the repository.
 
-### Шаг 3. Проверь, что агент увидел серверы
+### Step 3. Check that the agent sees the servers
 
-Открой агента в этой папке и попроси:
+Open the agent in this folder and ask:
 
-> Покажи, какие MCP-серверы подключены и какие инструменты доступны.
+> Show which MCP servers are connected and which tools are available.
 
-В списке должны появиться `paper-search` и `zotero`. Если сервера нет — агент обычно
-пишет причину (не найден пакет, неверный ключ); почини по сообщению и перезапусти.
+`paper-search` and `zotero` should appear in the list. If a server is missing, the agent
+usually states the reason (package not found, wrong key); fix it according to the message
+and restart.
 
 ---
 
-## Где взять ключи
+## Where to get the keys
 
-### Zotero (нужен для сервера `zotero`)
+### Zotero (needed for the `zotero` server)
 
-Два поля из конфига — `ZOTERO_API_KEY` и `ZOTERO_LIBRARY_ID`:
+Two fields from the config, `ZOTERO_API_KEY` and `ZOTERO_LIBRARY_ID`:
 
-1. Зайди в свой аккаунт Zotero и открой страницу ключей:
+1. Sign in to your Zotero account and open the keys page:
    **<https://www.zotero.org/settings/keys>**.
-2. **`ZOTERO_LIBRARY_ID`** — это твой числовой **userID**, он показан прямо на этой
-   странице («Your userID for use in API calls is …»).
-3. **`ZOTERO_API_KEY`** — нажми **Create new private key**
-   (<https://www.zotero.org/settings/keys/new>), дай ему доступ на чтение (а для
-   сохранения заметок/тегов — и на запись библиотеки), сохрани. Ключ показывается
-   один раз — скопируй сразу.
-4. **`ZOTERO_LIBRARY_TYPE`** — оставь `user` для личной библиотеки; для групповой
-   поставь `group`, а в `ZOTERO_LIBRARY_ID` — номер группы.
+2. **`ZOTERO_LIBRARY_ID`** is your numeric **userID**; it is shown right on that page
+   ("Your userID for use in API calls is …").
+3. **`ZOTERO_API_KEY`**: click **Create new private key**
+   (<https://www.zotero.org/settings/keys/new>), give it read access (and, to save notes and
+   tags, write access to the library as well), and save. The key is shown only once, so
+   copy it right away.
+4. **`ZOTERO_LIBRARY_TYPE`**: leave `user` for a personal library; for a group library set
+   `group` and put the group number into `ZOTERO_LIBRARY_ID`.
 
-Официальная документация Zotero Web API: **<https://www.zotero.org/support/dev/web_api/v3/start>**.
+The official Zotero Web API documentation: **<https://www.zotero.org/support/dev/web_api/v3/start>**.
 
-**Альтернатива без ключа — локальный режим.** Если Zotero стоит на этом же
-компьютере, сервер может ходить в него напрямую, без веб-ключа. Тогда в `env`
-вместо трёх полей выше поставь одно:
+**A keyless alternative: local mode.** If Zotero is installed on the same computer, the
+server can talk to it directly, without a web key. In that case, instead of the three
+fields above, put a single one into `env`:
 ```json
 "env": { "ZOTERO_LOCAL": "true" }
 ```
-и в самом Zotero включи локальный доступ: **Settings → Advanced → «Allow other
-applications on this computer to communicate with Zotero»**, десктоп должен быть
-запущен. Веб-режим (с ключом) работает и без запущенного приложения, и с
-телефона/сервера — выбирай по ситуации.
+and in Zotero itself enable local access: **Settings → Advanced → "Allow other
+applications on this computer to communicate with Zotero"**; the desktop app must be
+running. Web mode (with a key) works without the app running and from a phone or a
+server too; choose whichever suits the situation.
 
-> **Семантический поиск по библиотеке** (искать по смыслу) требует однократной сборки
-> индекса — агент делает это вызовом обновления поисковой базы. Для качественных
-> эмбеддингов сервер может использовать внешнюю модель; если попросит ключ провайдера
-> — это отдельный `YOUR_..._KEY`, ставится тем же способом. Базовый поиск по словам и
-> тегам работает без этого.
+> **Semantic search across the library** (searching by meaning) requires building an
+> index once; the agent does this by calling the search-database update. For good
+> embeddings the server may use an external model; if it asks for a provider key, that is
+> a separate `YOUR_..._KEY`, set up the same way. Basic search by words and tags works
+> without it.
 
 ### paper-search
 
-Большинство баз (arXiv, PubMed, CrossRef, OpenAlex, bioRxiv, medRxiv, DOAJ, Europe
-PMC и др.) работают **без ключа** — можно вообще убрать блок `env`.
+Most databases (arXiv, PubMed, CrossRef, OpenAlex, bioRxiv, medRxiv, DOAJ, Europe PMC and
+others) work **without a key**; you can remove the `env` block altogether.
 
-Ключи-ускорители (опциональны, повышают лимиты/качество):
+Accelerator keys (optional, they raise limits or quality):
 
-- **`SEMANTIC_SCHOLAR_API_KEY`** — бесплатный ключ Semantic Scholar поднимает лимит
-  запросов. Запрос ключа: **<https://www.semanticscholar.org/product/api>**.
-- **`CORE_API_KEY`** — для базы CORE (агрегатор открытого доступа). Регистрация:
+- **`SEMANTIC_SCHOLAR_API_KEY`**: a free Semantic Scholar key raises the request limit.
+  Request a key at **<https://www.semanticscholar.org/product/api>**.
+- **`CORE_API_KEY`**: for the CORE database (an open-access aggregator). Registration:
   **<https://core.ac.uk/services/api>**.
 
-Не нужен ключ — удали соответствующую строку из `env`. Никогда не вписывай реальный
-ключ в `.mcp.json.example` и не коммить его.
+No key needed? Delete the corresponding line from `env`. Never write a real key into
+`.mcp.json.example` and never commit it.
 
 ---
 
-## Как это сочетается с навыками
+## How this fits with the skills
 
-Рецепты в `runbooks/` опираются на навыки трека — `lit-search` (поиск),
-`pdf-digest` (конспект PDF), `cite` (оформление ссылок). MCP-серверы для них —
-**ускорители**: с ними поиск и скачивание идут быстрее и по большему числу баз.
-Навыки при этом написаны так, что базовый цикл работает и без MCP — на обычном
-веб-поиске и чтении файлов. Нет навыков под рукой — рецепты всё равно применимы,
-просто формулируй шаги агенту словами из runbook'а.
+The runbooks in `runbooks/` rely on the base skills `lit-search` (search) and `digest`
+(a PDF digest that also formats the references). The MCP servers are **accelerators** for
+them: with the servers, search and download are faster and cover more databases. The skills
+are written so that the basic loop works without MCP as well, on ordinary web search and
+file reading. No skills at hand? The runbooks still apply: just describe the steps to the
+agent in the words of the runbook.
 
-## Рецепты
+## Runbooks
 
-- `runbooks/lit-review.md` — полный пайплайн обзора литературы: запрос → поиск →
-  скрининг → PDF → конспект → синтез → ссылки → сохранение в Zotero.
-- `runbooks/eresources.md` — доступ к платным ресурсам и библиотеке вуза через
-  браузер, аккуратно и в правовой рамке.
-- `runbooks/rag.md` — вопросы к своей папке PDF (`materials/`) с ответами со ссылками
-  на страницы.
-- `runbooks/zotero.md` — искать, сохранять и аннотировать в своей библиотеке через
-  агента.
+- `runbooks/lit-review.md` — the full literature-review pipeline: question → search →
+  screening → PDF → digest → synthesis → references → saving to Zotero.
+- `runbooks/eresources.md` — access to paywalled resources and your university library
+  through the browser, carefully and within the legal frame.
+- `runbooks/rag.md` — questions to your own PDF folder (`materials/`), answered with page
+  references.
+- `runbooks/zotero.md` — search, save and annotate in your own library through the agent.

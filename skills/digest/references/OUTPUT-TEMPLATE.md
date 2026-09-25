@@ -1,120 +1,121 @@
-# Целевая форма выхода — digest
+# Target output shape: digest
 
-Это **шаблон**, а не пример. Плейсхолдеры в угловых или квадратных скобках
-(`<тезис>`, `<локатор>`, `<дословная цитата>`) показывают **форму**, их нужно
-заменить реальным содержимым из источника. Не заполняй шаблон выдуманным текстом —
-это прямо противоречит антигаллюцинации навыка. Проверенные разобранные примеры —
-рядом: PDF-пример на настоящей статье в `skills/pdf-digest/references/EXAMPLE-digest.md`,
-примеры на docx и md — в `EXAMPLE-digest-docx.md` и `EXAMPLE-digest-md.md`.
+This is a **template**, not an example. Placeholders in angle or square brackets
+(`<claim>`, `<locator>`, `<verbatim quote>`) show the **shape** and must be replaced
+with real content from the source. Do not fill the template with invented text: that
+directly contradicts the skill's anti-hallucination rules. Checked worked examples sit
+next to this file: a PDF example on a real paper in `EXAMPLE-digest-pdf.md`, and docx
+and md examples in `EXAMPLE-digest-docx.md` and `EXAMPLE-digest-md.md`.
 
-Форма едина для всех форматов (PDF, docx, md, txt): меняется только запись в колонке
-«Локатор» (страница · раздел и абзац · строка — см. таблицу якорей в `SKILL.md`).
+The shape is the same for every format (PDF, docx, md, txt); only what goes into the
+"Locator" column changes (page · section and paragraph · line; see the anchor table in
+`SKILL.md`).
 
-Обязательные к заполнению узлы: проверенная таблица привязки (все ⚠ сняты) и
-финальные секции оформления ссылки (`## Ссылка для списка литературы` с ГОСТ + APA
-и `## Цитирование (.bib)`). Без них конспект не считается завершённым.
+Mandatory parts: the checked anchor table (every ⚠ resolved) and the final reference
+sections (`## Reference-list entry` with APA 7, plus GOST on request, and
+`## Citation (.bib)`). Without them the digest is not finished.
 
 ---
 
 ```
-# Конспект: <Авторы, Год — Короткое название>
+# Digest: <Authors, Year — Short title>
 
-**Библио:** <Авторы> (<Год>). <Название>. <Журнал/конференция/препринт>. <DOI/URL>.
-**Прочитано:** <диапазон локаторов — страницы либо разделы>
-**Формат:** <PDF / docx / md / txt>  ·  **Доверие извлечения:** <digital-born |
-скан/OCR | деградация: навык N недоступен>  ·  **Дата:** <ГГГГ-ММ-ДД>
+**Biblio:** <Authors> (<Year>). <Title>. <Journal/conference/preprint>. <DOI/URL>.
+**Read:** <locator range — pages or sections>
+**Format:** <PDF / docx / md / txt>  ·  **Extraction trust:** <digital-born |
+scan/OCR | fallback: skill N unavailable>  ·  **Date:** <YYYY-MM-DD>
 
-## Суть одной строкой
-<О чём работа и её главный вывод — одно предложение своими словами.>
+## The gist in one line
+<What the work is about and its main finding, in one sentence of your own.>
 
-## Проблема и пробел
-<Какую задачу решают; что было не так или не сделано до них> (<локатор>).
+## Problem and gap
+<Which problem is addressed; what was wrong or missing before> (<locator>).
 
-## Метод
-<Что именно сделали: подход, модель, дизайн исследования, процедура> (<локатор>).
+## Method
+<What exactly was done: approach, model, study design, procedure> (<locator>).
 
-## Данные / материал
-<Выборка, датасет, источники, объём; как собрано> (<локатор>).
-<Если в статье этого нет — «не указано», не догадка.>
+## Data / material
+<Sample, dataset, sources, size; how it was collected> (<locator>).
+<If the paper does not say — "not stated", not a guess.>
 
-## Результаты
-<Главные результаты с конкретными числами и локаторами. Только то, что в тексте.>
-- <результат 1 с числом> (<локатор>)
-- <результат 2 с числом> (<локатор>)
+## Results
+<Main results with specific numbers and locators. Only what is in the text.>
+- <result 1 with a number> (<locator>)
+- <result 2 with a number> (<locator>)
 
-## Вклад и выводы
-<Что нового авторы заявляют как вклад; их собственные выводы> (<локатор>).
+## Contribution and conclusions
+<What the authors claim as new; their own conclusions> (<locator>).
 
-## Ограничения
-<Ограничения, которые называют сами авторы> (<локатор>).
-<+ замеченные тобой — помечай «моё».>
+## Limitations
+<Limitations the authors name themselves> (<locator>).
+<+ ones you noticed — mark them "mine".>
 
-## Привязка тезисов к источнику (проверено)
+## Claims anchored to the source (checked)
 
-Каждый несущий тезис и каждое число — отдельная строка. Колонка «Локатор» — по
-таблице якорей из SKILL.md (PDF — «с. N»; docx — «§раздел, абз. N»; md/txt —
-«стр. N»). Колонка «Проверено» заполняется на проходе само-сверки: агент заново
-открывает локатор и ищет дословную цитату в переоткрытом тексте. Найдена → ✓. Не
-найдена или отличается → исправить локатор/тезис хирургически под источник либо
-пометить «⚠ не подтверждён». Конспект с неснятыми ⚠ не выдаётся как готовый.
+Every load-bearing claim and every number is a separate row. The "Locator" column
+follows the anchor table in SKILL.md (PDF "p. N"; docx "§section, para. N"; md/txt
+"line N"). The "Checked" column is filled in during the self-check pass: the agent
+re-opens the locator and looks for the verbatim quote in the re-opened text. Found → ✓.
+Not found or different → fix the locator/claim surgically to match the source, or
+mark it "⚠ not confirmed". A digest with unresolved ⚠ is not handed over as finished.
 
-| Тезис | Локатор | Дословная цитата | Раздел | Проверено |
+| Claim | Locator | Verbatim quote | Section | Checked |
 |---|---|---|---|---|
-| <тезис 1 своими словами> | <локатор> | «<дословная цитата из источника>» | <Раздел> | ✓ |
-| <тезис 2 своими словами> | <локатор> | «<дословная цитата из источника>» | <Раздел> | ✓ |
-| <число/результат> | <локатор> | «<дословная цитата с числом>» | <Раздел> | ✓ |
-| <тезис, не найденный дословно> | <локатор?> | «<искомый текст>» | <Раздел> | ⚠ не подтверждён |
+| <claim 1 in your own words> | <locator> | "<verbatim quote from the source>" | <Section> | ✓ |
+| <claim 2 in your own words> | <locator> | "<verbatim quote from the source>" | <Section> | ✓ |
+| <number/result> | <locator> | "<verbatim quote with the number>" | <Section> | ✓ |
+| <claim not found verbatim> | <locator?> | "<text searched for>" | <Section> | ⚠ not confirmed |
 
-**Журнал самопроверки.** Строк: <N>. Подтверждено: <N> × ✓. Флагов ⚠: <N>. Реально
-переоткрыто при сверке: <перечислить локаторы и чем — Read страницы / секции /
-диапазона строк>. Проверка портативная: только повторное чтение того же файла, без
-внешних скриптов и Python.
+**Self-check log.** Rows: <N>. Confirmed: <N> × ✓. ⚠ flags: <N>. Actually re-opened
+during the check: <list the locators and how — Read of a page / section / line
+range>. The check is portable: only re-reading the same file, no external scripts and
+no Python.
 
-## Пробелы и вопросы
-- <Чего в статье нет / что осталось неясным.>
-- <Ограничения деградации извлечения, если навык pdf/docx был недоступен.>
-- <Что проверить, с чем сопоставить, что искать дальше> (→ lit-search).
+## Gaps and questions
+- <What the paper lacks / what stayed unclear.>
+- <Limits of a fallback extraction, if no pdf/docx skill was available.>
+- <What to check, what to compare with, what to look for next> (→ lit-search).
 
-## Метаданные для ссылки
-<Авторы полностью, в порядке из статьи> · <Год> · <Название> · <Журнал/сборник> ·
-<Том/выпуск> · <Страницы> · <DOI/URL> · <Дата обращения, если онлайн>.
-Пропуски — [проверить].
+## Citation metadata
+<Authors in full, in the paper's order> · <Year> · <Title> · <Journal/proceedings> ·
+<Volume/issue> · <Pages> · <DOI/URL> · <Access date, if online>.
+Gaps: [verify].
 
-## Ссылка для списка литературы
+## Reference-list entry
 
-Оформляет сам digest по references/bibtex-fields.md. Две готовые к вставке строки:
+Formatted by digest itself following references/bibtex-fields.md. Lines ready to paste:
 
-ГОСТ Р 7.0.100–2018: <Фамилия, И. О. Название статьи / И. О. Фамилия, И. О. Фамилия //
-Журнал/сборник. — Год. — Т. X, № Y. — С. XX–YY.>
-APA 7: <Фамилия, И. О., & Фамилия, И. О. (Год). Название статьи. Журнал/сборник, том(выпуск),
+APA 7 (default): <Surname, I. I., & Surname, I. I. (Year). Article title. Journal, volume(issue),
 XX–YY. https://doi.org/DOI>
+GOST R 7.0.100-2018 (on request, for Russian-language lists): <Surname, I. I. Article title / I. I. Surname, I. I. Surname //
+Journal. — Year. — Vol. X, no. Y. — P. XX–YY.>
 
-Пропущенные поля — [проверить], не выдумывать.
+Missing fields: [verify], never invented.
 
-## Цитирование (.bib)
+## Citation (.bib)
 
-BibTeX-запись — память источника для реф-менеджера (тип определяется по источнику).
-Форма для препринта:
+The BibTeX entry is the source's memory for a reference manager (the type depends on
+the source). Shape for a preprint:
 
 @misc{<citekey>,
-  author        = {<Фамилия, Имя and Фамилия, Имя>},
-  title         = {<Название>},
-  year          = {<Год>},
+  author        = {<Surname, Name and Surname, Name>},
+  title         = {<Title>},
+  year          = {<Year>},
   eprint        = {<arXiv ID>},
   archivePrefix = {arXiv},
-  primaryClass  = {<раздел, напр. cs.CL>},
+  primaryClass  = {<category, e.g. cs.CL>},
   url           = {<https://arxiv.org/abs/...>}
 }
 
-Форма для журнальной статьи:
+Shape for a journal article:
 
 @article{<citekey>,
-  author  = {<Фамилия, Имя and …>},
-  title   = {<Название>},
-  journal = {<Журнал>},
-  year    = {<Год>},
-  volume  = {<том>},
-  number  = {<выпуск>},
+  author  = {<Surname, Name and …>},
+  title   = {<Title>},
+  journal = {<Journal>},
+  year    = {<Year>},
+  volume  = {<volume>},
+  number  = {<issue>},
   pages   = {<XX--YY>},
   doi     = {<10.xxxx/xxxx>}
 }
@@ -122,14 +123,15 @@ BibTeX-запись — память источника для реф-менед
 
 ---
 
-## Как читать колонку «Проверено»
+## How to read the "Checked" column
 
-- **✓** — агент повторно открыл локатор (страницу / секцию / диапазон строк) и нашёл
-  эту цитату дословно в переоткрытом тексте.
-- **⚠ не подтверждён** — цитата не найдена в указанном локаторе или отличается; тезис
-  либо исправлен хирургически под источник, либо помечен как неподтверждённый, и
-  уверенность из формулировки убрана. Такой конспект нельзя отдавать как готовый —
-  сначала снять ⚠ (подтвердить или увести тезис в «Пробелы» как «не указано»).
+- **✓**: the agent re-opened the locator (page / section / line range) and found this
+  quote verbatim in the re-opened text.
+- **⚠ not confirmed**: the quote was not found at the given locator or differs; the
+  claim was either fixed surgically to match the source or marked unconfirmed, and all
+  certainty was removed from its wording. Such a digest cannot be handed over as
+  finished: first resolve the ⚠ (confirm it or move the claim to "Gaps" as "not
+  stated").
 
-Проверка — **портативная**: только повторное чтение того же файла силами самого
-агента, никаких внешних скриптов и Python.
+The check is **portable**: only re-reading the same file by the agent itself, no
+external scripts and no Python.

@@ -1,96 +1,96 @@
 # Transcript Recipe
 
-Что делать с готовой записью встречи, которую пользователь кинул в чат (диктофон → транскрибация → текст).
+What to do with a finished meeting recording that the user dropped into the chat (voice recorder → transcription → text).
 
-## Распознавание
+## Recognition
 
-Признаки транскрипта (любые 2+):
-- Реплики разных людей, имена / роли в начале строк
-- Артефакты speech-to-text: «эээ», «ммм», обрывы фраз, повторы, опечатки распознавания
-- Длинный неструктурированный текст с разговорной лексикой
-- Временные метки (`[00:12:34]`, `0:42:15`)
+Signs of a transcript (any 2+):
+- Lines from different people, names / roles at the start of lines
+- Speech-to-text artefacts: "uhh", "hmm", broken-off phrases, repetitions, recognition typos
+- Long unstructured text with conversational vocabulary
+- Timestamps (`[00:12:34]`, `0:42:15`)
 
-Не путать с: подготовленным брифом / клиентским документом / структурированными заметками.
+Do not confuse it with: a prepared brief / a client document / structured notes.
 
-## Tolerance к ошибкам распознавания
+## Tolerance to recognition errors
 
-- Догадываться о смысле через контекст (если рядом «компания» и «маркетинг» → «брандинг» вероятно «брендинг»)
-- При неуверенной расшифровке - помечать `[?]` и предлагать альтернативу: «...увеличили retention на 30% [?] (возможно: revenue)»
-- Не выдумывать факты, которых не было; если не понятно - явно говорить «эта часть неразборчива»
-
----
-
-## Baseline (всегда): Structured Summary
-
-Короткая выжимка в начале ответа (5-10 строк), отвечающая на:
-
-- **Цель встречи** - зачем собирались (если можно понять)
-- **Участники** (если идентифицируемы) - имена / роли
-- **Ключевые темы** - 3-5 обсуждённых блоков
-- **Главные результаты** - к чему пришли (даже если «не пришли ни к чему» - это тоже результат)
-- **Тон / динамика** - если важно (конфликт, согласие, brainstorming)
-
-Это ВСЕГДА. Дальше - опциональные секции по содержанию записи.
+- Guess the meaning from context (if "company" and "marketing" are nearby, "brand-ding" is probably "branding")
+- When a transcription is uncertain, mark it `[?]` and offer an alternative: "...increased retention by 30% [?] (possibly: revenue)"
+- Do not invent facts that were not there; if something is unclear, say explicitly "this part is illegible"
 
 ---
 
-## Опциональные секции (только если контент в записи реально есть)
+## Baseline (always): Structured Summary
 
-Не выдумывать пустые «Action Items: нет». Если содержания под секцию нет - просто не включать её.
+A short digest at the start of the answer (5-10 lines) that answers:
+
+- **Meeting goal** - why they met (if it can be inferred)
+- **Attendees** (if identifiable) - names / roles
+- **Key topics** - 3-5 discussed blocks
+- **Main outcomes** - what they arrived at (even "arrived at nothing" is an outcome)
+- **Tone / dynamics** - if it matters (conflict, agreement, brainstorming)
+
+This is ALWAYS there. After it come the optional sections, depending on what the recording contains.
+
+---
+
+## Optional sections (only if the recording really contains that content)
+
+Do not invent empty "Action Items: none". If there is no content for a section, simply leave it out.
 
 ### Issue Tree
-Если в обсуждении была явная проблема, которую пытались декомпозировать / понять причины - выписать её как root question + найденные ветки. Прогон MECE по тому, что было упомянуто.
+If the discussion had an explicit problem that people tried to decompose or find the causes of, write it out as a root question plus the branches found. Run MECE over what was mentioned.
 
 ### Action Items
-Кто, что, к когда. Формат:
+Who, what, by when. Format:
 ```
-- [Иван] подготовить cost analysis по Варианту B → к 5.05
-- [команда продукта] вернуться с product spec → следующая встреча
+- [Ivan] prepare the cost analysis for Option B → by 5 May
+- [product team] come back with the product spec → next meeting
 ```
-Только если в транскрипте были конкретные обещания / поручения.
+Only if the transcript contained concrete promises / assignments.
 
 ### Decisions Log
-Что было решено (явно). Формат: «**Решение:** [что], **обоснование:** [почему]». Не путать с обсуждавшимися вариантами.
+What was decided (explicitly). Format: "**Decision:** [what], **rationale:** [why]". Do not confuse it with the options that were discussed.
 
 ### Open Questions
-Вопросы, которые подняли, но не закрыли. Полезно перенести в follow-up.
+Questions that were raised but not closed. Useful to carry into the follow-up.
 
 ### Stakeholder Positions
-Если были разные позиции по ключевому вопросу - кто за что:
+If there were different positions on a key question, who stood for what:
 ```
-- Иван (CFO): за Вариант A, аргумент - cash flow в Q3
-- Мария (CMO): за Вариант B, аргумент - brand consistency
-- Не определились: Алексей, Ольга
+- Ivan (CFO): for Option A, argument - cash flow in Q3
+- Maria (CMO): for Option B, argument - brand consistency
+- Undecided: Alexei, Olga
 ```
-Только если позиции реально расходились.
+Only if the positions really diverged.
 
 ### Risks Raised
-Кто поднял какой риск. Полезно для recap клиенту: показывает, что risks heard.
+Who raised which risk. Useful for a recap to the client: it shows the risks were heard.
 
 ### Hypotheses to Test
-Гипотезы, которые надо проверить, чтобы двигаться дальше. Формат: «гипотеза - как проверить - кто/когда».
+Hypotheses that have to be checked in order to move on. Format: "hypothesis - how to check - who/when".
 
 ### Information Gaps
-Чего не хватает, чтобы принять решение. Часто всплывает в обсуждении («нам бы данные по X», «без Y не понять»).
+What is missing to make a decision. It often surfaces in the discussion ("we'd need data on X", "without Y we can't tell").
 
 ### Next Meeting Agenda
-Что обсудить в следующий раз - явно или вытекает из open questions / action items.
+What to discuss next time - stated explicitly or following from the open questions / action items.
 
 ---
 
-## Стиль вывода
+## Output style
 
-- Сначала Structured Summary (всегда)
-- Потом - секции, которые применимы, в порядке убывания важности для пользователя
-- В конце - короткий self-critique: «что в записи я мог упустить / неверно интерпретировать»
+- The Structured Summary first (always)
+- Then the sections that apply, in decreasing order of importance to the user
+- At the end, a short self-critique: "what in the recording I may have missed / misinterpreted"
 
-Не переписывать транскрипт целиком. Не цитировать дословно длинные куски. Цель - дать пользователю быстрый actionable обзор, который сэкономит ему 30-60 минут чтения.
+Do not rewrite the whole transcript. Do not quote long passages verbatim. The goal is to give the user a fast, actionable overview that saves them 30-60 minutes of reading.
 
 ---
 
-## Анти-паттерны
+## Anti-patterns
 
-- Включать пустые секции ради формы («Decisions Log: решений принято не было»)
-- Цитировать дословно длинные диалоги вместо синтеза
-- Игнорировать неуверенные расшифровки и выдавать их как факты
-- Превращать рабочую встречу в формальный protocol с полями «Председатель», «Секретарь» - стиль должен соответствовать характеру встречи
+- Including empty sections for form's sake ("Decisions Log: no decisions were made")
+- Quoting long dialogues verbatim instead of synthesising
+- Ignoring uncertain transcriptions and presenting them as facts
+- Turning a working meeting into a formal protocol with fields such as "Chair", "Secretary" - the style should match the character of the meeting

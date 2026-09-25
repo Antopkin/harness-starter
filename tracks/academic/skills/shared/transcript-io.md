@@ -1,129 +1,141 @@
 ---
 name: transcript-io
-description: Foundation reference for the transcript-* skill family (transcript-verbatim, transcript-polish). Input-format recognition, neutral speaker glossary, single-pass delegation model, continuation-marker ban, output-location question. Loaded by reference from the transcript skills — not invoked directly.
+description: Foundation reference for the transcript-* skill family (transcript-verbatim, transcript-polish, transcript-docs). Input-format recognition, neutral speaker glossary, single-pass delegation model, continuation-marker ban, output-location question. Loaded by reference from the three transcript skills — not invoked directly.
 disable-model-invocation: true
 ---
 
-# transcript-io — общий ввод и модель делегирования
+# transcript-io — shared input and delegation model
 
-Single source of truth по **вводу** и **исполнению** для семьи скиллов
-`transcript-*`. Потребители (`transcript-verbatim`, `transcript-polish`)
-**линкуют на этот файл и НЕ реализуют его правила заново** —
-распознавание формата, сборку реплик, нейтральный глоссарий, модель делегирования
-и вопрос о месте вывода. Один производитель, несколько потребителей: если
-потребитель по-своему переопределит сборку ASR-вывода или начнёт угадывать роли —
-семья разойдётся. Не надо.
+This file is the single source of truth on **input** and **execution** for the
+`transcript-*` skill family. Its consumers (`transcript-verbatim`,
+`transcript-polish`, `transcript-docs`) **link to this file and do NOT
+reimplement its rules**: format recognition, turn assembly, the neutral glossary,
+the delegation model and the question of where to save the output. One producer,
+three consumers: if a consumer redefines how ASR output is assembled, or starts
+guessing roles on its own, the family drifts apart. Don't.
 
-Граница: ЗДЕСЬ — только нейтральная модель. Маппинг ролей спикеров в конкретные
-метки (`{Интервьюер}`, `{Имя}:`) делает КАЖДЫЙ скилл у себя, не
-этот файл.
+The skills work on a recording in any language, and everything they write stays
+in the language of the recording. Nothing here depends on one language; where an
+example shows a particular language, it only illustrates the rule.
 
----
-
-## 1. Назначение
-
-- Single source для скиллов `transcript-*`; потребители линкуют сюда и НЕ
-  дублируют правила этого файла.
-- Маппинг нейтрального глоссария в конкретные метки — на стороне каждого скилла,
-  НЕ здесь. Этот файл доводит до нейтрального `speaker_glossary` и не дальше.
+Boundary: only the neutral model lives HERE. Mapping speaker roles onto concrete
+labels (`{Interviewer}`, `{Name}:`, `owner_speaker`) is done by EACH skill on its
+own side, not by this file.
 
 ---
 
-## 2. Распознавание формата входа
+## 1. Purpose
 
-Поддерживаются ЧЕТЫРЕ формата. Если вход не попадает ни в один — **подними в
-main, не угадывай**.
+- The single source for the three `transcript-*` skills; consumers link here and
+  do NOT duplicate the rules of this file.
+- Mapping the neutral glossary onto concrete labels happens on each skill's side,
+  NOT here. This file goes as far as a neutral `speaker_glossary` and no further.
 
-**`*_dialog.txt`** — блоки `[start - end] Спикер N:`, затем многострочный текст
-реплики; пустая строка между репликами:
+---
+
+## 2. Input-format recognition
+
+FOUR formats are supported. If the input fits none of them, **escalate to main,
+do not guess**.
+
+**`*_dialog.txt`** — blocks `[start - end] Speaker N:`, followed by the multi-line
+text of the turn; an empty line separates turns. The speaker label is whatever
+the converter wrote, in the language of the recording (`Speaker N:`,
+`Спикер N:`, `Sprecher N:`…); treat any of them the same way:
 
 ```
-[00:00:04 - 00:00:11] Спикер 0:
-Здравствуйте, давайте начнём. Расскажите немного о себе и о вашей роли.
+[00:00:04 - 00:00:11] Speaker 0:
+Hello, let's begin. Tell me a little about yourself and your role.
 
-[00:00:12 - 00:00:31] Спикер 1:
-Конечно. Я работаю продакт-менеджером, отвечаю за онбординг.
+[00:00:12 - 00:00:31] Speaker 1:
+Sure. I work as a product manager and I'm responsible for onboarding.
 ```
 
-**`*_transcript.json`** — сырой Deepgram. Слова лежат по пути
-`results.channels[].alternatives[].words[]`, каждый элемент —
-`{word, start, end, speaker, punctuated_word}`. Сборка реплик:
+**`*_transcript.json`** — raw Deepgram-style ASR JSON. The words sit at the path
+`results.channels[].alternatives[].words[]`, and each element is
+`{word, start, end, speaker, punctuated_word}`. Assembling turns:
 
-- группируй подряд идущие `words` с одним и тем же `speaker` в одну реплику;
-- текст реплики собирай из `punctuated_word` (с пунктуацией), не из `word`;
-- таймкод реплики = `start` первого слова группы .. `end` последнего слова группы;
-- смена `speaker` закрывает текущую реплику и открывает следующую.
+- group consecutive `words` with the same `speaker` into one turn;
+- build the turn text from `punctuated_word` (with punctuation), not from `word`;
+- the turn's timecode = `start` of the group's first word .. `end` of its last word;
+- a change of `speaker` closes the current turn and opens the next one.
 
-**plain `*_text.txt`** — сплошной текст без разметки спикеров и без таймкодов.
+**plain `*_text.txt`** — continuous text without speaker markup and without
+timecodes.
 
-**текст прямо в чате** — вставлен пользователем в сообщение, без файла.
+**text pasted in the chat** — the user put it straight into a message, no file.
 
 ---
 
-## 3. speaker_glossary в НЕЙТРАЛЬНОЙ форме
+## 3. speaker_glossary in NEUTRAL form
 
-Структура записи: `Спикер N → {role?, display_name?, evidence_turn}`. Строится из
-самопрезентаций в первых 3–5 репликах ИЛИ из ростера, явно переданного
-пользователем. `evidence_turn` — номер реплики, откуда взяты `role`/`display_name`.
+Entry structure: `Speaker N → {role?, display_name?, evidence_turn}`. It is built
+from self-introductions in the first 3–5 turns OR from a roster the user passed
+explicitly. `evidence_turn` is the number of the turn that `role`/`display_name`
+were taken from.
 
-Нумерация «Спикер 0 / Спикер 1» **НЕ фиксирована между файлами**: нельзя считать,
-что «Спикер 0» всегда интервьюер. Привязку даёт только содержание первых реплик
-или ростер.
+The numbering "Speaker 0 / Speaker 1" is **NOT fixed across files**: you cannot
+assume that "Speaker 0" is always the interviewer. Only the content of the first
+turns or the roster binds a number to a person.
 
-Маппинг нейтрального глоссария в конкретные метки делает КАЖДЫЙ скилл у себя:
+EACH skill maps the neutral glossary onto its own labels:
 
-| Скилл                | Маппинг нейтральной записи в свою метку |
+| Skill                | Mapping of the neutral entry onto its label |
 |----------------------|------------------------------------------|
-| `transcript-verbatim`| роли → `{Интервьюер}` / `{Респондент}` |
-| `transcript-polish`  | `display_name` → `{Имя}:` |
+| `transcript-verbatim`| roles → `{Interviewer}` / `{Respondent}` |
+| `transcript-polish`  | `display_name` → `{Name}:` |
+| `transcript-docs`    | owning speaker → `owner_speaker` |
 
-**ЗДЕСЬ маппинг НЕ делаем** — таблица описывает, что произойдёт у потребителя.
+Labels are written in the language of the recording (for a German interview,
+`{Interviewer}` / `{Befragte}`; for a Russian one, `{Интервьюер}` / `{Респондент}`).
+**NO mapping happens HERE** — the table only describes what the consumer will do.
 
-**Fallback:** если роли не определяются из первых реплик и ростер не передан —
-пометь `[Роли не определены]` и подними в main. НЕЛЬЗЯ угадывать роли — иначе
-каждый скилл угадает по-своему и метки разойдутся.
-
----
-
-## 4. Модель исполнения — делегирование
-
-main **НЕ обрабатывает транскрипт сам** — это сохраняет контекст главной сессии:
-чтение и обработку объёмного текста выноси в субагента, чтобы не засорять
-рабочий контекст координатора.
-
-- main делегирует файл **ОДНОМУ субагенту**: субагент читает файл и правила
-  конкретного скилла, отрабатывает за **один проход** и возвращает результат
-  (текст или JSON) обратно в main.
-- **Батч:** N файлов → волна субагентов, **по одному субагенту на файл**
-  (file-disjoint, параллельно; мягкий ориентир 5–10+, не потолок).
-- Параллелизм — **по файлам, НЕ по кускам одного файла**. Один файл между
-  субагентами дроблением не разбиваем.
+**Fallback:** if the roles cannot be determined from the first turns and no roster
+was passed, mark `[Roles not determined]` (in the language of the recording) and
+escalate to main. Guessing roles is NOT allowed — otherwise each skill guesses in
+its own way and the labels drift apart.
 
 ---
 
-## 5. Один проход, без маркера континуации
+## 4. Execution model — delegation
 
-Субагент обрабатывает весь файл за один ответ. Маркер `[ПРОДОЛЖЕНИЕ СЛЕДУЕТ]` в
-выводе **ЗАПРЕЩЁН**.
+main does **NOT process the transcript itself** — this keeps the main session's
+context clean (reading and processing go through subagents).
 
-Обоснование: типичные интервью и исследовательские расшифровки (обычно порядка
-10 000–20 000 слов) свободно влезают в контекст современных моделей с большим
-контекстным окном. Запас, как правило, огромный.
-
-Единственный fallback — редкий файл, чей **ВЫВОД** не влезает в один ответ
-(порядка >30 000 слов): субагент **сам продолжает
-следующим ответом**, НЕ вставляя маркер в тело текста. Маркер не появляется ни при
-каком сценарии.
+- main delegates a file to **ONE subagent**: the subagent reads the file and the
+  rules of the specific skill, works through it in **one pass** and returns the
+  result (text or JSON) to main.
+- **Batch:** N files → a wave of subagents, **one subagent per file**
+  (file-disjoint, in parallel; a soft guide of 5–10+, not a ceiling).
+- Parallelism is **by file, NOT by chunks of one file**. A single file is never
+  split between subagents.
 
 ---
 
-## 6. Вывод
+## 5. One pass, no continuation marker
 
-В конце обработки субагент/скилл спрашивает пользователя, **КУДА сохранить
-результат**:
+The subagent processes the whole file in one response. A continuation marker such
+as `[TO BE CONTINUED]` in the output is **FORBIDDEN**.
 
-- (а) рядом с источником;
-- (б) по указанному пользователем пути;
-- (в) только в чат.
+Rationale: the inputs fit in the context. A long interview transcript runs to
+about 16,000 words (≈ 21k tokens), while a current frontier model's context
+holds hundreds of thousands of tokens or more. The margin is huge.
 
-Конкретные суффиксы имён выходных файлов — на стороне каждого скилла, не здесь.
+The only fallback is a hypothetical file whose **OUTPUT** does not fit in one
+response (on the order of >30,000 words): the subagent **continues on its own in
+the next response**, WITHOUT inserting a marker into the body of the text. The
+marker does not appear in any scenario.
+
+---
+
+## 6. Output
+
+At the end of processing the subagent/skill asks the user **WHERE to save the
+result**:
+
+- (a) next to the source;
+- (b) at a path the user gives;
+- (c) in the chat only.
+
+The concrete suffixes of output file names are decided on each skill's side, not
+here.

@@ -75,6 +75,8 @@ Unlike Eval mode (which runs individual evals), Benchmark mode:
    → benchmark.md - Human-readable summary
 ```
 
+This contract governs every subagent spawned in this workflow. **Output language:** English, unless the eval prompt is in another language, in which case the executor follows the prompt. **Length cap:** at most 200 words in the agent's returned text. **Return shape:** the paths written for that phase — `transcript.md` and `outputs/` for a run, `grading.json` for a grader — with the fields defined in `references/schemas.md`.
+
 ## Spawning Executors
 
 Run executor subagents in the background for parallelism. When each agent completes, capture the execution metrics (tokens consumed, tool calls, duration) from the completion notification.
@@ -101,6 +103,8 @@ Extract from each completed executor's metrics:
 The exact format of completion notifications varies by environment — look for token counts, tool call counts, and duration in whatever format your environment provides.
 
 Record these per-run metrics alongside the grading results. The aggregate script can then compute mean/stddev/min/max across runs for each configuration.
+
+**Output language:** the language of the eval prompt. **Length cap:** at most 200 words in the executor's returned text. **Return shape:** the run directory paths written (`transcript.md`, `outputs/`, `metrics.json`) plus the metrics triple total_tokens, tool_uses, duration_ms.
 
 ## Scripts
 
@@ -147,3 +151,5 @@ The analyzer should NOT:
 - Suggest improvements to the skill (that's Improve mode)
 - Make subjective quality judgments beyond the data
 - Speculate without evidence
+
+**Output language:** English. **Length cap:** at most 400 words of notes. **Return shape:** a JSON array of note strings saved to the analyzer's `output_path` and carried into the `notes` field of `benchmark.json` — one string per observation, each naming the configuration comparison, the pattern or anomaly, and the numbers it rests on.

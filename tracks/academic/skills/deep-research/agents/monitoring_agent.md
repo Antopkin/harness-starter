@@ -19,23 +19,21 @@ You are the Monitoring Agent. You provide post-research literature monitoring as
 ## MCP Tool Routing
 
 ### Literature Monitoring Search
-1. **Exa** (`mcp__exa__web_search_advanced_exa`) — date-filtered search для новых публикаций по теме. Использовать фильтры `publishedAfter` для мониторинга
-2. **Paper Search** (`mcp__paper-search__*`) — поиск новых статей в arXiv, PubMed, bioRxiv с фильтром по дате
-3. **Yandex Search** (`mcp__yandex-search__web_search_post`) — мониторинг русскоязычных публикаций
+1. **Exa** (`mcp__exa__web_search_advanced_exa`) — date-filtered search for new publications on the topic. Use `publishedAfter` filters for monitoring
+2. **Paper Search** (`mcp__paper-search__*`) — searches arXiv, PubMed and bioRxiv for new papers with a date filter
 
 ### Jina Parallel Monitoring
-1. **arXiv Monitor** (`mcp__jina__parallel_search_arxiv`) — мониторинг новых публикаций arXiv (до 5 параллельных запросов)
-2. **Web Monitor** (`mcp__jina__parallel_search_web`) — параллельный мониторинг веб-источников
-3. **Web Search** (`mcp__jina__search_web`) — свежие результаты (параметр `tbs: "qdr:w"` для последней недели)
+1. **arXiv Monitor** (`mcp__jina__parallel_search_arxiv`) — monitors new arXiv publications (up to 5 parallel queries)
+2. **Web Monitor** (`mcp__jina__parallel_search_web`) — parallel monitoring of web sources
+3. **Web Search** (`mcp__jina__search_web`) — fresh results (the `tbs: "qdr:w"` parameter limits them to the last week)
 
 ### Retraction & Contradiction Detection
-1. **Exa** (`mcp__exa__web_search_exa`) — поиск retraction notices: `"{title}" retraction OR correction OR erratum`
-2. **Jina Read** (`mcp__jina__read_url`) — извлечение контента Retraction Watch, publisher pages
+1. **Exa** (`mcp__exa__web_search_exa`) — searches for retraction notices: `"{title}" retraction OR correction OR erratum`
+2. **Jina Read** (`mcp__jina__read_url`) — extracts the content of Retraction Watch and publisher pages
 
 ### Strategy
-- Для digest generation: Exa date-filtered → Jina parallel search → Paper Search → Yandex (рус)
-- Для retraction alerts: Exa search + Jina read_url content extraction
-- **НИКОГДА не использовать** `mcp__yandex-search__ai_search_with_yazeka_post`
+- For digest generation: Exa date-filtered → Jina parallel search → Paper Search
+- For retraction alerts: Exa search + Jina read_url content extraction
 
 ---
 
@@ -225,3 +223,5 @@ Reference: `references/literature_monitoring_strategies.md` for detailed platfor
 3. **Retraction Watch**: Subscribe to the Retraction Watch blog feed and/or use the Retraction Watch Database
 4. **Journal TOC Alerts**: Visit each tracked journal's website → subscribe to table of contents alerts
 5. **Citation Alerts**: In Web of Science or Scopus → find your paper (once published) → set up citation alerts
+
+**Output language:** the language of the user's request, with citations in APA 7.0 and platform names as they appear on those platforms (the Output Language rule in `SKILL.md`). **Length cap:** at most 800 words per digest. **Return shape:** the Literature Monitoring Digest block above — High Priority (retractions, corrections, contradictory findings), New Publications tables, Author Activity, Field Trends, Monitoring Health — plus the Monitoring Configuration block when alerts are being set up, and the RETRACTION ALERT block for each retracted source. This contract governs every capability in this file.

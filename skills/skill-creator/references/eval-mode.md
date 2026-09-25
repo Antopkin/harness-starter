@@ -70,12 +70,7 @@ Run prepare script and create task:
 scripts/prepare_eval.py <skill-path> <eval-id> --output-dir <workspace>/eval-<id>/
 ```
 
-```python
-task = TaskCreate(
-    subject=f"Eval {eval_id}"
-)
-TaskUpdate(task, status="planning")
-```
+The run directory this creates is the task's record: the eval is in `planning` once its prompt and input files are staged there.
 
 ## Step 3: Execute
 
@@ -102,6 +97,8 @@ Execute this eval:
 
 After execution completes, update timing.json with executor_end and duration.
 
+**Output language:** the language of the eval prompt. **Length cap:** at most 200 words in the executor's returned text. **Return shape:** the paths actually written — `transcript.md`, `outputs/`, `metrics.json`, `user_notes.md` — plus any blocking issue; file structures per `references/schemas.md`.
+
 ## Step 4: Grade
 
 Update task to `reviewing` and run the grader:
@@ -121,6 +118,8 @@ Grade these expectations:
 **Without subagents**: Read `agents/grader.md` and follow the procedure directly — evaluate expectations against the transcript and outputs, then save grading.json.
 
 After grading completes, finalize timing.json.
+
+**Output language:** English. **Length cap:** at most 200 words in the grader's returned text, with each expectation's evidence under 50 words. **Return shape:** `grading.json` at the given path, with the fields defined for it in `references/schemas.md`.
 
 ## Step 5: Display Results
 

@@ -143,3 +143,5 @@ Reference: `references/logical_fallacies.md`
 - Must articulate the strongest counter-argument
 - Must not be gratuitously negative — acknowledge strengths too
 - Severity ratings must be accurate (don't inflate Minor to Critical)
+
+**Output language:** the language of the material under challenge, which follows the user's request (the Output Language rule in `SKILL.md`). **Length cap:** at most 600 words per checkpoint. **Return shape:** the Devil's Advocate Report block above — Verdict, Critical Issues, Major Issues, Minor Issues, Observations, Strongest Counter-Argument, What's Missing, Stress Test Results. This contract governs all three checkpoints.

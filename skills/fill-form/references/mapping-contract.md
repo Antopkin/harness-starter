@@ -1,75 +1,75 @@
-# Контракт маппинга: вход → поля формы
+# The mapping contract: input → form fields
 
-Как сопоставить значения из входа с полями формы. Ключевое правило — **сопоставление
-по роли и accessible-name, не по CSS-селекторам**: accessible-name устойчив к
-вёрстке и переносим между формами, CSS-путь — нет.
+How to match values from the input to the fields of a form. The key rule is
+**matching by role and accessible name, not by CSS selectors**: an accessible name
+survives layout changes and carries over between forms; a CSS path does not.
 
-## Вход бывает двух видов
+## The input comes in two kinds
 
-- **Структурированный** (JSON/YAML): готовые пары «имя поля → значение». Маппинг
-  почти прямой — ключ входа сопоставляется с accessible-name поля.
-- **Проза (записка):** значения полей извлекает сам агент из текста (LLM-маппинг).
-  Например, из аргументативной записки — title, abstract, keywords, список
-  источников. Извлечённое дальше идёт по тому же контракту, что и структурированный
-  вход.
+- **Structured** (JSON/YAML): ready-made "field name → value" pairs. The mapping is
+  almost direct: the input key is matched to the field's accessible name.
+- **Prose (a memo):** the agent extracts the field values from the text itself (LLM
+  mapping). For example, from an argumentative memo: title, abstract, keywords, the
+  list of sources. What is extracted then follows the same contract as structured
+  input.
 
-## Правило сопоставления
+## The matching rule
 
-Для каждого поля формы из `snapshot -i` (роль + accessible-name):
+For every form field from `snapshot -i` (role + accessible name):
 
-1. Возьми accessible-name поля.
-2. **Нормализуй** обе стороны одинаково: trim по краям, lowercase, схлопни кратные
-   пробелы. (Двоеточие-суффикс подписи, напр. «E-mail:», тоже отбрасывай.)
-3. **Точное совпадение** нормализованного accessible-name с нормализованным ключом
-   входа → это пара. Действуй нативно по имени:
-   - `find label "<Подпись>" fill "<значение>"` — найти по подписи и вписать одной
-     командой;
-   - `find role <role> --name "<Имя>" <action>` — по роли и accessible-name;
-   - запасной путь — `snapshot -i` + `@eN`; **последний резерв** — сырой CSS.
+1. Take the field's accessible name.
+2. **Normalise** both sides the same way: trim the edges, lowercase, collapse
+   repeated spaces. (Also drop a trailing colon of the label, e.g. "E-mail:".)
+3. **An exact match** of the normalised accessible name with the normalised input
+   key → that is a pair. Act natively by name:
+   - `find label "<Label>" fill "<value>"`: find by label and enter in one command;
+   - `find role <role> --name "<Name>" <action>`: by role and accessible name;
+   - the fallback is `snapshot -i` + `@eN`; **the last resort** is raw CSS.
 
-Порядок предпочтения: `find label` / `find role --name` (натив по accessible-name)
-→ `@eN` из snapshot → CSS. Сырой CSS — только когда семантические локаторы не
-сработали.
+Order of preference: `find label` / `find role --name` (native, by accessible name)
+→ `@eN` from the snapshot → CSS. Raw CSS only when the semantic locators have
+failed.
 
-## Неоднозначность → human-gate, не угадывать
+## Ambiguity → human gate, do not guess
 
-Останавливайся и спрашивай человека, если:
+Stop and ask the human if:
 
-- **дубликаты accessible-names** — два и более поля с одинаковой подписью;
-- **пустые или нечитаемые подписи** — поле без accessible-name;
-- **ключ входа матчит несколько полей** или ни одного с уверенностью;
-- **тип поля не сходится** со значением (значение — дата, поле — свободный текст;
-  значение — один вариант, поле — мультиселект).
+- **accessible names are duplicated**: two or more fields with the same label;
+- **labels are empty or unreadable**: a field has no accessible name;
+- **an input key matches several fields**, or none with confidence;
+- **the field type does not fit** the value (the value is a date, the field is free
+  text; the value is a single option, the field is a multi-select).
 
-В этих случаях цена молчаливой догадки — значение уходит не туда. Спроси человека,
-какое поле имелось в виду (по порядку, по соседней метке, по placeholder), и
-зафиксируй его выбор. Угадывать нельзя.
+In these cases the cost of a silent guess is a value that lands in the wrong place.
+Ask the human which field was meant (by order, by a neighbouring label, by
+placeholder), and record their choice. Guessing is not allowed.
 
-Поле входа, которому в форме нет соответствия, и поле формы, которому нет значения
-во входе, — тоже показать человеку на human-gate перед submit, а не заполнять
-догадкой и не оставлять молча.
+An input field with no counterpart in the form, and a form field with no value in the
+input, are also shown to the human at the human gate before submit, rather than
+filled with a guess or left silently.
 
-## Не-текстовые поля
+## Non-text fields
 
-Сопоставление по роли+имени, но действие по типу:
+Match by role and name, but act by type:
 
-| Роль поля | Действие |
+| Field role | Action |
 |---|---|
-| `textbox`, `searchbox` | `fill` (при перехвате событий — лестница из `failure-modes.md`) |
-| `checkbox` | `check` / `uncheck` (идемпотентны) |
-| `radio` | `find role radio --name "<вариант>" click` или `check` нужной опции |
+| `textbox`, `searchbox` | `fill` (if events are intercepted, the ladder from `failure-modes.md`) |
+| `checkbox` | `check` / `uncheck` (idempotent) |
+| `radio` | `find role radio --name "<option>" click` or `check` the right option |
 | `combobox`, `listbox` (select) | `select @eN "<value>"` |
-| файл | `upload @eN <файл>` |
+| file | `upload @eN <file>` |
 
-## Приложение Б: демо-форма из полей записки
+## Appendix B: a demo form built from the memo's fields
 
-Демо-форму для тренировки подбирают так, чтобы её поля **выводились из записки**:
-title, abstract, keywords, источники — то, что в записке уже есть, ложится в поля
-формы один-к-одному. На такой форме контракт работает чисто.
+A demo form for practice is chosen so that its fields **follow from the memo**:
+title, abstract, keywords, sources, that is, what the memo already contains, map to
+the form's fields one to one. On such a form the contract works cleanly.
 
-**Честная граница (ограничение, не баг):** произвольная вузовская ПУД (программа
-учебной дисциплины) или силабус поле-в-поле из аргументативной записки
-**автоматически НЕ маппится**. У ПУД свои поля (компетенции, темы, часы, формы
-контроля), которых в аргументативной записке нет, — прямого соответствия ключей
-не существует. Это ограничение самого сопоставления, а не дефект скилла: там, где
-соответствия нет, скилл честно выносит поле на human-gate, а не выдумывает значение.
+**The honest limit (a limitation, not a bug):** an arbitrary university course
+syllabus does **NOT map automatically** field-to-field from an argumentative memo. A
+syllabus has its own fields (learning outcomes, topics, hours, assessment forms)
+that an argumentative memo does not contain, so no direct key correspondence exists.
+This is a limitation of the matching itself, not a defect of the skill: where there
+is no correspondence, the skill honestly brings the field to the human gate instead
+of inventing a value.

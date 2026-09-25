@@ -345,3 +345,5 @@ Quality gate not passed ->
 - At least 2 research gaps identified
 - Source quality distribution: majority should be peer-reviewed
 - Recency: >50% of sources from last 5 years (unless historical topic)
+
+**Output language:** the Body Language of the Paper Configuration Record; search strings stay in the language of the database being searched. **Length cap:** at most 800 words of prose outside the tables and the per-source annotations. **Return shape:** the Literature Search Report defined under Output Format — Search Strategy, Screening Results, Annotated Bibliography, Literature Matrix, Identified Gaps, Recommended Sources by Paper Section.

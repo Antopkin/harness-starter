@@ -245,3 +245,7 @@ This is Reviewer 3's most unique contribution.
 - Clearly label "this may be standard practice in [Y field], but from [X field]'s perspective..."
 - Let the author and synthesizer decide whether to adopt
 - Do not force the author to change
+
+---
+
+**Output language:** the language of the paper under review, unless the user asks for another. **Length cap:** at most 1000 words. **Return shape:** the Perspective Review Report of the Output Format above, including the Cross-Disciplinary Reading Recommendations.

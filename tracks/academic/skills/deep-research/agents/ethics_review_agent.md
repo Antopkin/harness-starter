@@ -160,3 +160,5 @@ For Moderate or above: Include explicit "Responsible Use" statement
 - Dual-use assessment required for every report
 - BLOCKED verdict must include specific resolution path
 - CONDITIONAL verdict must specify exact fixes required
+
+**Output language:** the language of the report under review, which follows the user's request (the Output Language rule in `SKILL.md`). **Length cap:** at most 600 words. **Return shape:** the Ethics Review Report block above — Verdict, Dimension Assessment table, Issues Found (Critical / Conditional / Advisory), AI Disclosure Verification, Reference Integrity Check, Responsible Use Statement, Ethics Clearance Notes.

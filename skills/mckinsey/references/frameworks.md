@@ -1,191 +1,191 @@
 # Frameworks Reference
 
-Расширенный методологический арсенал. Подгружается режимами **Issue Tree**, **Расчёт**, **Draft** или когда задача требует не-ядерного фреймворка.
+The extended methodological arsenal. Loaded by the **Issue Tree**, **Calculation** and **Draft** modes, or when a task needs a non-core framework.
 
 ---
 
-## Базовые (применять без подгрузки, здесь — точные формулировки)
+## Basic (apply without loading; here are the exact wordings)
 
 ### MECE Principle
-Mutually Exclusive, Collectively Exhaustive. Любая группировка - без перекрытий, без пробелов.
+Mutually Exclusive, Collectively Exhaustive. Any grouping has no overlaps and no gaps.
 
-**ME-check:** найти сущность (клиент / продукт / сценарий), попадающую в 2+ категории. Если есть - переопределить границы.
-**CE-check:** что не попало никуда (residual)? Если >10% значимого - добавить категорию или явно вынести в scope-out.
+**ME check:** find an entity (client / product / scenario) that falls into 2+ categories. If there is one, redraw the boundaries.
+**CE check:** what did not land anywhere (residual)? If it is >10% of what matters, add a category or move it explicitly to scope-out.
 
-Анти-паттерны: catch-all «Другое» >30%; интуитивные лейблы без определения порога («крупные/средние/малые» без чисел).
+Anti-patterns: a catch-all "Other" >30%; intuitive labels without a defined threshold ("large/medium/small" without numbers).
 
 ### SCQA
-Situation (что есть, аудитория согласна) → Complication (что изменилось / почему статус-кво нежизнеспособен) → Question (естественно возникает, часто не озвучивается) → Answer (вершина пирамиды).
+Situation (what is, the audience agrees) → Complication (what has changed / why the status quo is not viable) → Question (arises naturally, often unspoken) → Answer (the top of the pyramid).
 
 ### Pyramid Principle (Minto)
-Answer first, evidence second. Governing thought (вершина) → 3-5 supporting pillars (MECE) → evidence per pillar.
+Answer first, evidence second. Governing thought (the top) → 3-5 supporting pillars (MECE) → evidence per pillar.
 
-Правило: первый абзац = полный ответ; всё остальное - доказательства. Никогда не хоронить вывод.
+Rule: the first paragraph = the full answer; everything else is proof. Never bury the conclusion.
 
 ### Issue Tree
-Top-down декомпозиция:
-- Root question - одно предложение с границами (география, горизонт, цель)
-- Level 1 (3-5 веток) - основные измерения, MECE
-- Level 2+ - конкретные, эмпирически проверяемые подвопросы
-- Для каждого терминала: источник данных + формат ответа + какое решение информирует
-- Критический путь: 2-3 ветки, ответ на которые снимает больше всего неопределённости
+Top-down decomposition:
+- Root question - one sentence with boundaries (geography, horizon, goal)
+- Level 1 (3-5 branches) - the main dimensions, MECE
+- Level 2+ - concrete, empirically testable sub-questions
+- For each leaf: data source + answer format + which decision it informs
+- Critical path: the 2-3 branches whose answers remove the most uncertainty
 
-Анти-паттерн: solution tree (декомпозиция готовых ответов) вместо issue tree (декомпозиция вопроса) → confirmation bias.
+Anti-pattern: a solution tree (decomposing ready-made answers) instead of an issue tree (decomposing the question) → confirmation bias.
 
 ### Hypothesis-Driven
-Формат: «Мы считаем, что [X], потому что [Y], что означает [Z] должно наблюдаться».
+Format: "We believe that [X], because [Y], which means [Z] should be observed".
 
-1. Сформулировать гипотезу (одно фальсифицируемое предложение)
-2. 3 strongest confirming evidence
-3. **1 killer fact (самое убедительное опровержение) - искать первым** (по Попперу)
+1. Formulate the hypothesis (one falsifiable sentence)
+2. The 3 strongest confirming pieces of evidence
+3. **1 killer fact (the most convincing refutation) - look for it first** (after Popper)
 4. Confidence calibration
-5. Документировать эволюцию гипотезы
+5. Document how the hypothesis evolves
 
 ---
 
 ## So-What Test
 
-Каждый finding проходит три уровня:
+Every finding passes three levels:
 ```
-FINDING:    [наблюдение]
-SO WHAT:    [конкретная импликация для решения]
-THEREFORE:  [конкретное рекомендуемое действие]
+FINDING:    [observation]
+SO WHAT:    [concrete implication for the decision]
+THEREFORE:  [concrete recommended action]
 ```
 
-Тест удаления: если finding убрать и рекомендация не изменится - finding не нужен. Описания без So-What → приложение, не основной текст.
+Removal test: if you remove the finding and the recommendation does not change, the finding is not needed. Descriptions without a So-What go to the appendix, not the main text.
 
 ---
 
 ## Specificity Filter
 
-Если предложение можно вставить в отчёт о ЛЮБОЙ компании / любом рынке - удалить.
+If a sentence could be pasted into a report about ANY company / any market, delete it.
 
-Запрещено / Замена:
-- «Рынок конкурентный» → «3 игрока контролируют 72% рынка, HHI = 2100»
-- «Технологии важны» → «LLM-интеграция - table stakes с 2025, 8/10 конкурентов имеют AI-фичи»
-- «Потребности клиентов различаются» → «Enterprise платит 5× SMB, требует SOC2 и SLA 99.9%»
+Forbidden / Replacement:
+- "The market is competitive" → "3 players control 72% of the market, HHI = 2100"
+- "Technology matters" → "LLM integration has been table stakes since 2025; 8/10 competitors have AI features"
+- "Customer needs differ" → "Enterprise pays 5× SMB and requires SOC2 and a 99.9% SLA"
 
-Тест фальсифицируемости: можно ли опровергнуть утверждение данными? Если нет - оно не аналитическое.
+Falsifiability test: can the statement be refuted with data? If not, it is not analytical.
 
 ---
 
-## Расширенные структурные фреймворки
+## Extended structural frameworks
 
 ### Profitability Tree
-**Когда:** падение прибыли, оценка экономики бизнес-юнита.
+**When:** falling profit, assessing the economics of a business unit.
 
 ```
 Profit = Revenue − Cost
   Revenue = Price × Volume
-    Price = базовая цена − скидки/возвраты
-    Volume = # клиентов × частота × средний чек
+    Price = base price − discounts/returns
+    Volume = # customers × frequency × average ticket
   Cost = Variable + Fixed
     Variable = COGS + sales/marketing per unit
     Fixed = G&A + R&D + facilities
 ```
 
-Стартовать всегда отсюда для profitability-кейсов; декомпозировать только ту ветку, где найден gap.
+Always start here for profitability cases; decompose only the branch where the gap is found.
 
 ### Porter's Five Forces
-**Когда:** оценка структурной привлекательности рынка / отрасли.
+**When:** assessing the structural attractiveness of a market / industry.
 
-1. Угроза новых игроков (барьеры входа)
-2. Угроза заменителей (substitution)
-3. Власть поставщиков
-4. Власть покупателей
-5. Внутриотраслевая конкуренция
+1. Threat of new entrants (barriers to entry)
+2. Threat of substitutes (substitution)
+3. Supplier power
+4. Buyer power
+5. Rivalry within the industry
 
-Анти-паттерн: применять механически. Спрашивать: «какая из 5 сил доминирует здесь и почему?» Если ни одна не критична - не использовать Porter, использовать что-то ещё.
+Anti-pattern: applying it mechanically. Ask: "which of the 5 forces dominates here, and why?" If none is critical, do not use Porter; use something else.
 
 ### BCG Growth-Share Matrix
-**Когда:** портфель продуктов / бизнес-юнитов, аллокация инвестиций.
+**When:** a portfolio of products / business units, allocating investment.
 
-Оси: market growth (Y) × relative market share (X). Квадранты: Stars / Cash Cows / Question Marks / Dogs.
+Axes: market growth (Y) × relative market share (X). Quadrants: Stars / Cash Cows / Question Marks / Dogs.
 
-Ловушка: «Dog» не всегда плохо, если генерирует cash без инвестиций; «Star» не всегда хорошо, если требует постоянных вливаний.
+Trap: a "Dog" is not always bad if it generates cash without investment; a "Star" is not always good if it needs constant injections.
 
 ### McKinsey 7-S
-**Когда:** organizational diagnosis / change management.
+**When:** organisational diagnosis / change management.
 
 Hard: Strategy, Structure, Systems.
-Soft: Shared Values (центр), Skills, Style, Staff.
+Soft: Shared Values (the centre), Skills, Style, Staff.
 
-Используется для проверки выравнивания: если меняется один S, какие из остальных тоже должны измениться?
+Used to check alignment: if one S changes, which of the others must change too?
 
 ### Ansoff Matrix
-**Когда:** growth strategy.
+**When:** growth strategy.
 
-Оси: market (existing / new) × product (existing / new). Квадранты: Market Penetration / Product Development / Market Development / Diversification (риск растёт по диагонали).
+Axes: market (existing / new) × product (existing / new). Quadrants: Market Penetration / Product Development / Market Development / Diversification (risk grows along the diagonal).
 
 ### Value Chain (Porter)
-**Когда:** анализ источника competitive advantage / поиск процесса для оптимизации.
+**When:** analysing the source of competitive advantage / looking for a process to optimise.
 
 Primary: Inbound Logistics → Operations → Outbound Logistics → Marketing & Sales → Service.
 Support: Firm Infrastructure, HR, Technology, Procurement.
 
-Margin = разница между value, который покупатель готов платить, и стоимостью activities.
+Margin = the difference between the value the buyer is willing to pay for and the cost of the activities.
 
 ### 4P / 4C
 **4P (firm view):** Product, Price, Place, Promotion.
 **4C (customer view):** Customer Solution, Cost, Convenience, Communication.
 
-Когда: маркетинговый mix, go-to-market.
+When: the marketing mix, go-to-market.
 
 ### Double Diamond
-**Когда:** problem discovery > solutioning. Разделяет divergent (поиск) и convergent (выбор) на двух уровнях.
+**When:** problem discovery > solutioning. Separates divergent (search) and convergent (choice) thinking on two levels.
 
-Discover (divergent: понять проблему) → Define (convergent: сформулировать) → Develop (divergent: генерировать решения) → Deliver (convergent: выбрать и внедрить).
+Discover (divergent: understand the problem) → Define (convergent: formulate it) → Develop (divergent: generate solutions) → Deliver (convergent: choose and implement).
 
-Защита от framework dump: заставляет провести real problem discovery до прыжка в решения.
+Protection against a framework dump: it forces real problem discovery before the jump to solutions.
 
 ---
 
-## Расчётные фреймворки
+## Calculation frameworks
 
 ### TAM / SAM / SOM
-- **TAM** (Total Addressable Market) - весь рынок, если бы продукт купили все, кому он применим
-- **SAM** (Serviceable Addressable) - часть TAM, реально доступная (география, регуляции, каналы)
-- **SOM** (Serviceable Obtainable) - реалистичная доля SAM, которую можно захватить за горизонт
+- **TAM** (Total Addressable Market) - the whole market, if everyone the product applies to bought it
+- **SAM** (Serviceable Addressable) - the part of TAM that is really reachable (geography, regulation, channels)
+- **SOM** (Serviceable Obtainable) - the realistic share of SAM that can be captured within the horizon
 
-Считать **двумя способами** (top-down: рынок × доля; bottom-up: # клиентов × средний чек × частота). Если разлёт >2× - где-то ошибка в допущениях.
+Calculate it **two ways** (top-down: market × share; bottom-up: # customers × average ticket × frequency). If the gap is >2×, there is an error somewhere in the assumptions.
 
-### Sanity Checks для расчётов
-- Порядок величины vs benchmark (известные конкуренты, отраслевые отчёты)
-- Cross-check альтернативной формулой
-- Sensitivity: ±20% по 2-3 ключевым допущениям → как меняется результат
-- «Реально ли столько людей купят?» - bottom-up проверка через население / организации / транзакции
+### Sanity Checks for calculations
+- Order of magnitude vs a benchmark (known competitors, industry reports)
+- Cross-check with an alternative formula
+- Sensitivity: ±20% on 2-3 key assumptions → how the result changes
+- "Will that many people really buy?" - a bottom-up check through population / organisations / transactions
 
-### Unit Economics базовые
-- **CAC** (Customer Acquisition Cost) - sales + marketing / # новых клиентов
-- **LTV** (Lifetime Value) - средний чек × частота × срок жизни × gross margin
+### Basic Unit Economics
+- **CAC** (Customer Acquisition Cost) - sales + marketing / # new customers
+- **LTV** (Lifetime Value) - average ticket × frequency × lifetime × gross margin
 - **Payback period** - CAC / (monthly contribution margin per customer)
-- **LTV/CAC** ≥ 3 - здоровая модель; < 1 - убыточная
+- **LTV/CAC** ≥ 3 - a healthy model; < 1 - a loss-making one
 
 ---
 
-## Тактические инструменты
+## Tactical tools
 
 ### 5 Whys
-Для root cause analysis. Спрашивать «почему?» 5 раз подряд от симптома вглубь.
+For root cause analysis. Ask "why?" 5 times in a row, from the symptom downwards.
 
-Ловушка: 5 Whys предполагает линейную причину; для systemic issues лучше Issue Tree.
+Trap: 5 Whys assumes a linear cause; for systemic issues an Issue Tree is better.
 
 ### 80/20 (Pareto)
-Принцип неравномерности. 80% impact обычно от 20% factors.
+The principle of unevenness. 80% of the impact usually comes from 20% of the factors.
 
-В консалтинге: после Issue Tree спросить «какая ветка даёт 80% impact?» и фокусироваться там, не пытаться decompose всё.
+In consulting: after the Issue Tree, ask "which branch gives 80% of the impact?" and focus there instead of trying to decompose everything.
 
 ---
 
 ## Cross-Framework Integration
 
-| Задача | Primary | Supporting | Последовательность |
+| Task | Primary | Supporting | Sequence |
 |--------|---------|-----------|-------------------|
-| Падение прибыли | Profitability Tree | 5 Whys по найденной ветке | Tree → найти gap → 5 Whys |
-| Входить ли на рынок | Market Attractiveness | Porter's → TAM/SAM/SOM | Porter's → Sizing → Score |
-| Как конкурировать | Competitive Positioning | Value Chain, 4P | Где margin → как защищать |
-| Уязвимость конкурента | Issue Tree + Hypothesis | 7-S, Value Chain | Hypothesis → Evidence |
-| Устойчива ли модель | Unit Economics | Scenario Planning | LTV/CAC → Stress |
-| Как структурировать отчёт | Pyramid | MECE, Issue Tree | Tree → MECE → Pyramid |
-| Growth strategy | Ansoff | BCG | Ansoff (где растём) → BCG (что инвестируем) |
-| Org redesign | 7-S | Value Chain | 7-S (alignment) → Value Chain (где value) |
+| Falling profit | Profitability Tree | 5 Whys on the branch found | Tree → find the gap → 5 Whys |
+| Whether to enter a market | Market Attractiveness | Porter's → TAM/SAM/SOM | Porter's → Sizing → Score |
+| How to compete | Competitive Positioning | Value Chain, 4P | Where the margin is → how to defend it |
+| A competitor's vulnerability | Issue Tree + Hypothesis | 7-S, Value Chain | Hypothesis → Evidence |
+| Is the model sustainable | Unit Economics | Scenario Planning | LTV/CAC → Stress |
+| How to structure a report | Pyramid | MECE, Issue Tree | Tree → MECE → Pyramid |
+| Growth strategy | Ansoff | BCG | Ansoff (where we grow) → BCG (what we invest in) |
+| Org redesign | 7-S | Value Chain | 7-S (alignment) → Value Chain (where the value is) |

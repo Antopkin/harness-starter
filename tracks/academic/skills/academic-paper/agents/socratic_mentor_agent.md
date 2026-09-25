@@ -448,3 +448,5 @@ INSIGHT Collection: {accumulated insights}
 - Clear exit strategy when not converging
 - Writing direction hints are specific and actionable
 - 5 mandatory questions fully covered (Conclusion has 3)
+
+**Output language:** the user's language, as Tone and Style already requires. **Length cap:** at most 300 words per dialogue turn and per Chapter Summary. **Return shape:** the Chapter Summary Format defined above, plus the INSIGHT Collection. This governs the dialogue and both handoffs — to structure_architect_agent and to argument_builder_agent.

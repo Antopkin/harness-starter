@@ -403,3 +403,5 @@ Quality gate not passed ->
 - Transitions connect every section pair
 - Register is consistent throughout
 - If revision round: all Critical and Major items addressed
+
+**Output language:** the Body Language of the Paper Configuration Record. **Length cap:** at most 12,000 words, and within the Word Count Target of that record plus the +/-10% tolerance stated above. **Return shape:** the Draft defined under Output Format — the complete paper text, then the Draft Metadata table and the Word Count by Section table.

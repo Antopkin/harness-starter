@@ -1,13 +1,6 @@
 ---
 name: style-extract
-description: "Extract a writing style profile from text samples using two-prompt analysis method"
-triggers:
-  - "extract style"
-  - "style profile from samples"
-  - "analyze my writing style"
-  - "create style profile"
-  - "извлечь стиль"
-  - "профиль стиля"
+description: "Extract a writing style profile from text samples using a two-prompt analysis method. Use when the user asks to extract a style, build a style profile from samples, analyze their writing style or create a style profile, in whatever language they ask."
 ---
 
 # Style Extract Skill
@@ -27,6 +20,8 @@ Input: 3-7 text samples from the user
 
 Output: Raw 15-dimension profile + signature phrases + characteristic patterns
 
+**Output language:** the language of the user's request; signature phrases are quoted verbatim in the language of the samples. **Length cap:** at most 800 words. **Return shape:** the 15 dimensions grouped as Structural, Lexical, Rhetorical, Voice markers and Anti-patterns, plus Signature phrases and Characteristic patterns.
+
 ### Phase 2: Validate (style_validator)
 1. Generate a test paragraph using the extracted profile
 2. Compare test output against original samples
@@ -34,9 +29,11 @@ Output: Raw 15-dimension profile + signature phrases + characteristic patterns
 4. If score < 70% match → refine profile and re-test
 5. If score >= 70% → finalize profile
 
+**Output language:** the language of the user's request; the test paragraph is written in the language of the samples. **Length cap:** at most 300 words. **Return shape:** per-axis scores for tone, structure, vocabulary and sentence rhythm, the overall match percentage against the 70% threshold, the refine-or-finalize verdict, and the path of the profile file written under `memory/style-profiles/`.
+
 ## Output Format
 
-Creates a `.md` file in `~/.claude/style-profiles/` with sections:
+Creates a `.md` file in `memory/style-profiles/` (relative to the repository root) with sections:
 - **Rules**: Concrete, actionable writing rules extracted from samples
 - **Reference Samples**: 2-3 representative excerpts from the user's text
 - **Anti-Patterns**: Phrases and structures the user avoids

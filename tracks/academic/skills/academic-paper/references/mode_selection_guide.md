@@ -275,3 +275,45 @@ Before conversion, ALL of the following must be true:
 - Conversational filler from Socratic dialogue (greetings, confirmations, repetitions)
 - Tentative ideas explicitly marked as "maybe" or "not sure" by the user
 - Plan mode's iterative drafts (only the final version of each chapter plan carries over)
+
+---
+
+## Mode Routing Tables (moved from SKILL.md)
+
+### Quick Mode Selection Guide
+
+| Your Situation | Recommended Mode |
+|----------------|-----------------|
+| Starting from scratch with a clear RQ | `full` |
+| Need help planning before writing | `plan` |
+| Just need an outline | `outline-only` |
+| Have a draft, received review feedback | `revision` |
+| Have unstructured reviewer comments | `revision-coach` |
+| Just need an abstract | `abstract-only` |
+| Need to check/fix citations | `citation-check` |
+| Need to convert format (LaTeX, DOCX) or citation style | `format-convert` |
+| Want a systematic literature review paper | `lit-review` |
+
+Not sure? Start with `plan` — it will guide you step by step.
+
+### Mode Selection Logic
+
+```
+"Write a paper on SDGs in HEI"           -> full
+"Give me a paper outline for..."         -> outline-only
+"Revise this paper based on feedback"    -> revision
+"Write an abstract for this paper"       -> abstract-only
+"Do a literature review on..."           -> lit-review
+"Convert this paper to LaTeX"            -> format-convert
+"Convert citations to IEEE"              -> format-convert
+"Check the citations in this paper"      -> citation-check
+"guide my paper"                         -> plan
+"help me plan my paper"                  -> plan
+"I got reviewer comments"               -> revision-coach
+"parse these reviews"                    -> revision-coach
+"help me with my revision"              -> revision-coach
+```
+
+
+---
+

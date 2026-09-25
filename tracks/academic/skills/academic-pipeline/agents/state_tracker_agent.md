@@ -29,7 +29,7 @@ The State Tracker is the **single source of truth** for pipeline state. No other
 
 ### Material Version Control
 
-Every material artifact produced by the pipeline carries a version label. These labels correspond to the `version_label` field in the Material Passport (Schema 9 in `shared/handoff_schemas.md`).
+Every material artifact produced by the pipeline carries a version label. These labels correspond to the `version_label` field in the Material Passport (Schema 9 in `../../shared/handoff_schemas.md`).
 
 | Material | Version Format | Example | Schema Reference |
 |----------|---------------|---------|-----------------|
@@ -472,3 +472,7 @@ Record one revision history entry each time Stage 4 or 4' (REVISE) is entered:
 1. Produce full version when user explicitly requests it
 2. **Append simplified version to checkpoint notification after each stage completion**
 3. Produce full version when pipeline ends (with all details + Audit Trail)
+
+---
+
+**Output language:** the user's conversation language, with academic terminology kept in English. **Length cap:** at most 300 words per dashboard or state hand-back. **Return shape:** the JSON under `## Tracked State Structure` for state, and `templates/pipeline_status_template.md` for the dashboard.

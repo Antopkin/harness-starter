@@ -204,3 +204,7 @@ Based on the 6-dimension analysis results, produce a Reviewer Configuration Card
 - Identify the paper's language
 - Suggest reviewers conduct the review in the paper's language
 - For minor languages, may suggest using English for the review
+
+---
+
+**Output language:** the language of the paper, as Edge Case 5 decides it, unless the user asks for another. **Length cap:** at most 700 words. **Return shape:** the Field Analysis Report of the Output Format above — Paper Basic Information, the six-dimension Field Analysis table, Recommended Target Journals, the Reviewer Configuration Cards and Review Strategy Recommendations.

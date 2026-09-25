@@ -1,85 +1,68 @@
 ---
 name: handoff
-description: >
-  Компактный документ-передача текущего разговора, чтобы следующая сессия или
-  другой агент подхватили работу с чистого листа. Складывает состояние: цель;
-  что сделано / в полёте / заблокировано; открытые вопросы; следующий шаг; какие
-  факты из памяти и навыки поднять. Триггеры (RU): «сделай handoff», «передай
-  работу следующей сессии», «сохрани состояние сессии», «/handoff». NOT: готовый
-  план на исполнение — это отдельный артефакт; NOT: протокол встречи из транскрипта.
+description: Compact the current conversation into a handoff document so another agent can pick up the work. Slash-only invocation - /handoff [optional focus of next session].
+argument-hint: "What will the next session be used for?"
+disable-model-invocation: true
 ---
 
-# handoff — передать работу следующей сессии
+Write a handoff document summarising the current conversation so a fresh agent can continue the work.
 
-Собирает конспект текущего разговора так, чтобы свежий агент продолжил работу без
-твоего пересказа. Пиши его, когда контекст разросся или сессия прерывается на
-середине («устал, продолжим завтра»), а не когда задача уже закрыта.
+The skill is user-invoked (`disable-model-invocation: true`); only Claude Code honours that flag, so OpenCode and Codex may still invoke it on their own.
 
-1. **Путь:** `handoffs/<ГГГГ-ММ-ДД>-<короткий-слаг>.md` в корне проекта. Создай папку
-   `handoffs/`, если её нет (`mkdir -p handoffs`). Если файл с таким именем уже есть —
-   нарасти слаг (`-2`, `-3`), никогда не переписывай прошлый handoff.
+**When to use /handoff vs the Plan-audit rule:** Handoff = save state mid-work ("tired, let's continue tomorrow": session continuity). Plan-audit rule (see `contexts/workflow-orchestration.md`) = ship a plan for execution ("the plan is ready, handing it to a clean session"). If you are in plan mode and the plan is ready to finalise, use the Plan-audit rule, not handoff.
 
-2. Документ должен дать свежему агенту подхватить «с холода». Используй ровно этот
-   порядок секций. Первая секция — **фиксированный канонический текст**: воспроизведи
-   его дословно, не перефразируй. Необязательные секции при пустоте опускай целиком
-   (без пустого заголовка).
+1. Path: `plans/handoffs/$(date +%Y-%m-%d)-<short-slug>.md`, under the project root. Create `plans/handoffs/` if it doesn't exist (`mkdir -p`). If the target path already exists, bump the slug (`-2`, `-3`) — never overwrite a previous handoff.
+
+2. The doc must let a fresh agent pick up cold. Use exactly this section order. The first section is **fixed canonical text** — reproduce it verbatim, do not rephrase or summarise. Optional sections are omitted entirely (no empty header) when there's nothing to put in them.
 
    ```markdown
-   # Handoff: <слаг>
+   # Handoff: <slug>
 
-   ## ⚡ Инструкции для подхватывающего агента
+   ## ⚡ Instructions for the agent picking this up
 
-   Внимательно прочти этот файл целиком. Опиши как ты принимаешь задачу —
-   какие принципы работы, проблемы, ценность и следующие шаги ты понял.
-   Задай мне побольше открытых вопросов прежде чем действовать.
+   Read this whole file carefully. Describe how you are taking on the task:
+   which working principles, problems, value and next steps you understood.
+   Ask me plenty of open questions before you act.
 
-   **Политика субагентов:** береги своё контекстное окно как основная
-   рабочая сессия. Для ресёрча, поиска, чтения, исследования — запускай
-   специализированных субагентов (по типу или со скиллами). Параллельно
-   и волнами, где задачи независимы. Один task = один субагент.
+   **Subagent policy:** guard your context window as the main working
+   session. For research, search, reading and exploration, launch
+   specialised subagents (by type or with skills). Run them in parallel
+   and in waves where the tasks are independent. One task = one subagent.
 
-   В первую очередь загрузи Memory refs ниже, потом смотри Suggested skills.
+   Load the Memory refs below first, then look at Suggested skills.
 
    ## Goal
-   Один абзац — чего мы добиваемся.
+   One paragraph — what we're trying to accomplish.
 
-   ## Принципы и решения этой сессии
-   (необязательно — опусти всю секцию, если фиксировать нечего)
+   ## Principles and decisions from this session
+   (optional — omit the whole section if nothing to capture)
 
    ## State
-   Сделано / в полёте / заблокировано.
+   Done / in flight / blocked.
 
    ## Open questions
-   (необязательно — нерешённые развилки или что должен ответить пользователь;
-   опусти, если нет)
+   (optional — unresolved forks or things the user needs to answer; omit if none)
 
    ## Next step
-   Единственное самое конкретное следующее действие.
+   The single most concrete next action.
 
    ## Active plan
-   Handoff — это сохранение состояния на середине работы (session continuity),
-   а не готовый план на исполнение. Если в проекте есть план-файл, относящийся
-   к этой сессии, дай ссылку на него абсолютным путём — не пересказывай его
-   содержимое. Поставь «—», если плана нет.
+
+   If `plans/` has a plan file relevant to this session, link it by path. Don't restate its contents. Use "—" if none.
 
    ## Memory refs
-   2–5 записей из `memory/MEMORY.md`, которые следующей сессии обязательно
-   загрузить. Выбирай по релевантности работе, не все подряд.
+   2–5 entries from `memory/MEMORY.md` the next session must load. Pick by relevance to the work, not all of them.
 
    ## Suggested skills
-   Какие навыки следующей сессии стоит взять, по именам.
+   Which skills the next session should reach for, by name.
    ```
 
-3. Не дублируй то, что уже зафиксировано в других артефактах (планы, ADR, issue,
-   коммиты, диффы). Ссылайся на них путём или URL, а не переписывай.
+3. Do not duplicate content already captured in other artifacts (PRDs, plans, ADRs, issues, commits, diffs). Reference them by path or URL instead.
 
-4. Если пользователь передал аргумент к `/handoff`, считай его описанием того, на чём
-   сфокусируется следующая сессия, и подгони под него `Goal` и `Next step`.
+4. If the user passed arguments to `/handoff`, treat them as a description of what the next session will focus on and tailor Goal / Next step accordingly.
 
-5. После записи выведи абсолютный путь к файлу — чтобы пользователь вставил его
-   в следующую сессию.
+5. After writing, print the absolute path so the user can paste it into the next session.
 
-6. **EXECUTED-контракт.** Сессия, которая ИСПОЛНИЛА handoff (довела его задачу до
-   конца), дописывает в САМОЕ НАЧАЛО файла строку
-   `> EXECUTED <ГГГГ-ММ-ДД> — <итог одним предложением>`. Так следующий читатель
-   сразу видит, что handoff закрыт, и не переисполняет его.
+6. **EXECUTED contract.** The session that executed a handoff (carried its task through to the end) adds the line `> EXECUTED <YYYY-MM-DD> — <outcome in one sentence>` at the very top of the file. That way the next reader sees at once that the handoff is closed and does not execute it again.
+
+**Output language:** the language of the user's request for the prose you write yourself, while the template's headers and the canonical instruction block are reproduced verbatim as written above and the user's own wording is quoted as spoken. **Length cap:** at most 800 words for the whole handoff document — State and Open questions at most seven bullets each, Next step one sentence; whatever does not fit belongs in a plan or a memory note referenced by path. **Return shape:** the template's sections in the order given — Goal, Principles and decisions from this session (optional), State, Open questions (optional), Next step, Active plan, Memory refs (give the path `memory/MEMORY.md` once, then a bullet list of 2-5 named entries from it, half a line each on why that entry matters), Suggested skills (a bullet list of bare skill names, one per line, no prose) — followed by the written file's absolute path printed to the user. This contract governs every phase of this skill.
