@@ -354,6 +354,36 @@ check "log -n 5 ALLOW"               bash "git log -n 5"                        
 check "diff ALLOW"                   bash "git diff"                                allow
 check "grep -rn ALLOW"               bash "grep -rn x ."                            allow
 check "npm test ALLOW"               bash "npm test"                                allow
+check "commit -F msg file ALLOW"     bash "git commit -F /tmp/msg.txt"              allow
+check "-C commit --no-gpg-sign ALLOW" bash "git -C /tmp/r commit -q --no-gpg-sign -m x" allow
+check "add a hook file ALLOW"        bash "git add hooks/skip-ci-guard.sh"          allow
+check "gh pr merge ALLOW"            bash "gh pr merge 7 --squash"                  allow
+check "push --delete ALLOW"          bash "git $PSH origin --delete feat/x"         allow
+check "pull --ff-only ALLOW"         bash "git pull --ff-only"                      allow
+check "python3 -m pytest ALLOW"      bash "python3 -m pytest -q"                    allow
+check "restore '?*' BLOCK"           bash "git $RSR '?*'"                           block
+check "checkout -- ':!README' BLOCK" bash "git $CO -- ':!README.md'"                block
+
+echo "== BASH guard (heredocs, commit values, reset --help) =="
+# A quoted heredoc body is data unless a shell or interpreter reads it; the
+# value of commit -m/-F is data up to its own end; git reset --help is allowed.
+RMRF="$RMR $RF /tmp/x"; HEL="--h""el"
+check "bash <<'X' rm body BLOCK"     bash "bash <<'X'${NL}$RMRF${NL}X"              block
+check "cat <<X \$(rm) body BLOCK"    bash "cat <<X${NL}\$($RMRF)${NL}X"             block
+check "python3 os.system rm BLOCK"   bash "python3 - <<'X'${NL}import os; os.system('$RMRF')${NL}X" block
+check "cat <<'X' && rm marker BLOCK" bash "cat <<'X' && $RMRF${NL}body${NL}X"       block
+check "cat <<'X' | bash BLOCK"       bash "cat <<'X' | bash${NL}$RMRF${NL}X"        block
+check "rm after terminator BLOCK"    bash "git commit -F - <<'MSG'${NL}note${NL}MSG${NL}$RMRF" block
+check "reset --hel BLOCK"            bash "git $RST $HEL"                           block
+check "commit -m then rm BLOCK"      bash "git commit -m \"x\" && $RMRF"            block
+check "commit -m \$(rm) BLOCK"       bash "git commit -m \"\$($RMRF)\""             block
+check "commit -m backtick rm BLOCK"  bash "git commit -m \"\`$RMRF\`\""             block
+check "commit heredoc tidy ALLOW"    bash "git commit -q -F - <<'MSG'${NL}fix: tidy${NL}${NL}- $RMR stale dirs, not -r -f${NL}- say why git $PSH $FRC is risky${NL}MSG" allow
+check "commit heredoc docs ALLOW"    bash "git commit -q -F - <<'MSG'${NL}docs: explain why git $CO . and git $CLN -fd are refused${NL}MSG" allow
+check "commit -m -n in text ALLOW"   bash "git commit -m \"document the $CN flag of grep\"" allow
+check "commit -m push text ALLOW"    bash "git commit -m \"say why git $PSH $FRC is risky\"" allow
+check "commit -m \$(cat heredoc) ALLOW" bash "git commit -m \"\$(cat <<'EOF'${NL}why git $PSH $FRC is risky${NL}EOF${NL})\"" allow
+check "reset --help ALLOW"           bash "git $RST --help"                         allow
 
 echo "== skip-ci guard =="
 check "skip-ci + code BLOCK"     bash "git -C $REPO_PY commit -m \"x [skip ci]\""    block
