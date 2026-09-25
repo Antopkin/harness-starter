@@ -107,9 +107,15 @@ fi
 # (b) a bare cat that is the only command of a $(...) inside a double-quoted
 # argument of git commit (-m, -F), git tag or gh pr, issue or release, as in
 # -m "$(cat <<'EOF' ... EOF)". The marker line must end at the delimiter (for
-# (b) only the closing ) and " may follow it), and a command that defines a git
-# or cat function, or an alias, has no data bodies at all. That lets a commit
-# message name the very commands it explains. Every other body is scanned, a
+# (b) only the closing ) and " may follow it), a sink (b) body must be clean (no
+# ), no nested $( or backtick, quotes balanced: otherwise the shell runs it,
+# bash 3.2 closing the $( at the first ) and bash 5 running a nested one), and a
+# command that defines a git or cat function or an alias, rebinds cat with
+# hash -p or enable, or reorders PATH, has no data bodies at all. An editor
+# context (GIT_EDITOR=sh git commit -e ..., or -c core.editor=, which makes git
+# run the message as a script) likewise turns every body and every -m/-F value
+# into code. That still lets an ordinary commit message name the commands it
+# explains. Every other body is scanned, a
 # second time with its quotes, commas and brackets turned into spaces, so
 # os.system('...') or a ["rm", ...] list is read as the command it runs. The
 # marker line and everything after the terminator are always scanned. An
@@ -124,8 +130,14 @@ fi
 # continuation cannot hide behind a heredoc terminator.
 # The price of scanning every `rm` and `git` word is the same bargain as the
 # rest of this file: an echo, or a commit message passed any other way, that
-# spells one of these commands out is refused too. Known limit: a git alias defined with
-# -c alias.x=... is not expanded. If awk itself fails, the guard fails closed.
+# spells one of these commands out is refused too. A command word, or an rm
+# argument, spelled with ANSI-C quoting that carries a backslash escape
+# ($'\x72m', $'\x2d'rf) is refused, as is a brace-expansion word run as a
+# command ({rm,-rf,DIR}); the shell decodes both to something unq cannot see.
+# Known limits, not closable at text level: a git alias defined with
+# -c alias.x=... is not expanded, and neither is variable indirection, so
+# X=-rf; rm $X DIR and a shell alias for rm go past the guard. If awk itself
+# fails, the guard fails closed.
 VERDICT=$(printf '%s\n' "$CMD" | awk -v sq="'" '
 function unq(t) { gsub("[$][" sq "\"]", "", t); gsub(sq, "", t); gsub(/"/, "", t); gsub(/\\/, "", t); return t }
 function norm(t,   np, pt, st, ns, i, out) {
@@ -209,7 +221,8 @@ function cvlong(a) {
           isprefix(a, "--date", 4) || isprefix(a, "--reuse-message", 5) || isprefix(a, "--reedit-message", 5) ||
           isprefix(a, "--squash", 4) || isprefix(a, "--cleanup", 4) || isprefix(a, "--pathspec-from-file", 12))
 }
-function scan(s,   seg, nseg, i, n, w, u, k, b, j, o, verb, dry, m, a, c, p, staged, wt, hit, rr, ff, hp, e) {
+function scan(s,   seg, nseg, i, n, w, u, k, b, j, o, verb, dry, m, a, c, p, staged, wt, hit, rr, ff, hp, e, cw, cb, ansi) {
+  ansi = "[$]" sq "[^" sq "]*\\\\"
   while (match(s, /:\([^() \t]*\)/)) s = substr(s, 1, RSTART) "\001" substr(s, RSTART + 2, RLENGTH - 3) "\002" substr(s, RSTART + RLENGTH)
   gsub(/&&|\|\||[;|&()`]/, "\n", s)
   nseg = split(s, seg, "\n")
@@ -217,6 +230,20 @@ function scan(s,   seg, nseg, i, n, w, u, k, b, j, o, verb, dry, m, a, c, p, sta
     gsub(/[<>]/, " ", seg[i])
     n = split(seg[i], w)
     for (k = 1; k <= n; k++) u[k] = unq(w[k])
+    # The command word of the segment: the first word that is not a VAR= prefix.
+    cw = 0
+    for (k = 1; k <= n; k++) { if (u[k] ~ /^[A-Za-z_][A-Za-z0-9_]*=/) continue; cw = k; break }
+    if (cw) {
+      # N5: ANSI-C quoting ($'\x72m', $'\055rf') and brace expansion ({rm,-rf,T})
+      # hide a command or its flags from unq. A command word, or an argument of
+      # rm, that carries a $'...\...' escape is refused, as is a brace-expansion
+      # word (holding { , and } with no space, not a { ...; } group) run as a
+      # command. Variable indirection (X=-rf; rm $X) cannot be seen here.
+      if (w[cw] ~ ansi) { print "ANSI-C quoted command word"; exit }
+      if (index(w[cw], "{") && index(w[cw], ",") && index(w[cw], "}")) { print "brace-expansion command word"; exit }
+      cb = u[cw]; sub(/.*\//, "", cb)
+      if (cb == "rm") { for (m = cw + 1; m <= n; m++) if (w[m] ~ ansi) { print "ANSI-C quoted rm argument"; exit } }
+    }
     for (k = 1; k <= n; k++) {
       b = u[k]; sub(/.*\//, "", b)
       if (b == "rm") {
@@ -333,7 +360,9 @@ function subq(v, ok,   p, q) {
   return p
 }
 # A commit value v is data: it is emitted as _ and its substitutions are queued.
-function blank(v) { subq(v, 1); return "_" }
+# But when an editor context (EDIT) can run the message as a script, the value
+# is emitted as itself so it is scanned as code instead of dropped.
+function blank(v) { if (EDIT) { subq(v, 0); return v } subq(v, 1); return "_" }
 # End of the raw word WB: note a bare cat (CT), follow the segment through git,
 # its global options and commit or tag, or through gh pr/issue/release (ST),
 # note a -F - (FD), and emit the word to OUT, a -m/-F/--message/--file value
@@ -385,13 +414,43 @@ function wdone(   w, a, b, c, p, ch, o) {
 # that feed a sink, and the values of git commit -m/-F. Bodies that stay code
 # are added to EXTRA twice, the second time with quotes, commas and brackets
 # turned to spaces. sb is set when s is the text of a $( inside double quotes.
-function prep(s, sb,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data, bb, t, rest, sk, found) {
+function prep(s, sb,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data, bb, t, rest, sk, found, CSD, IHD, IHT) {
   OUT = ""; WB = ""; PQ = ""; ST = 0; SK = 0; VN = 0; NH = 0; AR = 0
-  FD = 0; GX = 0; NW = 0; CT = 0; SB = sb
+  FD = 0; GX = 0; NW = 0; CT = 0; SB = sb; CSD = 0; IHD = ""; IHT = 0
   n = length(s); i = 1
   while (i <= n) {
     ch = substr(s, i, 1)
     if (PQ != "") {
+      # Inside "$(...)" a heredoc body is literal text: skip it so a " or a )
+      # in it does not close the outer word early (N1) or the substitution.
+      if (PQ == "d" && ch == "$" && substr(s, i + 1, 1) == "(") { WB = WB "$("; CSD++; i += 2; continue }
+      if (PQ == "d" && ch == ")" && CSD > 0) { WB = WB ch; CSD--; i++; continue }
+      if (PQ == "d" && CSD > 0 && IHD == "" && ch == "<" && substr(s, i + 1, 1) == "<" && substr(s, i + 2, 1) != "<") {
+        j = i + 2; dash = 0; d = ""
+        if (substr(s, j, 1) == "-") { dash = 1; j++ }
+        while (j <= n && (substr(s, j, 1) == " " || substr(s, j, 1) == "\t")) j++
+        while (j <= n) {
+          c = substr(s, j, 1)
+          if (index(" \t\n;&|()<>", c)) break
+          if (c == sq || c == "\"") { k = index(substr(s, j + 1), c); if (!k) { d = d substr(s, j + 1); j = n + 1; break }; d = d substr(s, j + 1, k - 1); j += k + 1; continue }
+          if (c == "\\") { d = d substr(s, j + 1, 1); j += 2; continue }
+          if (c == "$" && (substr(s, j + 1, 1) == sq || substr(s, j + 1, 1) == "\"")) { j++; continue }
+          d = d c; j++
+        }
+        WB = WB substr(s, i, j - i); if (d != "") { IHD = d; IHT = dash }
+        i = j; continue
+      }
+      if (ch == "\n" && IHD != "") {
+        WB = WB ch; i++
+        while (i <= n) {
+          e = index(substr(s, i), "\n")
+          if (e) { ln = substr(s, i, e - 1); i += e } else { ln = substr(s, i); i = n + 1 }
+          cmp = ln; if (IHT) sub(/^\t+/, "", cmp)
+          WB = WB ln; if (e) WB = WB "\n"
+          if (cmp == IHD) break
+        }
+        IHD = ""; continue
+      }
       WB = WB ch
       if (PQ == "s") { if (ch == sq) PQ = "" }
       else if (ch == "\\") { WB = WB substr(s, i + 1, 1); i++ }
@@ -433,7 +492,7 @@ function prep(s, sb,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data, bb, t, 
         sk = ""
         if (FD && GX && (ST == 2 || ST == 3)) { if (rest ~ /^[ \t]*$/) sk = "a" }
         else if (SB && CT && rest ~ /^[ \t]*([)][ \t]*("[ \t]*)?)?$/) sk = "b"
-        HS[NH] = (dq && !NODATA) ? sk : ""; HC[NH] = index(rest, ")")
+        HS[NH] = (dq && !NODATA && !EDIT) ? sk : ""; HC[NH] = index(rest, ")")
       }
       i = j; continue
     }
@@ -451,6 +510,13 @@ function prep(s, sb,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data, bb, t, 
         # Sink (b) also needs the substitution to close right after the body.
         data = (HS[k] != "" && found)
         if (data && HS[k] == "b" && !HC[k]) { rest = substr(s, i); sub(/^[ \t\n]*/, "", rest); if (substr(rest, 1, 1) != ")") data = 0 }
+        # A sink (b) body must be clean: on macOS bash 3.2 a ) in it closes the
+        # $( early, and a nested $( or backtick, or an unbalanced quote (bash 5,
+        # zsh), makes the body run. Any of these means it is code, not data.
+        if (data && HS[k] == "b") {
+          if (index(bb, ")") || index(bb, "$(") || index(bb, "`")) data = 0
+          else { t = bb; if (gsub(/"/, "", t) % 2) data = 0; t = bb; if (gsub(sq, "", t) % 2) data = 0 }
+        }
         if (!data) { t = bb; gsub(sq, " ", t); gsub(/"/, " ", t); gsub(/,/, " ", t); gsub(/\[/, " ", t); gsub(/\]/, " ", t); EXTRA = EXTRA bb t }
       }
       NH = 0; continue
@@ -468,8 +534,17 @@ function prep(s, sb,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data, bb, t, 
 }
 { raw = raw $0 "\n" }
 END {
-  # A command that defines a git or cat function, or an alias, has no data.
-  NODATA = (raw ~ /(^|[^A-Za-z0-9_])(git|cat)[ \t]*[(][ \t]*[)]/ || raw ~ /function[ \t]+(git|cat)/ || raw ~ /(^|[^A-Za-z0-9_])alias[ \t]/)
+  # A command that defines a git or cat function, or an alias has no data. Nor
+  # does one that rebinds the sink another way: hash -p and enable relink cat,
+  # and a PATH= assignment (standalone or as a prefix) puts a different cat or
+  # git first, so any of these disables the data allowlist.
+  NODATA = (raw ~ /(^|[^A-Za-z0-9_])(git|cat)[ \t]*[(][ \t]*[)]/ || raw ~ /function[ \t]+(git|cat)/ || raw ~ /(^|[^A-Za-z0-9_])alias[ \t]/ || raw ~ /(^|[ \t;&|(\n])hash[ \t]/ || raw ~ /(^|[ \t;&|(\n])enable[ \t]/ || raw ~ /(^|[ \t;&|(\n])PATH=/)
+  # An editor context makes git run the message as a script (GIT_EDITOR=sh git
+  # commit -e ...), so on such a commit or tag no heredoc body is data and no
+  # -m/-F value is dropped; both are scanned. The trigger is an assignment of
+  # GIT_EDITOR, EDITOR, VISUAL, GIT_SEQUENCE_EDITOR, GIT_EXEC_PATH or
+  # GIT_CONFIG_*, a core.editor= config, or -e/--edit on a commit or tag.
+  EDIT = (raw ~ /(^|[ \t;&|(\n])(GIT_EDITOR|VISUAL|EDITOR|GIT_SEQUENCE_EDITOR|GIT_EXEC_PATH|GIT_CONFIG[0-9A-Za-z_]*)=/ || tolower(raw) ~ /core\.editor[ \t]*=/ || (raw ~ /(commit|tag)/ && raw ~ /(^|[ \t\n])(-e|--edit)([ \t\n]|$)/))
   EXTRA = ""; NJ = 1; JQ[1] = raw; JS[1] = 0
   for (h = 1; h <= NJ && h <= 64; h++) { o = prep(JQ[h], JS[h]); scan(o); scan(joinbs(o)) }
   while (h <= NJ) { scan(JQ[h]); scan(joinbs(JQ[h])); h++ }

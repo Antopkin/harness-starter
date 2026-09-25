@@ -59,6 +59,32 @@ IN=$(cat)
 P=$(printf '%s' "$IN" | jq -r '.tool_input | (.file_path, .path, .glob) | select(type == "string" and . != "")' 2>/dev/null) || { echo "guard: cannot parse hook input" >&2; exit 2; }
 G=$(printf '%s' "$IN" | jq -r '.tool_input.glob | select(type == "string" and . != "")' 2>/dev/null) || { echo "guard: cannot parse hook input" >&2; exit 2; }
 
+# A Grep with no glob, or one narrowed only by a file type, runs ripgrep with
+# --hidden, so rooted at the home directory (or a parent of it) it reaches the
+# credential store no matter what the pattern is. Its root is the path, or the
+# hook's cwd when no path is given. Refuse that; a project directory (any
+# descendant of home) is fine, and a glob that names files is handled below.
+TOOL=$(printf '%s' "$IN" | jq -r '.tool_name | select(type == "string")' 2>/dev/null) || { echo "guard: cannot parse hook input" >&2; exit 2; }
+if [ "$TOOL" = "Grep" ]; then
+  TYPE=$(printf '%s' "$IN" | jq -r '.tool_input.type | select(type == "string" and . != "")' 2>/dev/null)
+  if [ -z "$G" ] || [ -n "$TYPE" ]; then
+    ROOT=$(printf '%s' "$IN" | jq -r '.tool_input.path | select(type == "string" and . != "")' 2>/dev/null)
+    [ -z "$ROOT" ] && ROOT=$(printf '%s' "$IN" | jq -r '.cwd | select(type == "string" and . != "")' 2>/dev/null)
+    if [ -n "$ROOT" ] && [ -n "$HOME" ]; then
+      case $ROOT in "~") ROOT=$HOME ;; "~/"*) ROOT="$HOME/${ROOT#"~/"}" ;; esac
+      r=${ROOT%/}; h=${HOME%/}; reaches=0
+      [ -z "$r" ] && r=/
+      if [ "$r" = "/" ] || [ "$r" = "$h" ]; then reaches=1
+      else case "$h/" in "$r/"*) reaches=1 ;; esac
+      fi
+      if [ "$reaches" -eq 1 ]; then
+        echo "BLOCKED: a Grep with no glob (or only a type filter) rooted at $ROOT searches the home directory with --hidden and would reach the credential store. Root it at a project directory, or add a glob that names the files you want." >&2
+        exit 2
+      fi
+    fi
+  fi
+fi
+
 # Split the glob as Claude Code does. Whitespace is JavaScript's \s, so the
 # Unicode spaces (U+00A0, U+1680, U+2000-200A, U+2028/9, U+202F, U+205F,
 # U+3000, U+FEFF) become plain spaces first.

@@ -70,6 +70,9 @@ payload() {  # <kind> <input>
     read)   jq -n --arg p "$2" '{tool_name:"Read", tool_input:{file_path:$p}}' ;;
     grep)   jq -n --arg p "$2" '{tool_name:"Grep", tool_input:{pattern:"x", path:$p}}' ;;
     grepglob) jq -n --arg d "$ROOT" --arg g "$2" '{tool_name:"Grep", tool_input:{pattern:"x", path:$d, glob:$g}}' ;;
+    greptype) jq -n --arg p "$2" '{tool_name:"Grep", tool_input:{pattern:"x", path:$p, type:"py"}}' ;;
+    grepcwd)  jq -n --arg c "$2" '{tool_name:"Grep", tool_input:{pattern:"x"}, cwd:$c}' ;;
+    grephome) jq -n --arg p "$HOME" --arg g "$2" '{tool_name:"Grep", tool_input:{pattern:"x", path:$p, glob:$g}}' ;;
     prompt) jq -n --arg p "$2" '{hook_event_name:"UserPromptSubmit", prompt:$p}' ;;
     *)      jq -n --arg c "$2" '{tool_name:"Bash", tool_input:{command:$c}}' ;;
   esac
@@ -77,7 +80,7 @@ payload() {  # <kind> <input>
 hooks_for() {  # <kind> -> hooks file
   case "$1" in
     file|notebook) echo "$TMP/file_hooks.txt" ;;
-    read|grep|grepglob) echo "$TMP/read_hooks.txt" ;;
+    read|grep|grepglob|greptype|grepcwd|grephome) echo "$TMP/read_hooks.txt" ;;
     prompt) echo "$TMP/prompt_hooks.txt" ;;
     skipci) echo "$TMP/skipci_hooks.txt" ;;
     *) echo "$TMP/bash_hooks.txt" ;;
@@ -204,6 +207,15 @@ check "Grep glob !README.md BLOCK"    grepglob "!README.md"                   bl
 check "Grep glob **/*.py ALLOW"       grepglob "**/*.py"                      allow
 check "Grep glob *.md,*.txt ALLOW"    grepglob "*.md,*.txt"                   allow
 check "Read .env.sample ALLOW"        read "$ROOT/.env.sample"                allow
+# A Grep with no glob (or only a type filter) rooted at home or a parent of it
+# reaches the credential store under ripgrep's --hidden; a project dir is fine.
+check "Grep no glob at HOME BLOCK"    grep     "$HOME"                        block
+check "Grep no glob at / BLOCK"       grep     "/"                            block
+check "Grep type at HOME BLOCK"       greptype "$HOME"                        block
+check "Grep cwd HOME no path BLOCK"   grepcwd  "$HOME"                        block
+check "Grep no glob under HOME ALLOW" grep     "$HOME/some-project"           allow
+check "Grep glob at HOME ALLOW"       grephome "*.md"                         allow
+check "Read file at HOME ALLOW"       read     "$HOME/notes.md"               allow
 
 echo "== BASH guard (dangerous) =="
 check "git -C reset --hard"      bash "git -C /p $RST $HRD"                   block
@@ -415,6 +427,34 @@ check "gh --body \$(cat) ALLOW"      bash "gh pr create --title t --body \"\$(ca
 check "commit -m \$(cat) tidy ALLOW" bash "git commit -m \"\$(cat <<'EOF'${NL}fix: tidy${NL}${NL}- $RMR stale dirs, not -r -f${NL}EOF${NL})\"" allow
 check "tag -F - heredoc ALLOW"       bash "git tag -a v1 -F - <<'M'${NL}why git $PSH $FRC is risky${NL}M" allow
 check "reset --help ALLOW"           bash "git $RST --help"                         allow
+
+echo "== BASH guard (audit r3: heredoc, editor, rebind, ANSI-C, brace) =="
+# N1: a " in a cat-sink body must not close the outer word early and let a
+# later -m ' swallow the real code after the terminator.
+check "N1 heredoc quote bypass BLOCK" bash "git commit -m \"\$(cat <<'EOF'${NL}x\" -m '${NL}EOF${NL})\" ; $RMRF ; echo done" block
+# N2: a ) or a nested \$( in a cat-sink body makes it code, not data (bash 3.2
+# closes the substitution at the ), and bash 5 runs the nested one).
+check "N2 cat-sink ) body BLOCK"      bash "git commit -m \"\$(cat <<'EOF'${NL}) \$($RMRF)${NL}EOF${NL})\"" block
+check "N2 gh body ) subst BLOCK"      bash "gh pr create --title t --body \"\$(cat <<'EOF'${NL}) \$($RMRF)${NL}EOF${NL})\"" block
+check "N2 balanced-quote body ALLOW"  bash "git commit -m \"\$(cat <<'EOF'${NL}say \"hi\" to the team${NL}EOF${NL})\"" allow
+# N3: an editor context runs the message, so the body/value is scanned, not data.
+check "N3 GIT_EDITOR -e -F - BLOCK"   bash "GIT_EDITOR=sh git commit -e -F - <<'X'${NL}$RMRF${NL}X" block
+check "N3 GIT_EDITOR -e -m BLOCK"     bash "GIT_EDITOR=sh git commit -e -m '$RMRF'"    block
+check "N3 -e -F - no env BLOCK"       bash "git commit -e -F - <<'X'${NL}$RMRF${NL}X"  block
+check "N3 core.editor -F - BLOCK"     bash "git -c core.editor=sh commit -e -F - <<'X'${NL}$RMRF${NL}X" block
+check "N3 plain -F - heredoc ALLOW"   bash "git commit -q -F - <<'MSG'${NL}fix: tidy the docs${NL}MSG" allow
+# N4: rebinding cat (hash -p) or a PATH= prefix means the cat-sink body is code.
+check "N4 hash -p rebinds cat BLOCK"  bash "hash -p /bin/sh cat; git commit -m \"\$(cat <<'EOF'${NL}$RMRF${NL}EOF${NL})\"" block
+check "N4 PATH= prefix cat BLOCK"     bash "PATH=/tmp git commit -m \"\$(cat <<'EOF'${NL}$RMRF${NL}EOF${NL})\"" block
+# N5: ANSI-C quoting and brace expansion hide rm or its flags.
+check "N5 ANSI-C hex rm arg BLOCK"    bash "$RMR \$'\\x2d'rf /tmp/x"                  block
+check "N5 ANSI-C octal rm arg BLOCK"  bash "$RMR \$'\\055rf' /tmp/x"                  block
+check "N5 ANSI-C rm command BLOCK"    bash "\$'\\x72m' -rf /tmp/x"                    block
+check "N5 brace-expansion rm BLOCK"   bash "{$RMR,$RF,/tmp/x}"                        block
+check "N5 brace abs-path rm BLOCK"    bash "{/bin/$RMR,$RF,/tmp/x}"                   block
+check "N5 ANSI-C no escape ALLOW"     bash "echo \$'hello there'"                     allow
+check "N5 brace in arg position ALLOW" bash "echo {a,b}.txt"                          allow
+check "N5 brace group ALLOW"          bash "{ echo hi; }"                            allow
 
 echo "== skip-ci guard =="
 check "skip-ci + code BLOCK"     bash "git -C $REPO_PY commit -m \"x [skip ci]\""    block
