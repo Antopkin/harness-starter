@@ -1,31 +1,47 @@
-# Память проекта — индекс
+# Project memory: index
 
-Здесь агент хранит факты, которые должны переживать перезапуски сессии: как собирается
-проект, где что лежит, какие решения уже приняты, на какие грабли уже наступали. В начале
-каждой сессии агент читает этот файл, чтобы не переспрашивать одно и то же.
+This is where the agent keeps facts that must survive session restarts: how the project is built, where things are, which decisions are already made, which pitfalls were already hit, and every correction the user gave. The agent re-reads this index at session start and follows its links to the notes that bear on the task, so it does not ask the same questions twice.
 
-## Как вести память
+## Notes
 
-- **Одна запись = один факт.** Формат: **факт** + **почему** (при желании — **как применять**).
-- Пиши в память после каждой коррекции пользователя («нет, делай не так, а вот так») —
-  чтобы ошибка не повторилась.
-- Когда записей станет много, выноси их в отдельные файлы `memory/<тема>.md` и оставляй
-  в этом индексе только строку-ссылку.
-- Не храни здесь секреты, токены и пароли — только факты о проекте.
+- [[feedback_example]]: an example feedback note; copy its shape for your own corrections.
 
-## Записи
+## How to keep memory
 
-- [Обвязка настроена](#пример-записи) — стартовая обвязка подключена; пример формата ниже.
+- **One note = one fact, in its own file.** Put it in `memory/<name>.md` and add one line with a `[[name]]` link and a short hook to the Notes list above. The index stays a list of links; the content lives in the notes.
+- **Write a note after every correction.** When the user says "no, not like that, do it this way", write a `feedback` note straight away, so the mistake does not come back next session.
+- **Re-read at session start.** The agent reads this index first and opens the notes that match the task, feedback notes above all.
+- **Link notes to each other** with `[[name]]` where one fact depends on another, instead of repeating the fact.
+- **Update or delete** a note that turned out to be wrong; a stale note is worse than none.
+- **Never store secrets**, tokens or passwords here, only facts about the project.
+- Style profiles made by `style-extract` live in `memory/style-profiles/`.
 
-## Пример записи
+## The format of a note
 
-### Пример: обвязка настроена
+Each note starts with frontmatter:
 
-**Факт:** в этой папке подключён стартовый набор — правила в `AGENTS.md`, навыки в `skills/`
-(для Claude Code продублированы в `.claude/skills/`), память в `memory/MEMORY.md`.
+- `name`: the file name without `.md`; it is what `[[name]]` links point to.
+- `description`: one line saying what the note is about, so the agent can decide from the index whether to open it.
+- `type` (under `metadata`): one of `user` (who the user is and how they like to work), `feedback` (a correction or a confirmed way of working), `project` (a fact about this project) or `reference` (where to find something outside the project).
 
-**Почему:** чтобы любой агент, открытый здесь, сразу знал правила поведения, видел готовые
-навыки и помнил контекст между сессиями, а не начинал каждый раз с нуля.
+The body states the rule or fact first, then two lines:
 
-**Как применять:** в начале сессии прочитать `AGENTS.md` и этот индекс; при новой задаче,
-подходящей под навык, — открыть соответствующий `skills/<имя>/SKILL.md`.
+- **Why:** the reason, often the incident that produced the note. It lets the agent judge edge cases instead of following the rule blindly.
+- **How to apply:** when and where the rule kicks in.
+
+A template:
+
+```markdown
+---
+name: feedback_short_topic
+description: One line on what this note covers
+metadata:
+  type: feedback
+---
+
+The rule or fact, in one or two sentences.
+
+**Why:** what happened, or why it matters.
+
+**How to apply:** when and where to use it.
+```

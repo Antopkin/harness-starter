@@ -218,3 +218,7 @@ Based on the field, here are "anchors" to pay special attention to during review
 - Assess whether the author has discussed contextual specificity
 - Should not require all research to have international comparisons, but should have discussion of transferability
 - The value of regional research lies in depth; do not demand breadth
+
+---
+
+**Output language:** the language of the paper under review, unless the user asks for another. **Length cap:** at most 1200 words. **Return shape:** the Domain Review Report of the Output Format above, which follows `templates/peer_review_report_template.md`.

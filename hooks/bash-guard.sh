@@ -1,0 +1,312 @@
+#!/bin/sh
+# PreToolUse Bash guard — block irreversible / destructive commands.
+#
+# Hardened 2026-07-03: the previous inline pattern was bypassable:
+#   * `git -C <path> reset --hard`  (args between `git` and `reset`)
+#   * `git push origin main --force` (args between `push` and `--force`)
+#   * `git commit --no-verify`       (not matched at all)
+# New git branches allow arbitrary non-separator args between the verb and the
+# dangerous flag, and --no-verify is caught.
+# Hardened 2026-07-03 (audit): the rm branch previously listed only the literals
+# -rf/-fR/-Rf, so `rm -fr` (force-recursive, f-before-r combined) AND `rm -R -f`
+# (uppercase R, spaced) fell through. sudo branch preserved verbatim.
+# Hardened 2026-09-25 (review): the whole-command regexes for rm, reset, push
+# and commit still walked past `rm -v -rf`, `rm x -rf`, `git reset -q --hard`,
+# `git push origin +main`, `git commit -n` and long-option prefixes, so those
+# rules now live in the per-word pass below, next to clean, checkout and switch.
+#
+# Wiring: .claude/settings.json runs this as bash "$CLAUDE_PROJECT_DIR/hooks/bash-guard.sh".
+# Exit 2 blocks the call and shows stderr to the agent; exit 0 lets it through.
+# Without jq the guard cannot read its input, so it refuses every command until
+# jq is installed rather than silently letting everything pass. A jq that is
+# present but fails is treated the same way.
+command -v jq >/dev/null 2>&1 || { echo "guard inactive: install jq (brew install jq / apt install jq)" >&2; exit 2; }
+
+CMD=$(jq -r '.tool_input.command' 2>/dev/null) || { echo "guard: cannot parse hook input" >&2; exit 2; }
+[ "$CMD" = "null" ] && exit 0
+[ -z "$CMD" ] && exit 0
+
+PAT='(--no-verify|sudo[[:space:]])'
+if printf '%s\n' "$CMD" | grep -qE "$PAT"; then
+  echo "BLOCKED: dangerous command: $CMD" >&2
+  exit 2
+fi
+
+# ---------------------------------------------------------------------------
+# Added 2026-09-25 (after mattpocock/skills git-guardrails, MIT): per-segment
+# rules. Upstream matched fixed strings over the whole command, which a
+# `git -C <dir>` or a `-c k=v` between `git` and the verb walks straight past.
+# Here the command is cut into segments on ; && || | & ( ) ` and newlines, each
+# segment is split into words with quotes and backslashes stripped (so '.' and
+# "." read as .), and EVERY word whose basename is `rm` or `git` is analysed:
+# leading VAR=1 assignments, `bash -c '...'` and `xargs rm` are covered by that
+# scan, and git's global options (-C <dir>, -c <k=v>, --git-dir <d>,
+# --no-pager ...) are skipped before the verb is read. Every later word of the
+# segment counts, wherever it stands, because rm and git both accept options
+# after their operands. Then:
+#   * rm is refused when its words ask for both recursion (r or R in a short
+#     cluster, --recursive or a prefix of it) and force (f in a short cluster,
+#     --force or a prefix of it), whether the two come together or apart.
+#   * git reset is refused when any word after the verb starts with --h, so
+#     --hard and every abbreviation of it are caught.
+#   * git push is refused on f in a short cluster (-f, -uf), on --force and its
+#     prefixes down to --fo, and on a refspec that starts with +, which forces
+#     that one ref. --force-with-lease stays allowed.
+#   * git commit is refused on n in a short cluster (-n, -an) and on any prefix
+#     of --no-verify from --no-veri on (--no-ver is ambiguous with --no-verbose,
+#     and git rejects it). A cluster stops at the first option that takes a
+#     value (m, F, C, c, t), so the text of -mnote is not read, and a value
+#     option at the end of a cluster takes the next word. u and S end a cluster
+#     too, but their optional value is attached (-uno, -Skey), so the next word
+#     is read as an option again: -u -n and -S -n are refused. The value of -m,
+#     -F, --message, --file and the other value options is skipped as one shell
+#     word, quotes included, so git commit -m "fix -n handling" is allowed.
+#   * git commit and git push are refused when a global -c (or --config-env)
+#     sets core.hooksPath, in any letter case: that switches the hooks off as
+#     surely as --no-verify does.
+#   * git checkout / git switch are refused on f in a short cluster, on --force
+#     and its prefixes down to --f, and on --discard-changes and its prefixes
+#     down to --di. A cluster stops at b, B, c or C, whose value is a branch.
+#     (git push keeps --fo as its shortest --force: there --f is ambiguous.)
+#   * git clean is refused unless it carries -n (alone or in a short cluster such
+#     as -nd) or --dry-run before any `--`. So every force spelling, every
+#     long-option prefix (--forc) and a -c clean.requireForce=false override are
+#     refused alike: without a dry-run flag there is no safe clean.
+#   * git checkout / git restore are refused when a pathspec word is ., ./, :/
+#     or *, with or without a preceding --. git restore --staged (or -S) alone
+#     only touches the index and stays allowed; any worktree mode (the default,
+#     --worktree or -W) with such a pathspec is refused.
+# Hardened the same day after a review walked past it five ways. --attr-source
+# and --super-prefix take a value word too, so that value is no longer read as
+# the verb. In git clean a short cluster ending in e (-fe) swallows the next word
+# as its exclude pattern, so a -n there is not a dry run, and --no-dry-run (or
+# any prefix from --no-d on) switches dry-run back off. In git restore any
+# abbreviation of --worktree counts as worktree mode and --no-staged undoes
+# --staged. Whole-tree pathspecs are now read the way the shell and git read
+# them: a backslash-newline continuation is joined (both the raw and the joined
+# text are scanned), the $ of $'.' is dropped with the quotes, a pathspec is
+# normalised (// and ./ segments collapsed, x/.. segments resolved, so ./.,
+# .// and src/.. all count as .), a :(top) or :/ magic with nothing after it is
+# the whole tree (the parentheses of a :(magic) are kept from cutting the
+# segment), and --pathspec-from-file counts as whole-tree, since the guard
+# cannot see what the file lists.
+# Hardened again the same day (last review round). Exclude magic is whole-tree
+# too: a pathspec made only of excludes (:!x, :^x, :(exclude)x) means "the whole
+# tree except x", so every short magic with ! or ^ and every :(...) magic that
+# names exclude counts. So does a pattern made only of *, ?, [ and ] after
+# normalisation (*, **, ?*), which matches every path. A :(...) magic without
+# top is read like the bare pathspec after it, so :(icase). counts as . does.
+# The price of scanning every `rm` and `git` word is the same bargain as the
+# rest of this file: a commit message or an echo that spells one of these
+# commands out is refused too. Known limit: a git alias defined with
+# -c alias.x=... is not expanded. If awk itself fails, the guard fails closed.
+VERDICT=$(printf '%s\n' "$CMD" | awk -v sq="'" '
+function unq(t) { gsub("[$][" sq "\"]", "", t); gsub(sq, "", t); gsub(/"/, "", t); gsub(/\\/, "", t); return t }
+function norm(t,   np, pt, st, ns, i, out) {
+  gsub(/\/\/+/, "/", t)
+  while (t ~ /^\.\/./) t = substr(t, 3)
+  while (t ~ /\/\.\//) sub(/\/\.\//, "/", t)
+  sub(/\/\.$/, "/", t)
+  if (substr(t, 1, 1) != "/" && t ~ /(^|\/)\.\.(\/|$)/) {
+    np = split(t, pt, "/"); ns = 0
+    for (i = 1; i <= np; i++) {
+      if (pt[i] == "" || pt[i] == ".") continue
+      if (pt[i] == ".." && ns > 0 && st[ns] != "..") { ns--; continue }
+      st[++ns] = pt[i]
+    }
+    if (ns == 0) return "."
+    out = st[1]; for (i = 2; i <= ns; i++) out = out "/" st[i]
+    return out
+  }
+  return t
+}
+function wholetree(t,   r, p, mg, top, ch, g) {
+  r = t
+  if (substr(r, 1, 2) == ":\001") {
+    p = index(r, "\002"); if (!p) return 0
+    mg = "," substr(r, 3, p - 3) ","
+    if (index(mg, "exclude")) return 1
+    top = (mg ~ /,top,/)
+    r = substr(r, p + 1); if (r == "") return top
+  } else if (substr(r, 1, 1) == ":" && length(r) > 1 && index("/!^", substr(r, 2, 1))) {
+    p = 2
+    while (p <= length(r)) {
+      ch = substr(r, p, 1)
+      if (!index("/!^", ch)) break
+      if (ch == "!" || ch == "^") return 1
+      p++
+    }
+    r = substr(r, p); sub(/^:/, "", r); if (r == "") return 1
+  }
+  r = norm(r)
+  if (r == "." || r == "./" || r == ":/") return 1
+  g = r; gsub(/[*?]/, "", g); gsub(/\[/, "", g); gsub(/\]/, "", g)
+  return (r != "" && g == "")
+}
+function isprefix(a, full, min) { return (length(a) >= min && substr(full, 1, length(a)) == a) }
+# 1 when the short cluster a (e.g. -uf) holds bad before any char of vstop or
+# estop. A vstop char takes a value: at the very end of the cluster it takes
+# the next word (valnext). An estop char ends the cluster and takes nothing.
+function cluster(a, bad, vstop, estop,   c, p, ch) {
+  c = substr(a, 2); valnext = 0
+  for (p = 1; p <= length(c); p++) {
+    ch = substr(c, p, 1)
+    if (index(bad, ch)) return 1
+    if (index(vstop, ch)) { if (p == length(c)) valnext = 1; return 0 }
+    if (estop != "" && index(estop, ch)) return 0
+  }
+  return 0
+}
+# Advance the global quote state Q ("", s, d or a for $'...') through raw word t.
+function qwalk(t,   i, ch, L) {
+  L = length(t)
+  for (i = 1; i <= L; i++) {
+    ch = substr(t, i, 1)
+    if (Q == "") {
+      if (ch == "\\") i++
+      else if (ch == sq) Q = "s"
+      else if (ch == "\"") Q = "d"
+      else if (ch == "$" && substr(t, i + 1, 1) == sq) { Q = "a"; i++ }
+    } else if (Q == "s") { if (ch == sq) Q = "" }
+    else if (ch == "\\") i++
+    else if ((Q == "d" && ch == "\"") || (Q == "a" && ch == sq)) Q = ""
+  }
+}
+# The last raw word of the shell word that starts at raw word k: a quoted value
+# with spaces in it spans several raw words.
+function wend(w, k, n) { qwalk(w[k]); while (Q != "" && k < n) { k++; qwalk(w[k]) } return k }
+# 1 when a is a long git commit option (or an abbreviation git accepts or
+# rejects as ambiguous) whose required value is the next word.
+function cvlong(a) {
+  return (isprefix(a, "--message", 4) || isprefix(a, "--file", 5) || isprefix(a, "--fixup", 5) ||
+          isprefix(a, "--template", 4) || isprefix(a, "--trailer", 4) || isprefix(a, "--author", 4) ||
+          isprefix(a, "--date", 4) || isprefix(a, "--reuse-message", 5) || isprefix(a, "--reedit-message", 5) ||
+          isprefix(a, "--squash", 4) || isprefix(a, "--cleanup", 4) || isprefix(a, "--pathspec-from-file", 12))
+}
+function scan(s,   seg, nseg, i, n, w, u, k, b, j, o, verb, dry, m, a, c, p, staged, wt, hit, rr, ff, hp, e) {
+  while (match(s, /:\([^() \t]*\)/)) s = substr(s, 1, RSTART) "\001" substr(s, RSTART + 2, RLENGTH - 3) "\002" substr(s, RSTART + RLENGTH)
+  gsub(/&&|\|\||[;|&()`]/, "\n", s)
+  nseg = split(s, seg, "\n")
+  for (i = 1; i <= nseg; i++) {
+    n = split(seg[i], w)
+    for (k = 1; k <= n; k++) u[k] = unq(w[k])
+    for (k = 1; k <= n; k++) {
+      b = u[k]; sub(/.*\//, "", b)
+      if (b == "rm") {
+        rr = 0; ff = 0
+        for (m = k + 1; m <= n; m++) {
+          a = u[m]
+          if (a ~ /^--/) { if (isprefix(a, "--recursive", 3)) rr = 1; if (isprefix(a, "--force", 3)) ff = 1 }
+          else if (a ~ /^-./) { c = substr(a, 2); if (c ~ /[rR]/) rr = 1; if (index(c, "f")) ff = 1 }
+        }
+        if (rr && ff) { print "rm recursive and forced"; exit }
+        continue
+      }
+      if (b != "git") continue
+      j = k + 1; hp = 0
+      while (j <= n && substr(u[j], 1, 1) == "-") {
+        o = u[j]
+        if ((o == "-c" || o == "--config-env") && tolower(u[j + 1]) ~ /^core\.hookspath/) hp = 1
+        if (tolower(o) ~ /^--config-env=core\.hookspath/) hp = 1
+        if (o == "-C" || o == "-c" || o == "--git-dir" || o == "--work-tree" || o == "--namespace" || o == "--config-env" || o == "--attr-source" || o == "--super-prefix") j += 2
+        else j++
+      }
+      if (j > n) continue
+      verb = u[j]
+      if (hp && (verb == "commit" || verb == "push")) { print "git -c core.hooksPath on " verb; exit }
+      if (verb == "reset") {
+        for (m = j + 1; m <= n; m++) if (u[m] ~ /^--h/) { print "git reset --hard"; exit }
+      }
+      if (verb == "push") {
+        for (m = j + 1; m <= n; m++) {
+          a = u[m]
+          if (a ~ /^--/) { if (isprefix(a, "--force", 4)) { print "git push --force"; exit } }
+          else if (a ~ /^-./) { if (cluster(a, "f", "o", "")) { print "git push --force"; exit }; if (valnext) m++ }
+          else if (substr(a, 1, 1) == "+") { print "git push of a forced +refspec"; exit }
+        }
+      }
+      if (verb == "commit") {
+        Q = ""
+        for (m = j + 1; m <= n; m++) {
+          a = u[m]; e = wend(w, m, n)
+          if (a ~ /^--no-veri/) { print "git commit --no-verify"; exit }
+          if (a ~ /^--/) { if (a !~ /=/ && cvlong(a) && e < n) e = wend(w, e + 1, n) }
+          else if (a ~ /^-./) {
+            if (cluster(a, "n", "mFCct", "uS")) { print "git commit --no-verify"; exit }
+            if (valnext && e < n) e = wend(w, e + 1, n)
+          }
+          m = e
+        }
+      }
+      if (verb == "checkout" || verb == "switch") {
+        for (m = j + 1; m <= n; m++) {
+          a = u[m]
+          if (a ~ /^--/) { if (isprefix(a, "--force", 3) || isprefix(a, "--discard-changes", 4)) { print "git " verb " --force"; exit } }
+          else if (a ~ /^-./) { if (cluster(a, "f", "bBcC", "")) { print "git " verb " --force"; exit }; if (valnext) m++ }
+        }
+      }
+      if (verb == "clean") {
+        dry = 0
+        for (m = j + 1; m <= n; m++) {
+          a = u[m]
+          if (a == "--") break
+          if (a == "--dry-run") { dry = 1; continue }
+          if (a ~ /^--no-d/) { dry = 0; continue }
+          if (a == "-e" || a ~ /^--e[^=]*$/) { m++; continue }
+          if (a ~ /^-[^-]/) {
+            c = substr(a, 2); p = index(c, "e")
+            if (p == length(c)) m++
+            if (p) c = substr(c, 1, p - 1)
+            if (index(c, "n")) dry = 1
+          }
+        }
+        if (!dry) { print "git clean without -n/--dry-run"; exit }
+      }
+      if (verb == "checkout" || verb == "restore") {
+        staged = 0; wt = 0; hit = 0
+        for (m = j + 1; m <= n; m++) {
+          a = u[m]
+          if (wholetree(a)) hit = 1
+          else if (a ~ /^--pathspec-fr/) hit = 1
+          else if (a == "--staged") staged = 1
+          else if (a ~ /^--no-s/) staged = 0
+          else if (a ~ /^--w/) wt = 1
+          else if (a ~ /^-[^-]/) {
+            c = substr(a, 2); p = index(c, "s"); if (p) c = substr(c, 1, p - 1)
+            if (index(c, "S")) staged = 1
+            if (index(c, "W")) wt = 1
+          }
+        }
+        if (hit && (verb == "checkout" || !staged || wt)) { print "git " verb " of the whole tree"; exit }
+      }
+    }
+  }
+}
+{ raw = raw $0 "\n" }
+END {
+  nl = split(raw, L, "\n"); joined = ""
+  for (i = 1; i <= nl; i++) {
+    ln = L[i]; bs = 0
+    while (bs < length(ln) && substr(ln, length(ln) - bs, 1) == "\\") bs++
+    if (bs % 2 && i < nl) joined = joined substr(ln, 1, length(ln) - 1)
+    else joined = joined ln "\n"
+  }
+  scan(raw); scan(joined)
+}') || { echo "BLOCKED: bash-guard per-word check failed to run" >&2; exit 2; }
+if [ -n "$VERDICT" ]; then
+  echo "BLOCKED: dangerous command ($VERDICT): $CMD" >&2
+  exit 2
+fi
+
+# Added 2026-09-03: the Bash half of the credential-store protection. The Read
+# and Grep half is hooks/read-guard.sh. Any command naming Claude Code's
+# credential store (the .claude.json file in your home directory) is refused, so
+# the cat / grep / less / head / jq route is closed as firmly as the Read tool is.
+# Note this is a whole-command substring match, like every pattern above it: do
+# not write the file name as a literal in an unrelated command or comment.
+CLAUDEJSON='\.claude\.json'
+if printf '%s\n' "$CMD" | grep -qEi "$CLAUDEJSON"; then
+  echo "BLOCKED: protected file referenced in command" >&2
+  exit 2
+fi
+exit 0

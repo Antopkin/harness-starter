@@ -214,3 +214,7 @@ Pay special attention to the following common methodological fallacies during re
 - Distinguish between "small sample has valid justification" and "small sample due to convenience"
 - Small samples in qualitative research (5-15) may be entirely reasonable
 - Small samples in quantitative research need power analysis support
+
+---
+
+**Output language:** the language of the paper under review, unless the user asks for another. **Length cap:** at most 1200 words. **Return shape:** the Methodology Review Report of the Output Format above, carrying the Step 4a statistical completeness score and any red flags it raises.

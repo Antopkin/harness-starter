@@ -1,34 +1,29 @@
-# Первое задание: проверь, что обвязка подключилась
+# First exercise: check that the harness is connected
 
-Цель — за пару минут убедиться, что агент видит правила и навыки, и что он показывает
-план до того, как что-то делать. Прогони два маленьких шага.
+The goal is to make sure, in a couple of minutes, that the agent sees the rules and skills and that it shows a plan before it acts. Run three small steps.
 
-## Шаг 1. Спроси агента про его правила и навыки
+## Step 1. Ask the agent about its rules and skills
 
-Скажи агенту:
+Tell the agent:
 
-> Прочитай `AGENTS.md` и своими словами скажи: какие у тебя правила поведения и какие
-> навыки тебе доступны? Перечисли навыки списком с одной строкой про каждый.
+> Read `AGENTS.md` and tell me in your own words: what are your rules of behaviour, and which skills and agent roles are available to you? List the skills with one line about each.
 
-Хороший ответ: агент называет 3–4 ключевых правила (например, «показывать план до кода»,
-«минимум изменений», «не трогать секреты») и перечисляет навыки из таблицы в `INSTALL.md`.
-Если агент не видит навыков — вернись к `INSTALL.md`, шаг 3, и проверь, что они подключены.
+A good answer: the agent names three or four key rules (for example "show a plan before code", "change only what was asked", "do not touch secrets", "ask before merging a pull request") and lists the skills from the table in `INSTALL.md`. If the agent does not see the skills, go back to `INSTALL.md`, step 3, and check that they are connected.
 
-## Шаг 2. Дай крошечную задачу и потребуй план до кода
+## Step 2. Give it a tiny task and demand a plan before code
 
-Дай агенту любую микро-задачу, например:
+Give the agent any micro-task, for example:
 
-> Заведи файл `hello.txt` со строкой «обвязка работает» — но **сначала покажи план**,
-> что именно ты сделаешь, и не приступай, пока я не скажу «ок».
+> Create a file `hello.txt` with the line "the harness works", but **show me the plan first**: what exactly you will do. Do not start until I say "ok".
 
-Хороший ответ: агент **сначала** описывает план в одну-две строки и **ждёт** твоего «ок»,
-и только потом создаёт файл. Это и есть главное правило обвязки — думать и показывать
-намерение до действия.
+A good answer: the agent **first** describes a one- or two-line plan and **waits** for your "ok", and only then creates the file. That is the main rule of the harness: think and show your intent before acting.
 
-## Шаг 3. Запиши первый факт в память
+## Step 3. Write the first fact into memory
 
-Когда всё получилось, попроси:
+When everything worked, ask:
 
-> Добавь в `memory/MEMORY.md` короткую запись о том, что обвязка настроена: факт + почему.
+> Add a short memory note that the harness is set up: the fact, why it matters and how to apply it. Link it from `memory/MEMORY.md`.
 
-Теперь агент «в обвязке»: знает правила, умеет навыки и ведёт память. Можно работать.
+The agent should create a note in `memory/` with the frontmatter shown in `memory/MEMORY.md` and add a `[[name]]` line to the index.
+
+Now the agent is "inside the harness": it knows the rules, has the skills and keeps a memory. You can get to work.

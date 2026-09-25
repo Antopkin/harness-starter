@@ -1,78 +1,83 @@
-# Платформо-зависимое чтение через a11y-дерево
+# Platform-dependent reading through the a11y tree
 
-Структура Reddit-треда, ленты X и стены VK — разная, поэтому единой «формы поста»
-нет: форма захвата подстраивается под платформу. Общий инструмент один — a11y-дерево
-браузера (`snapshot -i` для интерактивных узлов и рефов, `get text <sel>` для
-дословного текста узла). Синтаксис примитивов — `see:
-../../fill-form/references/agent-browser-primitives.md`, не выдумывай флаги.
+A Reddit thread, an X feed and a VK wall are structured differently, so there is no
+single "post shape": the capture shape adapts to the platform. The common tool is one,
+the browser's a11y tree (`snapshot -i` for interactive nodes and refs, `get text <sel>`
+for the verbatim text of a node). For the syntax of the primitives see
+[agent-browser-primitives.md](../../fill-form/references/agent-browser-primitives.md);
+do not invent flags.
 
-Общий инвариант локатора: **`url + пост#`**. `url` — постоянная ссылка (permalink)
-самого элемента, а не страницы вообще; `пост#` — порядковый номер элемента в этом
-захвате (Элемент 1, 2, …). Пара «permalink + порядковый №» и есть адрес, по которому
-элемент можно переоткрыть и подтвердить его текст на проходе `to-evidence`.
+The common locator invariant: **`url + post#`**. `url` is the permanent link
+(permalink) of the item itself, not of the page in general; `post#` is the item's
+sequence number in this capture (Item 1, 2, …). The pair "permalink + sequence number"
+is the address by which the item can be reopened and its text confirmed on the
+`to-evidence` pass.
 
-## Reddit — тред (пост + комментарии)
+## Reddit — a thread (post + comments)
 
-- **Структура — дерево.** Корень (submission) = сам пост: заголовок, автор, тело.
-  Под ним — комментарии, вложенные ветками (родитель → ответы). В a11y-дереве это
-  вложенные `article`/узлы; глубину ветки видно по отступам snapshot.
-- **Что читать:** пост целиком + топ-комменты (или одну выбранную ветку). Не весь
-  тред целиком — держи объём 5–10 элементов.
-- **Локатор.** У поста permalink вида `reddit.com/r/<sub>/comments/<id>/…`; у каждого
-  комментария — своя постоянная ссылка (context/permalink на метке времени). Бери
-  permalink комментария; если он не вытаскивается — `url поста + позиция в ветке`
-  (напр. `…/<id> · тред: коммент 3 → ответ 1`).
-- **Тип элемента:** `пост` для корня, `коммент` или `узел треда` для веток.
-- **Пагинация:** длинные треды прячут ветки за «показать ещё N комментариев» /
-  «continue thread» — клик по кнопке, затем пере-`snapshot -i` (рефы протухли).
+- **The structure is a tree.** The root (submission) is the post itself: title,
+  author, body. Below it are comments nested in branches (parent → replies). In the
+  a11y tree these are nested `article` nodes; the branch depth shows in the snapshot
+  indentation.
+- **What to read:** the whole post + the top comments (or one chosen branch). Not the
+  whole thread; keep the volume at 5–10 items.
+- **Locator.** A post has a permalink of the form `reddit.com/r/<sub>/comments/<id>/…`;
+  every comment has its own permanent link (context/permalink on the timestamp). Take
+  the comment's permalink; if it cannot be extracted, use `post url + position in the
+  branch` (e.g. `…/<id> · thread: comment 3 → reply 1`).
+- **Item type:** `post` for the root, `comment` or `thread node` for branches.
+- **Pagination:** long threads hide branches behind "show N more comments" /
+  "continue thread": click the button, then re-run `snapshot -i` (the refs are stale).
 
-## X (Twitter) — лента / тред
+## X (Twitter) — a feed / thread
 
-- **Структура — плоская последовательность.** Лента и тред-цепочка = список постов
-  (каждый — `article` с автором, меткой времени, текстом; у репостов виден источник).
-- **Виртуализация.** Лента дорисовывается на скролле, а ушедшие вверх узлы
-  выгружаются из DOM. Читай видимое → скролль → пере-`snapshot` → **дедуплицируй по
-  id поста** (иначе один пост попадёт дважды). Не гонись за «всей лентой» — 5–10
-  постов.
-- **Локатор.** У каждого поста постоянная ссылка `x.com/<user>/status/<id>` — `id`
-  из `status/` и есть надёжный ключ и для дедупликации, и для локатора. Записывай
-  `status-url + пост#`.
-- **Тип элемента:** `пост`; для ответов в цепочке — `узел треда`.
+- **The structure is a flat sequence.** A feed and a thread chain are a list of posts
+  (each an `article` with author, timestamp and text; reposts show their source).
+- **Virtualisation.** The feed is drawn on scroll, and nodes that scrolled up are
+  unloaded from the DOM. Read what is visible → scroll → re-`snapshot` →
+  **deduplicate by post id** (otherwise the same post lands twice). Do not chase "the
+  whole feed": 5–10 posts.
+- **Locator.** Every post has a permanent link `x.com/<user>/status/<id>`; the `id`
+  from `status/` is the reliable key both for deduplication and for the locator.
+  Record `status-url + post#`.
+- **Item type:** `post`; for replies in a chain, `thread node`.
 
-## VK — стена / лента
+## VK — a wall / feed
 
-- **Структура — записи стены.** Стена (профиля/сообщества) или лента = список записей
-  (`запись стены`): автор, дата, текст, иногда вложения. Комментарии под записью —
-  отдельный вложенный уровень, как ветка.
-- **Локатор.** Постоянная ссылка записи вида `vk.com/wall<owner>_<postid>` (у
-  owner-сообщества — со знаком минус). Бери `wall-permalink + пост#`; у комментария —
-  его якорь `?reply=<id>` при наличии.
-- **Тип элемента:** `запись стены`; коммент под записью — `коммент`.
-- **Пагинация:** лента подгружается на скролле (как X) — скролл + пере-`snapshot` +
-  дедуп по `wall…_id`.
+- **The structure is wall posts.** A wall (of a profile or community) or a feed is a
+  list of entries (`wall post`): author, date, text, sometimes attachments. Comments
+  under an entry are a separate nested level, like a branch.
+- **Locator.** The permanent link of an entry has the form
+  `vk.com/wall<owner>_<postid>` (with a minus sign for a community owner). Take
+  `wall-permalink + post#`; for a comment, its `?reply=<id>` anchor if present.
+- **Item type:** `wall post`; a comment under an entry is a `comment`.
+- **Pagination:** the feed loads on scroll (like X): scroll + re-`snapshot` + dedup by
+  `wall…_id`.
 
-## Свой контент против публичного
+## Your own content versus public content
 
-- **Свой** (своя стена, свой тред, свои посты) — самый безопасный вход: и по ToS, и
-  по 152-ФЗ/AoIR меньше рисков. Предпочитай его для демо.
-- **Публичный чужой** — только малый разовый объём и **немедленное обезличивание**:
-  автор → `Участник A/B`, дословный текст остаётся лишь внутри `<untrusted>`-блока,
-  в записку идёт перефраз. Рамка ToS/закона по каждой платформе — `see:
-  ../../../tracks/academic/day4/ethics-checklist.md`.
+- **Your own** (your wall, your thread, your posts) is the safest input: fewer risks
+  under both the ToS and personal-data law or AoIR. Prefer it for demos.
+- **Someone else's public content**: only a small one-off volume and **immediate
+  anonymisation**: author → `Author A/B`, the verbatim text stays only inside the
+  `<untrusted>` block, and the memo gets a paraphrase. The ToS and legal framework per
+  platform is in [ethics-checklist.md](ethics-checklist.md).
 
-## Извлечение текста: практика
+## Text extraction: practice
 
-- Сначала `snapshot -i` — карта узлов и рефов; затем `get text <sel>` по конкретному
-  узлу поста/коммента для **дословного** тела (snapshot даёт accessible-name, а не
-  всегда полный текст).
-- Многострочный или капризный селектор — читай через `eval --stdin` (напр.
-  `document.querySelector('<sel>')?.innerText`), см. примитивы.
-- Каждый вытащенный текст сразу оборачивай `<untrusted source=… url=…>…</untrusted>`
-  и обезличивай — до любой обработки, не после.
+- First `snapshot -i` for the map of nodes and refs; then `get text <sel>` on a
+  specific post or comment node for the **verbatim** body (a snapshot gives the
+  accessible name, not always the full text).
+- For a multi-line or awkward selector, read through `eval --stdin` (e.g.
+  `document.querySelector('<sel>')?.innerText`); see the primitives.
+- Wrap every extracted text in `<untrusted source=… url=…>…</untrusted>` right away
+  and anonymise it, before any processing, not after.
 
-## Честная граница
+## The honest limit
 
-Если платформа за антиботом (свежая сессия ловит `navigator.webdriver`) — помогает
-только атач к реальному persistent-профилю, где человек вошёл руками. CAPTCHA или
-бот-проверка при чтении → **стоп человеку**, не патчить. Детект и его пределы — `see:
-../../fill-form/references/real-browser-substrate.md`.
+If the platform sits behind an anti-bot system (a fresh session gets caught on
+`navigator.webdriver`), the only thing that helps is attaching to a real persistent
+profile where the human logged in by hand. A CAPTCHA or bot check while reading →
+**stop and hand over to the human**, do not patch. Detection and its limits are
+described in
+[cdp-session-substrate.md](../../fill-form/references/cdp-session-substrate.md).

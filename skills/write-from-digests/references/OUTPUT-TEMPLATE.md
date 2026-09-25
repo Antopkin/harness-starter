@@ -1,121 +1,125 @@
-# Целевая форма выхода — записка с доказательной базой
+# Target output shape: a memo with an evidence base
 
-Это **шаблон**, а не пример. Плейсхолдеры в угловых скобках (`<тезис>`, `<цитата>`,
-`<локатор>`) показывают **форму** — их нужно заменить реальным содержимым из
-конспектов. Не заполняй шаблон выдуманным текстом: это прямо противоречит
-антигаллюцинации навыка. Полностью проработанный пример на двух реальных конспектах —
-рядом, в `EXAMPLE-zapiska.md`.
+This is a **template**, not an example. Placeholders in angle brackets (`<thesis>`,
+`<quote>`, `<locator>`) show the **shape** and must be replaced with real content
+from the digests. Do not fill the template with invented text: that directly
+contradicts the skill's anti-hallucination rules. A fully worked example on two real
+digests sits next to this file, in `EXAMPLE-zapiska.md`.
 
-Обязательные к заполнению узлы: тезис-рекомендация вперёд; ≥3 несущих утверждения,
-каждое с якорем `[S<n>.<row>]` и дословной цитатой отдельным предложением; Приложение А
-с evidence-таблицами (колонка-id `#` первой) и ссылками (ГОСТ + APA + .bib) по каждому
-источнику; verification log без неснятых ⚠. Без них записка не считается завершённой.
+Mandatory parts: the thesis-recommendation first; at least 3 load-bearing claims,
+each with an anchor `[S<n>.<row>]` and a verbatim quote as a separate sentence;
+Appendix A with evidence tables (the `#` id column first) and references (APA 7, GOST
+where the digest has it, and .bib) for each source; a verification log with no
+unresolved ⚠. Without them the memo is not finished.
 
-Этот файл — **канон**. Материалы, которые ссылаются на форму записки, ссылаются сюда,
-а не переписывают её у себя.
+This file is **the canon**. Materials that refer to the memo's shape point here
+rather than rewriting it.
 
 ---
 
 ```
-# Записка: <короткое имя вопроса/решения>
+# Memo: <short name of the question/decision>
 
-**Источники:** S1 — <Авторы, год, короткое название>; S2 — <…>; … (по числу конспектов)
-**Вход:** N конспектов digest.md  ·  **Выход:** <русский | английский> · <Markdown | Word>
-**Дата:** <ГГГГ-ММ-ДД>
+**Sources:** S1 — <Authors, year, short title>; S2 — <…>; … (one per digest)
+**Input:** N digest.md files  ·  **Output:** <language of the request> · <Markdown | Word>
+**Date:** <YYYY-MM-DD>
 
-## 1. Рекомендация (тезис)
+## 1. Recommendation (thesis)
 
-<3–5 предложений: вывод/рекомендация вперёд. Что предлагается сделать и при каком
-условии; ключевая оговорка. Без якорей — это резюме аргументации ниже.>
+<3–5 sentences: the conclusion/recommendation first. What is proposed and under which
+condition; the key caveat. No anchors: this summarises the argument below.>
 
-## 2. Аргументация
+## 2. Argument
 
-**<Несущее утверждение 1 — одно предложение-заголовок абзаца.>** <Topic: разворот
-утверждения.> <Evidence — дословная цитата отдельным предложением:> «<точная цитата из
-пула>» (пер.: «<перевод>») [S<n>.<row>]. <Explanation: почему цитата держит утверждение.>
-<Link: переход к следующему.>
+**<Load-bearing claim 1, one sentence heading the paragraph.>** <Topic: the claim
+unfolded.> <Evidence, a verbatim quote as a separate sentence:> “<exact quote from the
+pool>” (tr.: “<translation, only if the memo's language differs>”) [S<n>.<row>].
+<Explanation: why the quote holds up the claim.> <Link: the bridge to the next one.>
 
-**<Несущее утверждение 2.>** <Topic.> «<точная цитата>» (пер.: «<перевод>»)
+**<Load-bearing claim 2.>** <Topic.> “<exact quote>” (tr.: “<translation>”)
 [S<n>.<row>]. <Explanation.> <Link.>
 
-**<Несущее утверждение 3.>** <Topic.> «<точная цитата>» (пер.: «<перевод>»)
+**<Load-bearing claim 3.>** <Topic.> “<exact quote>” (tr.: “<translation>”)
 [S<n>.<row>][S<m>.<row>]. <Explanation.> <Link.>
 
-<При необходимости — «Границы этого вывода»: чего в источниках нет / что осталось на
-проверку. Честная оговорка, а не новый факт.>
+<If needed, "The limits of this conclusion": what the sources lack / what remains to be
+checked. An honest caveat, not a new fact.>
 
 ---
 
-## Приложение А. Доказательная база
+## Appendix A. Evidence base
 
-По каждому источнику — его evidence-таблица из digest с колонкой-id `#` первой, затем
-готовые ссылки. Всё берётся из самого digest, не пересобирается.
+For each source, its evidence table from the digest with the `#` id column first,
+then the ready-made references. Everything is taken from the digest itself, not
+rebuilt.
 
-### Источник S1 — <Авторы, год, короткое название>
+### Source S1 — <Authors, year, short title>
 
-| # | Тезис | Локатор | Дословная цитата | Раздел | Проверено |
+| # | Claim | Locator | Verbatim quote | Section | Checked |
 |---|---|---|---|---|---|
-| S1.1 | <тезис> | <локатор> | «<цитата>» | <раздел> | ✓ |
-| S1.2 | … | … | «…» | … | ✓ |
+| S1.1 | <claim> | <locator> | “<quote>” | <section> | ✓ |
+| S1.2 | … | … | “…” | … | ✓ |
 
-**Ссылка для списка литературы (S1).**
-ГОСТ Р 7.0.100–2018: <строка ГОСТ>
-APA 7: <строка APA>
+**Reference-list entry (S1).**
+APA 7: <APA line>
+GOST R 7.0.100-2018: <GOST line, where the digest has it>
 
-**Цитирование S1 (.bib).**
+**Citation S1 (.bib).**
 ```bibtex
-@<тип>{<citekey>,
+@<type>{<citekey>,
   ...
 }
 ```
 
-### Источник S2 — <Авторы, год, короткое название>
+### Source S2 — <Authors, year, short title>
 
-| # | Тезис | Локатор | Дословная цитата | Раздел | Проверено |
+| # | Claim | Locator | Verbatim quote | Section | Checked |
 |---|---|---|---|---|---|
-| S2.1 | <тезис> | <локатор> | «<цитата>» | <раздел> | ✓ |
-| S2.2 | … | … | «…» | … | ✓ |
+| S2.1 | <claim> | <locator> | “<quote>” | <section> | ✓ |
+| S2.2 | … | … | “…” | … | ✓ |
 
-**Ссылка для списка литературы (S2).**
-ГОСТ Р 7.0.100–2018: <строка ГОСТ>
-APA 7: <строка APA>
+**Reference-list entry (S2).**
+APA 7: <APA line>
+GOST R 7.0.100-2018: <GOST line, where the digest has it>
 
-**Цитирование S2 (.bib).**
+**Citation S2 (.bib).**
 ```bibtex
-@<тип>{<citekey>,
+@<type>{<citekey>,
   ...
 }
 ```
 
-### Verification log (обратный проход)
+### Verification log (backward pass)
 
-- **Якорей в тексте:** <N> (ссылаются на <K> различных строк пула).
-- **Дословных цитат сверено:** <M> из <M> — все `grep -F` в исходном digest = найдено.
-- **Флагов ⚠:** <0>. <Если не 0 — какие утверждения ослаблены/удалены по правилу
-  «нет цитаты → hedge/delete».>
-- **Метод:** для каждой цитаты — `grep -F "<цитата>" <исходный digest>` = найдено;
-  локаторы переоткрыты (страница/секция/строка). Проверка портативная: повторное чтение
-  того же файла и детерминированный `grep -F`, без Python внутри логики навыка.
+- **Anchors in the text:** <N> (pointing to <K> distinct pool rows).
+- **Verbatim quotes checked:** <M> of <M>; every `grep -F` in the source digest = found.
+- **⚠ flags:** <0>. <If not 0, which claims were weakened/deleted under the
+  "no quote → hedge/delete" rule.>
+- **Method:** for each quote, `grep -F "<quote>" <source digest>` = found;
+  locators re-opened (page/section/line). The check is portable: re-reading the same
+  file and a deterministic `grep -F`, with no Python inside the skill's logic.
 
 ---
 
-## Приложение Б. Выход в действие (плейсхолдер fill-form)
+## Appendix B. Into action (fill-form placeholder)
 
-Место под скриншоты «до/после» заполнения формы. Заполняется навыком `fill-form`;
-здесь — только раздел под него.
+The place for "before/after" screenshots of a filled-in form. It is filled by the
+`fill-form` skill; here there is only the section for it.
 
-- [ ] Скриншот: форма до заполнения.
-- [ ] Скриншот: форма после заполнения.
-- [ ] Короткая подпись: какое решение записки внесено в форму.
+- [ ] Screenshot: the form before it is filled in.
+- [ ] Screenshot: the form after it is filled in.
+- [ ] A short caption: which decision from the memo went into the form.
 ```
 
 ---
 
-## Как читать якорь и колонку «Проверено»
+## How to read an anchor and the "Checked" column
 
-- **`[S<n>.<row>]`** — адрес доказательства: источник `n`, строка `row` его
-  evidence-таблицы. Несколько якорей подряд — несколько источников на одно утверждение.
-- **✓** в колонке `#`-таблицы — строка перенесена из digest, где она уже подтверждена
-  само-сверкой, и переоткрыта на обратном проходе записки. Строка с ⚠ в пул не берётся.
-- Проверка **портативная**: повторное чтение того же файла силами агента плюс
-  детерминированный `grep -F` цитаты в исходном digest. Без внешних скриптов и Python.
+- **`[S<n>.<row>]`** is the address of the evidence: source `n`, row `row` of its
+  evidence table. Several anchors in a row mean several sources behind one claim.
+- **✓** in the `#` table means the row was carried over from the digest, where the
+  self-check already confirmed it, and was re-opened during the memo's backward pass.
+  A ⚠ row is not taken into the pool.
+- The check is **portable**: re-reading the same file by the agent plus a
+  deterministic `grep -F` of the quote in the source digest. No external scripts and
+  no Python.

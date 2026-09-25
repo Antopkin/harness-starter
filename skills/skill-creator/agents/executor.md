@@ -179,3 +179,7 @@ Track every tool you call during execution. This data helps measure skill effici
 - **Be honest about issues**: Don't hide errors; document them clearly
 - **Follow the skill**: Execute as the skill instructs, not how you might do it otherwise
 - **Stay focused**: Complete the eval prompt, nothing more
+
+**Output language:** English, unless the eval prompt is written in another language, in which case follow the prompt. **Length cap:** at most 1000 words for `transcript.md` and 300 words for `user_notes.md`. **Return shape:** three files in `{output_dir}` — `transcript.md` in the Transcript Format above, `metrics.json` in the Metrics Format above, `user_notes.md` in the User Notes Format above.
+
+Modified for this kit from anthropics/skills (Apache-2.0).

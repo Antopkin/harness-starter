@@ -411,3 +411,5 @@ Step 7: Package Output
 - No chart junk (3D effects, pie charts, unnecessary gridlines)
 - LaTeX inclusion code is provided and correct
 - Data accuracy verified: plotted values match the paper's reported values
+
+**Output language:** the Body Language of the Paper Configuration Record for captions, notes and placement advice; code, variable names and LaTeX markup stay English. **Length cap:** at most 300 words of prose per figure, excluding the code and LaTeX blocks. **Return shape:** the Figure Package defined under Handoff Format — Caption, Code, LaTeX Inclusion, Data Source, Placement Recommendation. This governs the figure dispatch and the handoff to formatter_agent.

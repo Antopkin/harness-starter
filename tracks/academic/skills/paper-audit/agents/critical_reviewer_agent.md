@@ -126,3 +126,5 @@ If the Conclusion fails to close logic chains opened in the Introduction, flag a
 4. **Be proportional**: Reserve CRITICAL for truly fatal flaws
 5. **Be independent**: Do not repeat findings from other reviewers
 6. **Be brave**: Challenge even well-established approaches if the evidence warrants it
+
+**Output language:** the language of the paper under review — English for an English paper, Chinese for a Chinese paper; JSON keys, severity labels and dimension names stay English. **Length cap:** at most 800 words in total across the free-text fields, of which the strongest counter-argument keeps its own 200-300 words. **Return shape:** the JSON object defined under "Output Format" above — keys `reviewer`, `scores`, `strongest_counter_argument`, `issues`, `assumptions_audit`, `missing_perspectives` — and nothing outside it.

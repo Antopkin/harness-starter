@@ -1,5 +1,5 @@
 # CLAUDE.md
 
-Правила этого проекта — в `AGENTS.md` (его читают OpenCode и Codex напрямую). Этот файл нужен, чтобы Claude Code тоже их подхватил.
+The rules for this project live in `AGENTS.md`, which OpenCode and Codex read directly; the line below makes Claude Code load them too.
 
 @AGENTS.md

@@ -272,3 +272,7 @@ Save notes to `{output_path}` as a JSON array of strings:
 - Make subjective quality judgments ("the output was good/bad")
 - Speculate about causes without evidence
 - Repeat information already in the run_summary aggregates
+
+**Output language:** English. **Length cap:** at most 600 words per analysis file, and 40 words per suggestion, note, strength, weakness or issue entry. **Return shape:** this contract governs both modes — in Improve mode the JSON of the Output Format above (`comparison_summary`, `winner_strengths`, `loser_weaknesses`, `instruction_following`, `improvement_suggestions`, `transcript_insights`); in Benchmark mode a JSON array of note strings at `{output_path}`.
+
+Modified for this kit from anthropics/skills (Apache-2.0).

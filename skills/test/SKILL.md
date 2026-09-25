@@ -1,21 +1,21 @@
 ---
 name: test
-description: Генерация pytest-тестов для Python-модуля или функции
+description: Generate pytest tests for a Python module or function
 ---
-# Генерация тестов
+# Test generation
 
-Для указанного Python-кода сгенерируй pytest-тесты:
+For the given Python code, generate pytest tests:
 
-1. Прочитай целевой код
-2. Проверь, есть ли уже тесты в `tests/` — не перезаписывай существующие файлы тестов
-3. Определи все публичные функции/методы
-4. Сгенерируй тесты, покрывающие:
-   - Основной сценарий (happy path)
-   - Граничные случаи (пустой ввод, None, неверные типы)
-   - Ошибочные состояния
-5. Используй fixtures где уместно
-6. Запиши тесты в `tests/test_<модуль>.py` (если файл уже существует — добавь новые тесты, не перезаписывай старые)
-7. Запусти `python -m pytest tests/test_<модуль>.py -v` для проверки
+1. Read the target code
+2. Check whether `tests/` already holds tests; do not overwrite existing test files
+3. Identify every public function and method
+4. Generate tests that cover:
+   - The main scenario (happy path)
+   - Edge cases (empty input, None, wrong types)
+   - Error states
+5. Use fixtures where they fit
+6. Write the tests to `tests/test_<module>.py` (if the file already exists, add the new tests and do not overwrite the old ones)
+7. Run `python -m pytest tests/test_<module>.py -v` to check them
 
-Используй описательные имена тестов в формате `test_<функция>_<сценарий>`.
-Отвечай на русском.
+Use descriptive test names in the form `test_<function>_<scenario>`.
+Answer in the language of the user's request.

@@ -342,5 +342,25 @@ F8 (Non-convergence) → May evolve into F10 (abandonment)
 | F8 | socratic_mentor sets a dialogue cap per chapter |
 | F9 | intake_agent performs a complete materials check when detecting a handoff |
 | F10 | Maintain dialogue rhythm to avoid user fatigue |
-| F11 | Phase 7 researches target journal scope when producing the cover letter; format_agent strictly follows formatting rules |
+| F11 | Phase 7 researches target journal scope when producing the cover letter; formatter_agent strictly follows formatting rules |
 | F12 | intake_agent detects whether this is a conference paper expansion; calculate new content ratio early |
+
+---
+
+## Failure Paths
+
+Quick reference:
+
+| Failure Scenario | Handling Strategy |
+|---------|---------|
+| Insufficient research foundation | Recommend running `deep-research` first |
+| Wrong paper structure selected | Return to Phase 2, suggest alternative structure |
+| Word count significantly over/under target | Identify problematic chapters, suggest trimming/expansion |
+| Citation format entirely wrong | Re-run the entire citation phase |
+| Peer review rejection | Analyze rejection reasons, suggest major revision or restructuring |
+| Plan mode not converging | Suggest switching to outline-only mode |
+| Incomplete handoff materials | List missing items, suggest supplementing or re-running |
+| User abandons midway | Save completed Chapter Plan |
+
+---
+

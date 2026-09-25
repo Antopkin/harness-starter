@@ -1,50 +1,50 @@
 # Spec Phase: AC / EC / ERR
 
-Перед тем как писать первый тест, из описания фичи выводится **спецификация** — нумерованный контракт между тестами и реализацией. Каждое поведение и каждый тест дальше несёт ровно один тег спеки (`# spec: AC-3`). Спека — источник истины: тесты трассируются к ней, а финальная верификация сверяет код со спекой.
+Before you write the first test, you derive a **specification** from the feature description: a numbered contract between the tests and the implementation. Every behavior and every test after that carries exactly one spec tag (`# spec: AC-3`). The spec is the source of truth: the tests trace to it, and the final verification checks the code against the spec.
 
-Это статический шаг. Он ловит дыры и противоречия в требованиях до того, как мы потратим Red→Green на воображаемое поведение. Он НЕ доказывает корректность реализации — для этого mutation testing (`mutmut`) или property-based тесты.
+This is a static step. It catches holes and contradictions in the requirements before we spend Red→Green on imagined behavior. It does NOT prove the implementation correct; for that you need mutation testing (`mutmut`) or property-based tests.
 
 ---
 
-## Таксономия: три категории тегов
+## Taxonomy: three tag categories
 
-Каждое требование попадает ровно в одну категорию:
+Each requirement falls into exactly one category:
 
-- **AC** (acceptance criteria) — ядро. Обязательное поведение, ради которого фича существует. «Что система делает в штатном случае.»
-- **EC** (edge cases) — границы. Пустой ввод, нулевые/предельные значения, пограничные размеры, единственный элемент.
-- **ERR** (error cases) — отказы. Невалидный ввод, исключения, режимы провала. «Что система делает, когда что-то идёт не так.»
+- **AC** (acceptance criteria) — the core. The mandatory behavior the feature exists for. "What the system does in the normal case."
+- **EC** (edge cases) — the boundaries. Empty input, zero/extreme values, boundary sizes, a single element.
+- **ERR** (error cases) — failures. Invalid input, exceptions, failure modes. "What the system does when something goes wrong."
 
-Объём — как у целевого числа тестов: **3–7 AC + 1–3 EC + 1 ERR** (число AC задаётся в SPEC-фазе, см. SKILL.md §SPEC; PLAN затем раскладывает их на атомарные поведения).
+The volume matches the target number of tests: **3–7 AC + 1–3 EC + 1 ERR** (the number of AC is set in the SPEC phase, see SKILL.md §SPEC; PLAN then breaks them down into atomic behaviors).
 
-### Формат спеки
+### Spec format
 
 ```
 ### Spec: <feature>
 
 Acceptance Criteria
-  AC-1: format_file_size(1024) возвращает "1 KB"
-  AC-2: format_file_size(1048576) возвращает "1 MB"
-  AC-3: используются бинарные единицы (база 1024, не 1000)
+  AC-1: format_file_size(1024) returns "1 KB"
+  AC-2: format_file_size(1048576) returns "1 MB"
+  AC-3: binary units are used (base 1024, not 1000)
 
 Edge Cases
-  EC-1: format_file_size(0) возвращает "0 B"
+  EC-1: format_file_size(0) returns "0 B"
 
 Error Cases
-  ERR-1: format_file_size(-1) поднимает ValueError
+  ERR-1: format_file_size(-1) raises ValueError
 ```
 
-### Хорошее AC: критерии INVEST-стиля
+### A good AC: INVEST-style criteria
 
-- **Конкретное** — про наблюдаемое поведение, не про реализацию. `format_file_size(1024) == "1 KB"`, не «функция корректно форматирует».
-- **Testable в изоляции** — проверяемо без других критериев.
-- **Атомарное** — одно поведение. Составное «X и Y» в одном AC → разбей на `AC-N` и `AC-N+1`.
-- **Input-complete** — все предусловия явны. Если тест предполагает форму ввода, которую спека не определяет, — это дефект спеки (см. ниже).
+- **Concrete** — about observable behavior, not the implementation. `format_file_size(1024) == "1 KB"`, not "the function formats correctly".
+- **Testable in isolation** — checkable without other criteria.
+- **Atomic** — one behavior. A compound "X and Y" in one AC → split it into `AC-N` and `AC-N+1`.
+- **Input-complete** — all preconditions are explicit. If a test assumes an input shape the spec does not define, that is a spec defect (see below).
 
 ---
 
-## Тегирование тестов
+## Tagging tests
 
-Каждый тест ссылается на свой критерий в имени или комментарии. Это даёт трассируемость в обе стороны.
+Every test refers to its criterion in its name or a comment. This gives traceability in both directions.
 
 ```python
 def test_format_file_size_kilobytes():
@@ -61,53 +61,53 @@ def test_format_file_size_negative_raises():
         format_file_size(-1)
 ```
 
-Порядок написания тестов: сначала happy-path AC, затем EC, затем ERR. Один критерий → минимум один тест; один тест → ровно один критерий.
+Order of writing tests: happy-path AC first, then EC, then ERR. One criterion → at least one test; one test → exactly one criterion.
 
 ---
 
-## Spec-verification procedure (чеклист, до первого RED)
+## Spec-verification procedure (checklist, before the first RED)
 
-Прогоняется по спеке как статическая проверка. Три измерения:
+Run it over the spec as a static check. Three dimensions:
 
-### 1. Completeness — у каждого AC есть хотя бы один запланированный тест
-
-```
-[ ] Перечислить все критерии: AC-*, EC-*, ERR-*
-[ ] Для каждого критерия найти запланированный тест по совпадению id
-[ ] Каждый AC покрыт ≥1 тестом? (EC/ERR желательны, AC обязательны)
-```
-
-Непокрытый AC → дыра. Либо добавь тест, либо вынеси критерий из спеки осознанно.
-
-### 2. Traceability — каждый запланированный тест мапится назад на конкретный id
+### 1. Completeness — every AC has at least one planned test
 
 ```
-[ ] У каждого теста есть тег # spec: <id>?
-[ ] Каждый id из тега существует в спеке?
-[ ] Нет «сиротских» тестов без критерия (тест без спеки = тест воображаемого поведения)
+[ ] List all criteria: AC-*, EC-*, ERR-*
+[ ] For each criterion, find the planned test by matching id
+[ ] Is every AC covered by ≥1 test? (EC/ERR desirable, AC mandatory)
 ```
 
-Тест без трассируемого критерия — это speculative test (см. `anti-patterns.md` §3). Удали или заведи критерий.
+An uncovered AC → a hole. Either add a test or take the criterion out of the spec deliberately.
 
-### 3. Coherence — никакие два AC не противоречат друг другу
+### 2. Traceability — every planned test maps back to a specific id
 
 ```
-[ ] Для каждой пары AC: могут ли оба быть истинны одновременно для одного входа?
-[ ] Нет взаимоисключающих требований (sync vs async, «виден» vs «не виден» для того же состояния)?
-[ ] Нет нереализуемых ограничений (физически/логически невозможных как заявлено)?
+[ ] Does every test have a # spec: <id> tag?
+[ ] Does every id in a tag exist in the spec?
+[ ] No "orphan" tests without a criterion (a test without a spec = a test of imagined behavior)
 ```
 
-Если два AC взаимоисключающи — **STOP, emit `spec_defect`**, не пиши зелёные тесты на противоречивой спеке. Полный протокол сигнала, worked example (premium-дашборд) и 2-strike rule — в `double-isolation.md`.
+A test without a traceable criterion is a speculative test (see `anti-patterns.md` §3). Delete it or add a criterion.
+
+### 3. Coherence — no two AC contradict each other
+
+```
+[ ] For each pair of AC: can both be true at the same time for the same input?
+[ ] No mutually exclusive requirements (sync vs async, "visible" vs "not visible" for the same state)?
+[ ] No unachievable constraints (physically/logically impossible as stated)?
+```
+
+If two AC are mutually exclusive, **STOP, emit `spec_defect`**; do not write green tests on a contradictory spec. The full signal protocol, the worked example (premium dashboard) and the 2-strike rule are in `double-isolation.md`.
 
 ---
 
-## Итоговый отчёт спеки
+## Final spec report
 
 ```
 Spec Verification
-  Completeness:  N/N AC покрыты тестами
-  Traceability:  N/N тестов трассируются к критериям
+  Completeness:  N/N AC covered by tests
+  Traceability:  N/N tests trace to criteria
   Coherence:     OK | spec_defect: <AC-i> vs <AC-j>
 ```
 
-Только при `Coherence: OK` переходим к PLAN/RED. При `spec_defect` — halt и эскалация человеку.
+Move on to PLAN/RED only with `Coherence: OK`. With `spec_defect`, halt and escalate to a human.

@@ -279,3 +279,5 @@ revision_coach_agent output -> revision mode input
 - Effort estimation is realistic and based on the actual scope of changes
 - User has confirmed the parsing before the final Roadmap is generated
 - Output is immediately usable without further interpretation
+
+**Output language:** the Body Language of the Paper Configuration Record when one exists, otherwise the language of the reviewer comments being parsed. **Length cap:** at most 800 words of prose outside the roadmap tables. **Return shape:** the Revision Roadmap defined above — Overview, P1: Must Fix, P2: Should Fix, P3: Consider, Positive Comments, Cross-Reviewer Patterns, Suggested Revision Order — plus, when the user asks for it, a pre-filled `templates/revision_tracking_template.md`. This governs the roadmap and its handoff to revision mode and draft_writer_agent.

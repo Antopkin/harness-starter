@@ -6,7 +6,7 @@ description: >
   test-driven development, or wants iterative development with automatic
   verification via tests. Derives an AC/EC/ERR spec, runs RED and GREEN in two
   isolated subagent contexts, and halts on a contradictory spec via spec_defect.
-  Invocation: /tdd <feature description>.
+  Invocation: /tdd followed by a short feature description.
 ---
 
 # TDD: Spec-Driven Red-Green-Refactor
@@ -29,7 +29,7 @@ Tests verify **behavior through public interfaces**, not implementation details.
 
 ## Anti-Patterns (what NOT to do)
 
-Не пиши все тесты пачкой (**horizontal slicing** — каждый Red→Green→Refactor — vertical slice одного behavior). Не тестируй имплементацию (моки внутренних коллабораторов, private методы, побочные каналы). Никаких **speculative tests** без тега спеки. Не рефакторь под красным. Один тест — одно логическое утверждение. Разбор: `references/anti-patterns.md`, `references/vertical-slicing.md`.
+Don't write all the tests in one batch (**horizontal slicing** — each Red→Green→Refactor is a vertical slice of one behavior). Don't test the implementation (mocks of internal collaborators, private methods, side channels). No **speculative tests** without a spec tag. Don't refactor while red. One test, one logical assertion. Details: `references/anti-patterns.md`, `references/vertical-slicing.md`.
 
 ## Cycle
 
@@ -75,6 +75,8 @@ Run only this test: `python -m pytest tests/test_<module>.py::<test_name> -v`
 - **PASS** → useless test. Behavior already exists (delete, next behavior) or test wrong (rewrite).
 - **ERROR** (Import/Name/AttributeError) → acceptable Red, proceed to GREEN.
 
+**Output language:** the language of the user's request. **Length cap:** at most 100 words. **Return shape:** `test_file_path`, `test_name`, `spec_tag`, the marker line `🔴 RED: test_<name> — FAIL`, and the pytest failure excerpt.
+
 ## GREEN Phase  (developer context — blind to spec)
 
 **RULES:** DO NOT TOUCH test files. Write **minimal** code to pass THIS test only. Hardcoded returns, simple if-branches, stubs — all fine. Create new files as needed. The developer is given ONLY the current behavior's test (its `# spec:` tag stripped by main) **read-only** + a command to run the rest; never the spec, never the accumulated test file. It codes to the test alone.
@@ -85,6 +87,8 @@ Run ALL module tests: `python -m pytest tests/test_<module>.py -v`
 - **New PASS, old FAIL** → you broke something. Fix implementation (not tests!).
 - **New FAIL** → insufficient. Add code (do not modify the test!).
 - **Green for this test breaks another AC's green test** → latent contradiction. The GREEN subagent **returns** `cross_ac_break:{broke, while_greening}`; **main** counts strikes across cycles (a blind, ephemeral GREEN context can't hold the count) and emits `spec_defect` at strike 2. Any cross-AC breakage is a strike regardless of the 3-attempt counter. See `references/double-isolation.md`.
+
+**Output language:** the language of the user's request. **Length cap:** at most 150 words. **Return shape:** the marker line `🟢 GREEN: test_<name> — PASS (total: N, all green)`, `files_modified`, and `cross_ac_break:{broke, while_greening}` when greening this test broke another AC's green test.
 
 ## REFACTOR Phase
 
@@ -100,7 +104,7 @@ git commit -m "tdd(<module>): <behavior>  [spec: <id>]
 
 Red: test_<name> added | Green: <what> | Refactor: <what | skipped>
 
-Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
+Co-Authored-By: <model> <noreply@anthropic.com>"
 ```
 
 `📦 COMMIT: tdd(<module>): <behavior>` — then RED for the next behavior.
@@ -114,6 +118,8 @@ Two separate subagent contexts prevent "subconscious cheating". Brief here; full
 - **Developer (GREEN):** given ONLY the current test (tag stripped) **read-only** + a run command for the rest + pytest output; **blind to the spec** (no spec path; tests carry behavior names, not prose; accumulated file withheld so the growing test set can't be mined). Returns `cross_ac_break` if greening broke another AC's test. Writes minimal code to pass the test only.
 
 Without subagents: work in main, but hold both boundaries — don't peek at impl during RED, don't consult the spec during GREEN.
+
+**Output language:** the language of the user's request. **Length cap:** at most 150 words per subagent return, and at most 100 words for the test-writer. **Return shape:** this governs both contexts — the test-writer returns `test_file_path`, `test_name`, `spec_tag` and the `🔴 RED` marker; the developer returns the `🟢 GREEN` marker, `files_modified` and `cross_ac_break:{broke, while_greening}`; either falls back to the `spec_defect` block defined in `references/double-isolation.md`.
 
 ## Summary
 
@@ -137,7 +143,7 @@ Without subagents: work in main, but hold both boundaries — don't peek at impl
 
 ## Compatibility
 
-**Автоформат** — если в проекте настроен formatter (Ruff, Black и т.п.), его прогон не должен ломать тесты; при конфликте виноват тест, а не форматтер. **`/test`** — генерация тестов БЕЗ TDD-дисциплины; **`/review`** — финальное ревью после цикла; **`/diagnose`** — для недетерминированных багов: сначала построй детерминированный сигнал, потом пиши регрессионный тест здесь.
+**Ruff format:** no formatter hook ships with this kit, so run `ruff format <files>` yourself before each commit; it does not break tests. **`/test`** — test generation WITHOUT TDD discipline; **`/review`** — user-invoked, so after the cycle suggest the user run `/review` for a final review; **`/diagnose`** — for non-deterministic bugs, build a deterministic signal first, then write a regression test here.
 
 ## References
 
@@ -145,6 +151,10 @@ Progressive disclosure — load when relevant:
 
 - `references/spec-phase.md` — AC/EC/ERR taxonomy, test tagging, spec-verification procedure (Completeness/Traceability/Coherence)
 - `references/double-isolation.md` — two-context protocol, `spec_defect` signal format, 2-strike rule, premium worked example
-- `references/anti-patterns.md` — TDD антипаттерны (horizontal slicing, implementation testing, speculative tests, etc.)
-- `references/behavior-vs-implementation.md` — good vs bad tests с Python-примерами, когда мокать
-- `references/vertical-slicing.md` — tracer bullets, как разбивать фичу на тонкие end-to-end slices
+- `references/anti-patterns.md` — TDD anti-patterns (horizontal slicing, implementation testing, speculative tests, etc.)
+- `references/behavior-vs-implementation.md` — good vs bad tests with Python examples, when to mock
+- `references/vertical-slicing.md` — tracer bullets, how to split a feature into thin end-to-end slices
+
+---
+
+Adapted from mattpocock/skills@c55ee46 engineering/tdd (MIT).

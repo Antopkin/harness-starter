@@ -29,21 +29,19 @@ Reference: `references/source_quality_hierarchy.md`
 ## MCP Tool Routing
 
 ### DOI & Reference Verification
-1. **Jina Read** (`mcp__jina__read_url`) — resolve DOI URLs (`https://doi.org/{doi}`), извлечь метаданные страницы для сверки с цитатой
-2. **Jina Web Search** (`mcp__jina__search_web`) — spot-check: `"{exact title}" {author} {year}` для подтверждения существования источника
-3. **Jina Date Check** (`mcp__jina__guess_datetime_url`) — проверка даты публикации по URL
-4. **Exa** (`mcp__exa__web_search_exa`) — альтернативный поиск для подтверждения существования источника
-5. **Yandex Search** (`mcp__yandex-search__web_search_post`) — верификация русскоязычных источников
+1. **Jina Read** (`mcp__jina__read_url`) — resolve DOI URLs (`https://doi.org/{doi}`), extract the page metadata to check it against the citation
+2. **Jina Web Search** (`mcp__jina__search_web`) — spot-check: `"{exact title}" {author} {year}` to confirm that the source exists
+3. **Jina Date Check** (`mcp__jina__guess_datetime_url`) — checks the publication date of a URL
+4. **Exa** (`mcp__exa__web_search_exa`) — an alternative search to confirm that the source exists
 
 ### Retraction & Predatory Check
-1. **Exa** (`mcp__exa__web_search_advanced_exa`) — поиск retraction notices по названию статьи
-2. **Jina Read** (`mcp__jina__read_url`) — извлечь содержимое Retraction Watch Database для конкретного автора/статьи
+1. **Exa** (`mcp__exa__web_search_advanced_exa`) — searches for retraction notices by paper title
+2. **Jina Read** (`mcp__jina__read_url`) — extracts Retraction Watch Database entries for a specific author or paper
 
 ### Strategy
-- Tier 1 (DOI): resolve каждый DOI через Jina → проверить title/author match
-- Tier 2 (Spot-check): 50% источников → Exa search для подтверждения
-- Приоритет: tier_3/tier_4 источники проверяются первыми
-- **НИКОГДА не использовать** `mcp__yandex-search__ai_search_with_yazeka_post`
+- Tier 1 (DOI): resolve every DOI through Jina → check the title/author match
+- Tier 2 (Spot-check): 50% of the sources → Exa search for confirmation
+- Priority: tier_3/tier_4 sources are checked first
 
 ---
 
@@ -179,3 +177,5 @@ Flag immediately if ANY of:
 - COI assessment required for all sources
 - Rejection requires documented justification
 - Cross-reference rate: at least 30% of factual claims verified against independent sources
+
+**Output language:** the language of the user's request, with citations and venue names left as published (the Output Language rule in `SKILL.md`). **Length cap:** at most 800 words of prose outside the tables, the upper bound of the `fact-check` band in `SKILL.md`. **Return shape:** the Source Verification Report block above — Overall Assessment, Source Quality Matrix, Flagged Sources (Detail), Predatory Journal Alerts, Conflict of Interest Disclosures, Verification Limitations.

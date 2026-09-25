@@ -165,6 +165,8 @@ This document defines all legal states, transition conditions, transition action
 | Stage 4.5 | Stage 4.5 (retry) | FAIL | Fix issues, re-verify (max 3 rounds) |
 | checkpoint | Stage 5 | User confirms | Pass final accepted draft |
 
+**Output language:** the language of the paper. **Length cap:** at most 200 words. **Return shape:** from, to, precondition, materials passed. Governs every transition in the table above.
+
 ### Special Flow Transitions
 
 | From | To | Precondition | Action |
@@ -210,6 +212,8 @@ This document defines all legal states, transition conditions, transition action
 | **Re-Revised Draft** | **Stage 4'** | **Stage 4.5 (input)** | **Required (if executed)** |
 | **Integrity Report (Final)** | **Stage 4.5** | **Stage 5 (prerequisite)** | **Required** |
 | Final Paper | Stage 5 | END (delivery) | Required |
+
+**Output language:** the language of the paper. **Length cap:** at most 200 words. **Return shape:** material, produced at, consumed at, required or recommended. Governs every artifact in the matrix above.
 
 ---
 
@@ -278,3 +282,30 @@ Unresolved issues -> Acknowledged Limitations.
 | 4 reviewers | 5 reviewers (+Devil's Advocate) |
 | Can skip any stage | Stage 2.5 and 4.5 cannot be skipped |
 | No mandatory checkpoints | Every stage requires a checkpoint |
+
+## Pipeline State Machine
+
+1. **Stage 1 RESEARCH** -> user confirmation -> Stage 2
+2. **Stage 2 WRITE** -> user confirmation -> Stage 2.5
+3. **Stage 2.5 INTEGRITY** -> PASS -> Stage 3 (FAIL -> fix and re-verify, max 3 rounds)
+4. **Stage 3 REVIEW** -> Accept -> Stage 4.5 / Minor|Major -> Stage 4 / Reject -> Stage 2 or end
+5. **Stage 4 REVISE** -> user confirmation -> Stage 3'
+6. **Stage 3' RE-REVIEW** -> Accept|Minor -> Stage 4.5 / Major -> Stage 4'
+7. **Stage 4' RE-REVISE** -> user confirmation -> Stage 4.5 (no return to review)
+8. **Stage 4.5 FINAL INTEGRITY** -> PASS (zero issues) -> Stage 5 (FAIL -> fix and re-verify)
+9. **Stage 5 FINALIZE** -> MD + DOCX -> ask about LaTeX -> confirm -> PDF -> Stage 6
+10. **Stage 6 PROCESS SUMMARY** -> ask language version -> generate process record MD -> LaTeX -> PDF -> end
+
+
+---
+
+## Revision Loop Management
+
+- Stage 3 (first review) -> Stage 4 (revision) -> Stage 3' (verification review) -> Stage 4' (re-revision, if needed) -> Stage 4.5 (final verification)
+- **Maximum 1 round of RE-REVISE** (Stage 4'): If Stage 3' gives Major, enter Stage 4' for revision then proceed directly to Stage 4.5 (no return to review)
+- **Pipeline overrides academic-paper's max 2 revision rule**: In the pipeline, revisions are limited to Stage 4 + Stage 4' (one round each), replacing academic-paper's max 2 rounds rule
+- Mark unresolved issues as Acknowledged Limitations
+- Provide cumulative revision history (each round's decision, items addressed, unresolved items)
+
+---
+

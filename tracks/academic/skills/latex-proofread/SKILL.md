@@ -1,111 +1,113 @@
 ---
 name: latex-proofread
-description: "Двухфазный пруфридинг LaTeX-статей. Фаза 1: аудит инфраструктуры (preamble, макросы, cross-ref, цитаты, фигуры). Фаза 2: ревью контента (грамматика, научная ясность, нарратив, нотация). Основано на LimHyungTae/awesome-claudecode-paper-proofreading."
+description: "Two-phase proofreading of LaTeX papers. Phase 1 audits the infrastructure (preamble, macros, cross-references, citations, figures). Phase 2 reviews the content (grammar, scientific clarity, narrative, notation). Based on LimHyungTae/awesome-claudecode-paper-proofreading."
 metadata:
   version: "1.0"
   last_updated: "2026-03-14"
   source: "https://github.com/LimHyungTae/awesome-claudecode-paper-proofreading"
 ---
 
-# LaTeX Paper Proofreading — Двухфазный аудит
+# LaTeX Paper Proofreading — Two-Phase Audit
 
-Строгий двухфазный пруфридинг LaTeX-статей уровня ICRA, RSS, NeurIPS, T-RO, CVPR.
+A strict two-phase proofread of LaTeX papers aimed at venues such as ICRA, RSS, NeurIPS, T-RO and CVPR.
 
-## Быстрый старт
+## Quick start
 
 ```
 /latex-proofread main.tex
-/latex-proofread main.tex --phase 1     # только инфраструктура
-/latex-proofread main.tex --phase 2     # только контент
+/latex-proofread main.tex --phase 1     # infrastructure only
+/latex-proofread main.tex --phase 2     # content only
 ```
 
-## Триггеры
+## Triggers
 
-Используй этот скилл когда пользователь хочет:
-- проверить LaTeX-статью перед подачей
-- найти ошибки в preamble, макросах, цитатах
-- вычитать текст на грамматику, ясность, нотацию
-- проверить workspace на скрытые ошибки (TODO, плейсхолдеры)
+Use this skill when the user wants to:
+- check a LaTeX paper before submission
+- find errors in the preamble, macros or citations
+- proofread the text for grammar, clarity and notation
+- check the workspace for hidden errors (TODOs, placeholders)
 
-Ключевые слова: proofread, вычитка, проверить статью, latex proofread, check paper, ревью tex
+Keywords: proofread, proofreading, check the paper, latex proofread, check paper, review tex
 
-## НЕ триггерить
+## Do NOT trigger
 
-| Сценарий | Используй |
+| Scenario | Use instead |
 |---|---|
-| Исправить ошибки компиляции по .log | `/latex-fix` |
-| Написать статью | `/academic-paper` |
-| Рецензия на статью (академическая) | `/academic-paper-reviewer` |
-| Аудит качества (scoring) | `/paper-audit` |
+| Fix compilation errors from the .log | `/latex-fix` |
+| Write a paper | `/academic-paper` |
+| Review a paper (academic peer review) | `/academic-paper-reviewer` |
+| Quality audit (scoring) | `/paper-audit` |
 
 ---
 
-## Рабочий процесс
+## Workflow
 
-### Подготовка (перед обеими фазами)
+### Preparation (before both phases)
 
-1. Прочитай корневой `.tex` файл
-2. Найди все `\input{...}` и `\include{...}` рекурсивно
-3. Прочитай все подключённые файлы (`sections/*.tex`, `shortcuts.tex`, `preamble.tex`, и т.д.)
-4. Прочитай все `.bib` файлы из `\bibliography{...}`
-5. Делай это молча, до любого вывода
+1. Read the root `.tex` file
+2. Find every `\input{...}` and `\include{...}` recursively
+3. Read all included files (`sections/*.tex`, `shortcuts.tex`, `preamble.tex`, and so on)
+4. Read every `.bib` file named in `\bibliography{...}`
+5. Do all of this silently, before producing any output
 
-### Фаза 1 — Аудит инфраструктуры LaTeX workspace
+### Phase 1 — LaTeX workspace infrastructure audit
 
-> **НЕ модифицируй файлы во время Фазы 1. Только детектируй и репортируй.**
+> **Do NOT modify files during Phase 1. Only detect and report.**
 
-#### Проверки (C1-C9)
+#### Checks (C1-C9)
 
-| # | Проверка | Описание |
+| # | Check | Description |
 |---|---|---|
-| C1 | Preamble | Дубли/конфликты/неиспользуемые/отсутствующие пакеты. cleveref, hyperref, caption, math packages |
-| C2 | Порядок пакетов | hyperref → cleveref, amsmath → mathtools, xcolor → tikz, caption → subcaption |
-| C3 | Макросы | \methodname без \xspace, дубли, конфликты имён, \etalcite, subscript consistency |
-| C4 | Cross-references | Смешанные \Cref/\cref/\ref, ручные "Fig.", множественные ссылки |
-| C5 | Именование меток | Префиксы fig:/tab:/eq:/sec:/alg:, дубли, неиспользуемые, сломанные |
-| C6 | Цитаты и библиография | \cite без записи в .bib, дубли ключей, качество BibTeX, ~\cite{} |
-| C7 | Фигуры и таблицы | Отсутствующие файлы, плейсхолдеры, абсолютные пути, позиция \label |
-| C8 | Скрытые ошибки | TODO/XXX/FIXME, несогласованные названия, шаблонный контент, \vspace хаки |
-| C9 | Академическое письмо | Единицы (\,), тысячные разделители, et al., \ie/\eg, state-of-the-art, акронимы |
+| C1 | Preamble | Duplicate, conflicting, unused or missing packages. cleveref, hyperref, caption, math packages |
+| C2 | Package order | hyperref → cleveref, amsmath → mathtools, xcolor → tikz, caption → subcaption |
+| C3 | Macros | \methodname without \xspace, duplicates, name clashes, \etalcite, subscript consistency |
+| C4 | Cross-references | Mixed \Cref/\cref/\ref, hand-written "Fig.", multiple references |
+| C5 | Label naming | Prefixes fig:/tab:/eq:/sec:/alg:, duplicates, unused and broken labels |
+| C6 | Citations and bibliography | \cite without a .bib entry, duplicate keys, BibTeX quality, ~\cite{} |
+| C7 | Figures and tables | Missing files, placeholders, absolute paths, \label position |
+| C8 | Hidden errors | TODO/XXX/FIXME, inconsistent names, boilerplate content, \vspace hacks |
+| C9 | Academic writing | Units (\,), thousands separators, et al., \ie/\eg, state-of-the-art, acronyms |
 
-#### Формат вывода Фазы 1
+#### Phase 1 output format
 
 ```
-**`файл.tex`**
-[N]  L.XX   Описание проблемы | Предложение
+**`file.tex`**
+[N]  L.XX   Problem description | Suggestion
 
 CRITICAL
-  [N]  Файл — краткое описание
+  [N]  File — short description
 MAJOR
-  [N]  Файл — краткое описание
+  [N]  File — short description
 MINOR / STYLE
-  [N]  Файл — краткое описание
+  [N]  File — short description
 
 Infrastructure Suggestions:
 - ...
 ```
 
-### Фаза 2 — Ревью контента
+**Output language:** the language of the user's request, with academic terminology kept in English. **Length cap:** at most 600 words. **Return shape:** the "Phase 1 output format" block above — the per-file list, the CRITICAL / MAJOR / MINOR / STYLE groups and the Infrastructure Suggestions; the rule applies to every check C1-C9.
 
-> **НЕ переписывай текст. Только детектируй и репортируй.**
+### Phase 2 — Content review
 
-Персона: строгий рецензент уровня ICRA, RSS, NeurIPS, T-RO, CVPR.
+> **Do NOT rewrite the text. Only detect and report.**
 
-#### Категории (A-I)
+Persona: a strict reviewer at the level of ICRA, RSS, NeurIPS, T-RO or CVPR.
 
-| # | Категория | Описание |
+#### Categories (A-I)
+
+| # | Category | Description |
 |---|---|---|
-| A | Язык и грамматика | Subject-verb agreement, tense consistency, passive voice, Oxford comma |
-| B | Качество языка | Опечатки (CRITICAL), номинализация, filler expressions, citation-as-noun |
-| C | Научная ясность | Overclaiming, causal gaps, unsupported limitations, undefined symbols |
-| D | Структура и поток | Introduction, Related Work, Methodology, Experiments — полная проверка |
-| E | Фигуры, таблицы, подписи | Self-containedness подписей, bold/underline convention, reference order |
-| F | LaTeX-форматирование | Thin spaces, thousands separators, consistent references, \ie/\eg macros |
-| G | Abstract и Conclusion | WHY→PROBLEM→HOW→RESULTS, no citations in abstract, single paragraph |
-| H | Консистентность нотации | Symbol overload, boldface vectors, coordinate frame notation |
-| I | Дефисы | Compound adjectives, -ly adverb rule, context-dependent checks |
+| A | Language and grammar | Subject-verb agreement, tense consistency, passive voice, Oxford comma |
+| B | Language quality | Typos (CRITICAL), nominalisation, filler expressions, citation-as-noun |
+| C | Scientific clarity | Overclaiming, causal gaps, unsupported limitations, undefined symbols |
+| D | Structure and flow | Introduction, Related Work, Methodology, Experiments — a full check |
+| E | Figures, tables, captions | Self-contained captions, bold/underline convention, reference order |
+| F | LaTeX formatting | Thin spaces, thousands separators, consistent references, \ie/\eg macros |
+| G | Abstract and Conclusion | WHY→PROBLEM→HOW→RESULTS, no citations in the abstract, a single paragraph |
+| H | Notation consistency | Symbol overload, boldface vectors, coordinate frame notation |
+| I | Hyphenation | Compound adjectives, the -ly adverb rule, context-dependent checks |
 
-#### Формат вывода Фазы 2
+#### Phase 2 output format
 
 ```
 Paper quality: GOOD / NEEDS REVISION / MAJOR REVISION
@@ -117,45 +119,47 @@ Paper quality: GOOD / NEEDS REVISION / MAJOR REVISION
 | MINOR    |       |
 | STYLE    |       |
 
-[Полный список по файлам]
-[Группировка по severity]
+[Full list by file]
+[Grouping by severity]
 [Caption Review]
 [LaTeX Formatting Patterns]
 [Optional Polishing Suggestions]
 ```
 
+**Output language:** the language of the user's request, with academic terminology kept in English. **Length cap:** at most 800 words. **Return shape:** the "Phase 2 output format" block above — the Paper quality verdict, the count table, the full list by file, the grouping by severity, Caption Review, LaTeX Formatting Patterns and Optional Polishing Suggestions; the rule applies to every category A-I.
+
 ---
 
-## Фаза Fix — после обеих фаз
+## Fix phase — after both phases
 
-После вывода всех проблем, жди решения пользователя:
+Once every problem has been reported, wait for the user's decision:
 
-- `fix safe` — только однозначные опечатки и грамматические ошибки
-- `fix all critical` — только CRITICAL
-- `fix all` — все предложенные исправления
-- `fix [номера]` — конкретные проблемы (например `fix 1, 3, 5`)
-- `discard [номера]` — пропустить конкретные
+- `fix safe` — only unambiguous typos and grammar errors
+- `fix all critical` — only CRITICAL items
+- `fix all` — every suggested fix
+- `fix [numbers]` — specific problems (for example `fix 1, 3, 5`)
+- `discard [numbers]` — skip specific problems
 
-**НЕ модифицируй файлы до подтверждения пользователем.**
+**Do NOT modify files until the user confirms.**
 
-### Правила исправления
+### Fix rules
 
-- **Без em dashes** (`—`) — заменяй на запятую, точку с запятой, двоеточие или перестраивай предложение
-- Не добавляй AI-характерные конструкции
+- **No em dashes** (`—`) — replace them with a comma, semicolon or colon, or restructure the sentence
+- Do not add constructions that read as AI-generated
 
 ---
 
 ## Severity Levels
 
-| Уровень | Значение |
+| Level | Meaning |
 |---------|---------|
-| CRITICAL | Исправить до подачи |
-| MAJOR | Важная проблема ясности/корректности |
-| MINOR | Грамматика или формулировка |
-| STYLE | Опциональное улучшение |
+| CRITICAL | Fix before submission |
+| MAJOR | A significant clarity or correctness problem |
+| MINOR | Grammar or wording |
+| STYLE | An optional improvement |
 
 ---
 
-## Язык вывода
+## Output language
 
-Следует языку пользователя. Академическая терминология на английском.
+Follow the language of the user's request. Academic terminology stays in English.
