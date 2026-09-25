@@ -134,6 +134,14 @@ fi
 # argument, spelled with ANSI-C quoting that carries a backslash escape
 # ($'\x72m', $'\x2d'rf) is refused, as is a brace-expansion word run as a
 # command ({rm,-rf,DIR}); the shell decodes both to something unq cannot see.
+# Hotfix after N5 round 3: these two refusals apply only to shell code, that is
+# top-level command segments, command substitutions, and the bodies (and
+# here-strings) read by sh, bash, zsh, dash, ksh, fish, ssh, eval, source, .,
+# xargs or an env, exec or command wrapper of them. Quoted text of any other
+# command (python3 -c '...', node -e '...'), the bodies read by anything else
+# (python, node, cat, ...) and their quote-stripped copies are not held to
+# them, so JSON, regexes and f-strings with braces pass; the rm and git rules
+# still read all of that text as before.
 # Known limits, not closable at text level: a git alias defined with
 # -c alias.x=... is not expanded, and neither is variable indirection, so
 # X=-rf; rm $X DIR and a shell alias for rm go past the guard. If awk itself
@@ -221,9 +229,16 @@ function cvlong(a) {
           isprefix(a, "--date", 4) || isprefix(a, "--reuse-message", 5) || isprefix(a, "--reedit-message", 5) ||
           isprefix(a, "--squash", 4) || isprefix(a, "--cleanup", 4) || isprefix(a, "--pathspec-from-file", 12))
 }
-function scan(s,   seg, nseg, i, n, w, u, k, b, j, o, verb, dry, m, a, c, p, staged, wt, hit, rr, ff, hp, e, cw, cb, ansi) {
+# N5: ANSI-C quoting ($'\x72m', $'\055rf') and brace expansion ({rm,-rf,T})
+# hide a command or its flags from unq. In the shell code s, a command word, or
+# an argument of rm, that carries a $'...\...' escape is refused, as is a
+# brace-expansion word (holding { , and } with no space, not a { ...; } group)
+# run as a command. Variable indirection (X=-rf; rm $X) cannot be seen here.
+# s is only ever shell code: the NV view of a command (quoted text masked), a
+# substitution, or a body or here-string a shell reads, never data or the
+# body of another interpreter.
+function n5(s,   seg, nseg, i, n, w, u, k, m, cw, cb, ansi) {
   ansi = "[$]" sq "[^" sq "]*\\\\"
-  while (match(s, /:\([^() \t]*\)/)) s = substr(s, 1, RSTART) "\001" substr(s, RSTART + 2, RLENGTH - 3) "\002" substr(s, RSTART + RLENGTH)
   gsub(/&&|\|\||[;|&()`]/, "\n", s)
   nseg = split(s, seg, "\n")
   for (i = 1; i <= nseg; i++) {
@@ -233,17 +248,50 @@ function scan(s,   seg, nseg, i, n, w, u, k, b, j, o, verb, dry, m, a, c, p, sta
     # The command word of the segment: the first word that is not a VAR= prefix.
     cw = 0
     for (k = 1; k <= n; k++) { if (u[k] ~ /^[A-Za-z_][A-Za-z0-9_]*=/) continue; cw = k; break }
-    if (cw) {
-      # N5: ANSI-C quoting ($'\x72m', $'\055rf') and brace expansion ({rm,-rf,T})
-      # hide a command or its flags from unq. A command word, or an argument of
-      # rm, that carries a $'...\...' escape is refused, as is a brace-expansion
-      # word (holding { , and } with no space, not a { ...; } group) run as a
-      # command. Variable indirection (X=-rf; rm $X) cannot be seen here.
-      if (w[cw] ~ ansi) { print "ANSI-C quoted command word"; exit }
-      if (index(w[cw], "{") && index(w[cw], ",") && index(w[cw], "}")) { print "brace-expansion command word"; exit }
-      cb = u[cw]; sub(/.*\//, "", cb)
-      if (cb == "rm") { for (m = cw + 1; m <= n; m++) if (w[m] ~ ansi) { print "ANSI-C quoted rm argument"; exit } }
+    if (!cw) continue
+    if (w[cw] ~ ansi) { print "ANSI-C quoted command word"; exit }
+    if (index(w[cw], "{") && index(w[cw], ",") && index(w[cw], "}")) { print "brace-expansion command word"; exit }
+    cb = u[cw]; sub(/.*\//, "", cb)
+    if (cb == "rm") { for (m = cw + 1; m <= n; m++) if (w[m] ~ ansi) { print "ANSI-C quoted rm argument"; exit } }
+  }
+}
+# The word o as the N5 view sees it: inside single, double and ANSI-C quotes
+# every blank, separator, brace and comma becomes _, so quoted text cannot
+# form a command word of its own. ANSI-C escapes are kept for the ANSI-C test.
+# A $( or backtick inside "..." is queued (JN5) to be read as shell code.
+function mword(o,   i, L, ch, q, r, qd) {
+  L = length(o); q = ""; r = ""; qd = 0
+  for (i = 1; i <= L; i++) {
+    ch = substr(o, i, 1)
+    if (q == "") {
+      if (ch == "\\") { r = r ch substr(o, i + 1, 1); i++; continue }
+      if (ch == sq) q = "s"
+      else if (ch == "\"") q = "d"
+      else if (ch == "$" && substr(o, i + 1, 1) == sq) { q = "a"; r = r ch sq; i++; continue }
+      r = r ch; continue
     }
+    if (q == "d" && !qd && ((ch == "$" && substr(o, i + 1, 1) == "(") || ch == "`")) { qd = 1; JN5[++NN] = substr(o, i + (ch == "`" ? 1 : 2)) }
+    if (q != "s" && ch == "\\") { r = r ch; i++; ch = substr(o, i, 1); if (index(" \t\n;&|()`<>{},", ch)) ch = "_"; r = r ch; continue }
+    if ((q == "s" && ch == sq) || (q == "d" && ch == "\"") || (q == "a" && ch == sq)) { q = ""; r = r ch; continue }
+    if (index(" \t\n;&|()`<>{},", ch)) ch = "_"
+    r = r ch
+  }
+  return r
+}
+# The text of a here-string word t with its outer quotes removed.
+function hsbody(t,   L) {
+  L = length(t)
+  if (L >= 2 && ((substr(t, 1, 1) == sq && substr(t, L, 1) == sq) || (substr(t, 1, 1) == "\"" && substr(t, L, 1) == "\""))) return substr(t, 2, L - 2)
+  return t
+}
+function scan(s,   seg, nseg, i, n, w, u, k, b, j, o, verb, dry, m, a, c, p, staged, wt, hit, rr, ff, hp, e) {
+  while (match(s, /:\([^() \t]*\)/)) s = substr(s, 1, RSTART) "\001" substr(s, RSTART + 2, RLENGTH - 3) "\002" substr(s, RSTART + RLENGTH)
+  gsub(/&&|\|\||[;|&()`]/, "\n", s)
+  nseg = split(s, seg, "\n")
+  for (i = 1; i <= nseg; i++) {
+    gsub(/[<>]/, " ", seg[i])
+    n = split(seg[i], w)
+    for (k = 1; k <= n; k++) u[k] = unq(w[k])
     for (k = 1; k <= n; k++) {
       b = u[k]; sub(/.*\//, "", b)
       if (b == "rm") {
@@ -367,10 +415,26 @@ function blank(v) { if (EDIT) { subq(v, 0); return v } subq(v, 1); return "_" }
 # its global options and commit or tag, or through gh pr/issue/release (ST),
 # note a -F - (FD), and emit the word to OUT, a -m/-F/--message/--file value
 # blanked and the substitution of a gh or tag argument queued.
-function wdone(   w, a, b, c, p, ch, o) {
+function wdone(   w, a, b, c, p, ch, o, a0, b0) {
   if (WB == "") return
   w = WB; WB = ""; a = unq(w); o = w
   b = a; sub(/.*\//, "", b)
+  # The consumer of the segment (SSH[SEGN] = 1 when it is a shell): the first
+  # word that is not a redirection or VAR= prefix, past env, exec and command
+  # (and their options). A here-string it reads is queued as shell code.
+  if (!CWD) {
+    a0 = a; sub(/[<>].*/, "", a0)
+    if (SKW) SKW = 0
+    else if (a0 == "" || a0 ~ /^[A-Za-z_][A-Za-z0-9_]*=/) {}
+    else if (WR && substr(a0, 1, 1) == "-") { if (a0 == "-u" || a0 == "-C" || a0 == "-P" || a0 == "-S") SKW = 1 }
+    else {
+      b0 = a0; sub(/.*\//, "", b0)
+      if (b0 == "env" || b0 == "exec" || b0 == "command") WR = 1
+      else { CWD = 1; SSH[SEGN] = (b0 ~ /^(sh|bash|zsh|dash|ksh|fish|ssh|eval|source|[.]|xargs)$/) }
+    }
+  }
+  if (HSN) { HSN = 0; if (SSH[SEGN]) JN5[++NN] = hsbody(w) }
+  else if (p = index(w, "<<<")) { c = substr(w, p + 3); if (c == "") HSN = 1; else if (SSH[SEGN]) JN5[++NN] = hsbody(c) }
   if (++NW == 1) CT = (a == "cat"); else if (a != "-") CT = 0
   if (ST == 0) { if (a !~ /^[A-Za-z_][A-Za-z0-9_]*=/) { GX = (a == "git"); ST = (b == "git") ? 1 : (a == "gh") ? 4 : 9 } }
   else if (ST == 1) {
@@ -409,6 +473,10 @@ function wdone(   w, a, b, c, p, ch, o) {
     if (index(w, "$(") || index(w, "`")) { p = subq(w, 1); o = substr(w, 1, p - 1) "_" }
   } else if (ST == 4) ST = (a == "pr" || a == "issue" || a == "release") ? 5 : 9
   OUT = OUT o
+  # In the N5 view the segment of a shell is kept as it is (its quoted
+  # arguments, as in sh -c, are shell code); any other command has its quoted
+  # text masked.
+  NV = NV (SSH[SEGN] ? o : mword(o))
 }
 # The command text s with its data taken out: the bodies of quoted heredocs
 # that feed a sink, and the values of git commit -m/-F. Bodies that stay code
@@ -416,6 +484,7 @@ function wdone(   w, a, b, c, p, ch, o) {
 # turned to spaces. sb is set when s is the text of a $( inside double quotes.
 function prep(s, sb,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data, bb, t, rest, sk, found, CSD, IHD, IHT) {
   OUT = ""; WB = ""; PQ = ""; ST = 0; SK = 0; VN = 0; NH = 0; AR = 0
+  NV = ""; SEGN++; CWD = 0; WR = 0; SKW = 0; HSN = 0
   FD = 0; GX = 0; NW = 0; CT = 0; SB = sb; CSD = 0; IHD = ""; IHT = 0
   n = length(s); i = 1
   while (i <= n) {
@@ -467,7 +536,7 @@ function prep(s, sb,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data, bb, t, 
       if (e) { OUT = OUT substr(s, i, e - 1); i += e - 1 } else { OUT = OUT substr(s, i); i = n + 1 }
       continue
     }
-    if (ch == " " || ch == "\t") { wdone(); OUT = OUT ch; i++; continue }
+    if (ch == " " || ch == "\t") { wdone(); OUT = OUT ch; NV = NV ch; i++; continue }
     if (ch == "<" && substr(s, i + 1, 2) == "<<") { WB = WB "<<<"; i += 3; continue }
     if (ch == "<" && substr(s, i + 1, 1) == "<" && !AR) {
       wdone(); j = i + 2; dash = 0; d = ""; dq = 0
@@ -485,9 +554,9 @@ function prep(s, sb,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data, bb, t, 
         if (c == "$" && (substr(s, j + 1, 1) == sq || substr(s, j + 1, 1) == "\"")) { j++; continue }
         d = d c; j++
       }
-      OUT = OUT substr(s, i, j - i)
+      OUT = OUT substr(s, i, j - i); NV = NV mword(substr(s, i, j - i))
       if (d != "") {
-        NH++; HD[NH] = d; HT[NH] = dash
+        NH++; HD[NH] = d; HT[NH] = dash; HG[NH] = SEGN
         e = index(substr(s, j), "\n"); rest = e ? substr(s, j, e - 1) : substr(s, j)
         sk = ""
         if (FD && GX && (ST == 2 || ST == 3)) { if (rest ~ /^[ \t]*$/) sk = "a" }
@@ -498,6 +567,7 @@ function prep(s, sb,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data, bb, t, 
     }
     if (ch == "\n") {
       wdone(); ST = 0; SK = 0; VN = 0; FD = 0; NW = 0; CT = 0; SB = 0; OUT = OUT ch; i++
+      NV = NV ch; SEGN++; CWD = 0; WR = 0; SKW = 0; HSN = 0
       for (k = 1; k <= NH; k++) {
         bb = ""; found = 0
         while (i <= n) {
@@ -518,11 +588,14 @@ function prep(s, sb,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data, bb, t, 
           else { t = bb; if (gsub(/"/, "", t) % 2) data = 0; t = bb; if (gsub(sq, "", t) % 2) data = 0 }
         }
         if (!data) { t = bb; gsub(sq, " ", t); gsub(/"/, " ", t); gsub(/,/, " ", t); gsub(/\[/, " ", t); gsub(/\]/, " ", t); EXTRA = EXTRA bb t }
+        # A body a shell reads is shell code for the N5 rules too.
+        if (!data && SSH[HG[k]]) JN5[++NN] = bb
       }
       NH = 0; continue
     }
     if (index(";&|()`", ch)) {
       wdone(); ST = 0; SK = 0; VN = 0; FD = 0; NW = 0; CT = 0; SB = 0
+      NV = NV ch; SEGN++; CWD = 0; WR = 0; SKW = 0; HSN = 0
       if (ch == "(") { if (AR) AR++; else if (substr(s, i + 1, 1) == "(") AR = 1 }
       else if (ch == ")" && AR) AR--
       OUT = OUT ch; i++; continue
@@ -545,10 +618,19 @@ END {
   # GIT_EDITOR, EDITOR, VISUAL, GIT_SEQUENCE_EDITOR, GIT_EXEC_PATH or
   # GIT_CONFIG_*, a core.editor= config, or -e/--edit on a commit or tag.
   EDIT = (raw ~ /(^|[ \t;&|(\n])(GIT_EDITOR|VISUAL|EDITOR|GIT_SEQUENCE_EDITOR|GIT_EXEC_PATH|GIT_CONFIG[0-9A-Za-z_]*)=/ || tolower(raw) ~ /core\.editor[ \t]*=/ || (raw ~ /(commit|tag)/ && raw ~ /(^|[ \t\n])(-e|--edit)([ \t\n]|$)/))
-  EXTRA = ""; NJ = 1; JQ[1] = raw; JS[1] = 0
-  for (h = 1; h <= NJ && h <= 64; h++) { o = prep(JQ[h], JS[h]); scan(o); scan(joinbs(o)) }
-  while (h <= NJ) { scan(JQ[h]); scan(joinbs(JQ[h])); h++ }
+  EXTRA = ""; NJ = 1; JQ[1] = raw; JS[1] = 0; NN = 0; SEGN = 0
+  for (h = 1; h <= NJ && h <= 64; h++) { o = prep(JQ[h], JS[h]); v = NV; scan(o); scan(joinbs(o)); n5(v); n5(joinbs(v)) }
+  while (h <= NJ) { scan(JQ[h]); scan(joinbs(JQ[h])); n5(JQ[h]); n5(joinbs(JQ[h])); h++ }
+  # EXTRA holds bodies and their quote-stripped copies: data or other
+  # interpreters, so only the rm and git rules read it, not N5.
   scan(EXTRA); scan(joinbs(EXTRA))
+  # The N5 jobs (JN5): substitutions inside "...", and the bodies and
+  # here-strings a shell reads. Each is read as shell code in its own N5 view;
+  # the rm and git rules have already seen this text, so EXTRA and JQ are kept.
+  sx = EXTRA; sj = NJ
+  for (q = 1; q <= NN && q <= 64; q++) { prep(JN5[q], 0); v = NV; NJ = sj; n5(v); n5(joinbs(v)) }
+  while (q <= NN) { n5(JN5[q]); n5(joinbs(JN5[q])); q++ }
+  EXTRA = sx
 }') || { echo "BLOCKED: bash-guard per-word check failed to run" >&2; exit 2; }
 if [ -n "$VERDICT" ]; then
   echo "BLOCKED: dangerous command ($VERDICT): $CMD" >&2

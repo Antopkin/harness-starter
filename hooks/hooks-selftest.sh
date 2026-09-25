@@ -455,6 +455,24 @@ check "N5 brace abs-path rm BLOCK"    bash "{/bin/$RMR,$RF,/tmp/x}"             
 check "N5 ANSI-C no escape ALLOW"     bash "echo \$'hello there'"                     allow
 check "N5 brace in arg position ALLOW" bash "echo {a,b}.txt"                          allow
 check "N5 brace group ALLOW"          bash "{ echo hi; }"                            allow
+# Hotfix after N5 round 3: the ANSI-C and brace refusals read shell code only
+# (top level, substitutions, bodies and here-strings a shell reads), not data,
+# the bodies of other interpreters, or the -c/-e strings of python or node.
+check "HF json in cat heredoc ALLOW"  bash "cat > /tmp/a.json <<'EOF'${NL}{\"a\":1,\"b\":2}${NL}EOF" allow
+check "HF python regex body ALLOW"    bash "python3 - <<'PY'${NL}import re${NL}print(re.findall(r\"\\d{1,3}\", \"a12\"))${NL}PY" allow
+check "HF python f-string body ALLOW" bash "python3 - <<'PY'${NL}x, y = 1, 2${NL}print(f\"{x},{y}\")${NL}PY" allow
+check "HF python {1,3} body ALLOW"    bash "python3 - <<'PY'${NL}{1,3}${NL}PY"        allow
+check "HF python3 -c regex ALLOW"     bash "python3 -c 'import re; print(re.findall(r\"\\d{1,3}\", \"a\"))'" allow
+check "HF node -e object ALLOW"       bash "node -e 'console.log([1,2].map(x => ({a:x,b:x})))'" allow
+check "HF printf ANSI-C tab ALLOW"    bash "printf \$'a\\tb\\n'"                      allow
+check "HF mkdir {a,b} ALLOW"          bash "mkdir -p /tmp/src/{a,b}"                  allow
+check "HF brace in bash body BLOCK"   bash "bash <<'X'${NL}{$RMR,$RF,/tmp/x}${NL}X"   block
+check "HF ANSI-C rm top level BLOCK"  bash "\$'\\x72m' $RF /tmp/x"                    block
+check "HF brace in env sh body BLOCK" bash "env -i sh <<'X'${NL}{$RMR,$RF,/tmp/x}${NL}X" block
+check "HF brace bash here-str BLOCK"  bash "bash <<< '{$RMR,$RF,/tmp/x}'"             block
+check "HF brace in \"\$(...)\" BLOCK" bash "echo \"\$({$RMR,$RF,/tmp/x})\""          block
+check "HF brace in sh -c BLOCK"       bash "sh -c 'true; {$RMR,$RF,/tmp/x}'"          block
+check "HF python os.system rm BLOCK"  bash "python3 -c 'import os; os.system(\"$RMR $RF /tmp/x\")'" block
 
 echo "== skip-ci guard =="
 check "skip-ci + code BLOCK"     bash "git -C $REPO_PY commit -m \"x [skip ci]\""    block
