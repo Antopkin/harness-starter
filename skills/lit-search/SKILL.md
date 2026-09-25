@@ -1,140 +1,145 @@
 ---
 name: lit-search
 description: >
-  Поиск и первичный обзор академической литературы. Как искать (arXiv напрямую,
-  веб-поиск, через браузер к платным электронным ресурсам и библиотеке вуза при
-  доступе), как отсеивать нерелевантное, как собрать мини-обзор с проверяемыми
-  цитатами. Антигаллюцинация в основе: не выдумывать источники. Триггеры (RU):
-  «найди литературу», «обзор литературы», «что известно про…», «подбери статьи»,
-  «lit-search». NOT: конспект своей статьи → digest; NOT: оформить ссылку → digest
-  (оформление влито в digest).
+  Search for and first review of academic literature. How to search (arXiv
+  directly, web search, a browser to paid e-resources and a university library when
+  you have access), how to filter out what is irrelevant, how to assemble a mini
+  review with verifiable citations. Anti-hallucination at the core: never invent
+  sources. Triggers: "find literature", "literature review", "what is known
+  about…", "find papers on", "lit-search". NOT: a digest of your own paper, use
+  digest; NOT: formatting a reference, use digest (reference formatting is part of
+  digest).
 ---
 
-# lit-search — поиск и первичный обзор литературы
+# lit-search — searching for and a first review of the literature
 
-Помогает найти релевантные научные работы по теме, отсеять шум и собрать короткий
-обзор с честными, проверяемыми ссылками. Это первый шаг исследования: разведка
-поля, а не написание статьи.
+Helps you find relevant research on a topic, filter out the noise and assemble a
+short review with honest, verifiable references. This is the first step of research:
+scouting the field, not writing the paper.
 
-Дальше по цепочке: подробно законспектировать найденную статью и сразу оформить
-ссылку для списка литературы — `digest` (бывш. pdf-digest; он же вобрал оформление
-ссылок из бывшего `cite`).
+Next in the chain: to write a detailed digest of a paper you found and format its
+reference for the bibliography in the same pass, use `digest` (it covers both the
+digest and the reference formatting).
 
-## Железное правило: не выдумывать источники
+## The iron rule: never invent sources
 
-Галлюцинация источника — худшая ошибка в этой работе. Дороже, чем ничего не найти.
+A hallucinated source is the worst mistake in this work. It costs more than finding
+nothing.
 
-- **Цитируй только то, что реально открыл.** Каждый источник в обзоре — это работа,
-  которую ты нашёл через поиск и подтвердил, что она существует (открыл страницу,
-  увидел аннотацию, забрал идентификатор). Не собирай «правдоподобную» ссылку из
-  головы.
-- **Не достраивай поля.** Если не знаешь года, DOI или авторов — не угадывай.
-  Оставь пропуск и пометь `[проверить]`.
-- **Разделяй факт и пересказ.** «В аннотации сказано X» ≠ «работа доказывает X».
-  В обзоре пиши то, что реально прочитал, а не то, что домыслил по названию.
-- **Каждому источнику — идентификатор.** DOI, arXiv ID или прямой URL, по которому
-  работу можно снова найти. Нет идентификатора — источник не подтверждён.
-- **Ноль результатов — валидный ответ.** Если по теме ничего надёжного не нашлось,
-  так и скажи. Не заполняй пустоту выдумкой.
+- **Cite only what you actually opened.** Every source in the review is a work you
+  found through search and confirmed to exist (you opened the page, saw the abstract,
+  took the identifier). Do not assemble a "plausible" reference from memory.
+- **Do not fill in fields.** If you do not know the year, DOI or authors, do not
+  guess. Leave a gap and mark it `[verify]`.
+- **Separate fact from paraphrase.** "The abstract says X" ≠ "the work proves X". In
+  the review write what you actually read, not what you inferred from the title.
+- **Every source gets an identifier.** A DOI, an arXiv ID or a direct URL by which
+  the work can be found again. No identifier means the source is not confirmed.
+- **Zero results is a valid answer.** If nothing reliable turned up on the topic, say
+  so. Do not fill the void with invention.
 
-## Рабочий цикл
+## The working cycle
 
-1. **Уточни запрос.** Сформулируй тему как исследовательский вопрос: предмет +
-   аспект + (опц.) популяция/период/метод. Из вопроса выпиши 3–6 ключевых терминов
-   и их синонимов — на русском и английском (большинство науки на английском).
-   Неоднозначная тема — покажи 2 трактовки и спроси, какая нужна.
-2. **Ищи** (см. «Где искать»). Начни с 2–3 площадок, комбинируй термины.
-3. **Отсеивай** по названию и аннотации (см. «Как отсеивать»). Держи воронку узкой.
-4. **Читай отобранное** послойно: аннотация → введение и выводы → при нужде глубже.
-   Глубокий конспект отдельной статьи — это уже `digest`.
-5. **Собери мини-обзор** по шаблону ниже, с цитатами и идентификаторами.
+1. **Refine the query.** Phrase the topic as a research question: subject + aspect +
+   (optionally) population/period/method. From the question, write down 3–6 key
+   terms and their synonyms, in the user's language and in English (most research is
+   published in English). If the topic is ambiguous, show 2 readings and ask which is
+   meant.
+2. **Search** (see "Where to search"). Start with 2–3 venues, combine the terms.
+3. **Filter** by title and abstract (see "How to filter"). Keep the funnel narrow.
+4. **Read the shortlist** in layers: abstract → introduction and conclusions → deeper
+   if needed. A deep digest of a single paper is already `digest`.
+5. **Assemble the mini review** using the template below, with citations and
+   identifiers.
 
-## Где искать
+## Where to search
 
-Начинай с бесплатного и открытого, к платному переходи при наличии доступа.
+Start with what is free and open; move to paid resources when you have access.
 
-**Открытый доступ (сначала сюда):**
-- **arXiv** (`arxiv.org`) — препринты по физике, CS, математике, кол-ичественным
-  областям. Ищи прямо на сайте или через веб-поиск: `тема site:arxiv.org`. У каждой
-  работы есть arXiv ID (напр. `2401.01234`) — забирай его.
-- **Веб-поиск по научным площадкам** — используй доступный тебе инструмент
-  веб-поиска. Полезные операторы: `filetype:pdf`, `site:`, кавычки для точной
-  фразы. Хорошие цели: **Semantic Scholar**, **Google Scholar**, **OpenAlex**,
-  **PubMed** (медицина/биология), **DOAJ** (открытые журналы), **SSRN**
-  (экономика/право/соцнауки), **CORE**, **PhilPapers** (философия).
-- **Прямое чтение страницы** — когда есть URL работы или списка результатов,
-  открой его инструментом чтения веб-страниц и вытащи аннотацию и метаданные.
+**Open access (start here):**
+- **arXiv** (`arxiv.org`): preprints in physics, CS, mathematics and quantitative
+  fields. Search on the site directly or through web search: `topic site:arxiv.org`.
+  Every work has an arXiv ID (e.g. `2401.01234`); take it.
+- **Web search across research venues**: use whatever web search tool you have.
+  Useful operators: `filetype:pdf`, `site:`, quotes for an exact phrase. Good
+  targets: **Semantic Scholar**, **Google Scholar**, **OpenAlex**, **PubMed**
+  (medicine/biology), **DOAJ** (open journals), **SSRN** (economics/law/social
+  sciences), **CORE**, **PhilPapers** (philosophy).
+- **Reading a page directly**: when you have the URL of a work or of a results list,
+  open it with a web page reading tool and extract the abstract and metadata.
 
-**Платные ресурсы и библиотека вуза (при доступе):**
-- Через **браузер** (инструмент управления браузером, если подключён) заходи в
-  подписные базы под своим логином вуза: **Scopus**, **Web of Science**,
-  **JSTOR**, **ScienceDirect**, **Springer**, **eLibrary/РИНЦ**, ЭБС вашей
-  библиотеки. Логинься сам — не проси меня вводить чужие пароли.
-- Часто у вуза есть **прокси доступа** (EZproxy) или единый вход — заходи через
-  портал библиотеки, тогда полные тексты открываются.
-- Нет полного текста за пейволлом — проверь открытую версию: **Unpaywall**,
-  препринт на arXiv/SSRN, PDF на сайте автора или репозитории вуза.
+**Paid resources and a university library (when you have access):**
+- Through the **browser** (a browser control tool, if connected), go into subscription
+  databases under your own university login: **Scopus**, **Web of Science**,
+  **JSTOR**, **ScienceDirect**, **Springer**, **eLibrary/RSCI**, your library's
+  e-book systems. Log in yourself; do not ask me to enter other people's passwords.
+- Universities often have an **access proxy** (EZproxy) or single sign-on; go in
+  through the library portal and the full texts open.
+- No full text behind the paywall? Check for an open version: **Unpaywall**, a
+  preprint on arXiv/SSRN, a PDF on the author's site or in a university repository.
 
-**Если у тебя подключены специальные MCP-инструменты** (напр. `paper-search`,
-`jina`, `exa`, `zotero`) — используй их как ускорители поиска и извлечения
-метаданных. Но не полагайся на них: базовый цикл работает и на обычном
-веб-поиске + чтении страниц.
+**If you have special MCP tools connected** (e.g. `paper-search`, `jina`, `exa`,
+`zotero`), use them to speed up search and metadata extraction. But do not depend on
+them: the basic cycle works on plain web search + page reading.
 
-## Как отсеивать
+## How to filter
 
-Быстрая воронка «название → аннотация → беглый просмотр». На каждом шаге отбрасывай.
+A fast funnel: "title → abstract → a quick skim". Discard at every step.
 
-Оставляй, если:
-- прямо отвечает на твой вопрос (а не смежная тема);
-- проверяемый источник: есть журнал/конференция/репозиторий и идентификатор;
-- (обычно) свежее, если поле быстро движется; для фундамента — ключевые старые
-  работы тоже нужны;
-- хорошо цитируется ИЛИ это явно свежий/нишевый результат (мало цитат — не всегда
-  минус для новой работы).
+Keep a work if:
+- it answers your question directly (not a neighbouring topic);
+- it is a verifiable source: there is a journal/conference/repository and an
+  identifier;
+- it is (usually) recent if the field moves fast; for the foundations, the key older
+  works are needed too;
+- it is well cited OR is clearly a recent or niche result (few citations are not
+  always a minus for a new work).
 
-Красные флаги — насторожись:
-- нет автора, аффилиации, года или журнала; «журнал» похож на хищнический;
-- громкие заявления без данных и метода; результат нельзя воспроизвести;
-- источник не находится нигде, кроме одной подозрительной страницы;
-- ты не смог открыть работу и подтвердить её существование → **не включай**.
+Red flags, be wary:
+- no author, affiliation, year or journal; the "journal" looks predatory;
+- loud claims without data or method; the result cannot be reproduced;
+- the source cannot be found anywhere except one suspicious page;
+- you could not open the work and confirm it exists → **do not include it**.
 
-## Формат мини-обзора
+## Mini review format
 
 ```
-# Мини-обзор литературы: <тема>
+# Mini literature review: <topic>
 
-**Вопрос:** <исследовательский вопрос одним предложением>
-**Запросы:** <какие термины/площадки использованы>
-**Дата поиска:** <ГГГГ-ММ-ДД>  ·  **Площадки:** <arXiv, Scholar, …>
+**Question:** <the research question in one sentence>
+**Queries:** <which terms/venues were used>
+**Search date:** <YYYY-MM-DD>  ·  **Venues:** <arXiv, Scholar, …>
 
-## Что говорит поле (синтез)
-2–4 абзаца: основные линии работ, где согласие, где спор, где пробел.
-Каждое утверждение подкрепляй ссылкой [n]. Не обобщай сверх прочитанного.
+## What the field says (synthesis)
+2–4 paragraphs: the main lines of work, where there is agreement, where there is
+dispute, where there is a gap. Back every claim with a reference [n]. Do not
+generalise beyond what you read.
 
-## Ключевые источники
-1. Авторы (Год). Название. Журнал/конференция/репозиторий.
-   - Идентификатор: DOI / arXiv ID / URL
-   - Суть в 1–2 строках: что делают, главный вывод (по аннотации/тексту)
-   - Релевантность: чем полезно твоему вопросу
+## Key sources
+1. Authors (Year). Title. Journal/conference/repository.
+   - Identifier: DOI / arXiv ID / URL
+   - Gist in 1–2 lines: what they do, the main finding (from the abstract/text)
+   - Relevance: how it helps your question
 2. …
 
-## Пробелы и следующие шаги
-- Чего в найденном не хватает; какие вопросы открыты.
-- Что стоит прочитать глубоко и оформить в список литературы (→ digest).
+## Gaps and next steps
+- What is missing from what you found; which questions are open.
+- What is worth reading in depth and formatting for the bibliography (→ digest).
 
-## Не подтверждено / под вопросом
-- Источники, которые не удалось открыть или проверить. Явно, без маскировки.
+## Not confirmed / in doubt
+- Sources you could not open or verify. Stated openly, not disguised.
 ```
 
-## Что фиксировать по каждому источнику
+## What to record for every source
 
-Чтобы позже собрать корректную ссылку (`digest`) без повторного поиска, для каждой
-работы сразу сохраняй: **авторов** (полностью, в порядке из статьи), **год**,
-**точное название**, **журнал/конференцию/издателя**, **том/выпуск/страницы**,
-**DOI** (или arXiv ID), **URL**, **дату обращения** (для онлайн-ресурсов). Чего
-нет — помечай `[проверить]`, не выдумывай.
+So that you can later assemble a correct reference (`digest`) without searching
+again, save for every work right away: the **authors** (in full, in the order given
+in the paper), the **year**, the **exact title**, the **journal/conference/publisher**,
+the **volume/issue/pages**, the **DOI** (or arXiv ID), the **URL**, and the **access
+date** (for online resources). Mark whatever is missing `[verify]`; do not invent it.
 
-## Отвечай по-русски
+## Reply in the language of the user's request
 
-Обзор и пояснения — на русском. Названия работ, имена авторов и технические
-идентификаторы (DOI, arXiv ID) оставляй в оригинале.
+Write the review and the explanations in the language of the user's request. Keep the
+titles of works, author names and technical identifiers (DOI, arXiv ID) in the
+original.

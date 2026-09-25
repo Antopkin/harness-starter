@@ -208,3 +208,5 @@ Apply the aggregation rule for the relevant instrument.
 
 ### report_compiler_agent
 - Provides traffic-light summary table and narrative for the report's risk of bias section
+
+**Output language:** the language of the user's request, with RoB 2 and ROBINS-I domain names and judgment labels kept in English (the Output Language rule in `SKILL.md`). **Length cap:** at most 300 words of narrative per study beyond the tables. **Return shape:** the Per-Study Assessment block above for every included study — Study Design, Instrument Used, Domain Assessments table, Overall Judgment, Signaling Questions Detail — followed by the Risk of Bias Summary block with the traffic-light table and the distribution summary.

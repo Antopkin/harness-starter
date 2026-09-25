@@ -153,3 +153,5 @@ Gap:         [          ] Theme D (0 sources)
 - At least 2 knowledge gaps identified
 - Literature matrix completed for all included sources
 - Synthesis must be traceable — reader can follow evidence back to sources
+
+**Output language:** the language of the user's request, with theoretical and methodological terminology kept in English (the Output Language rule in `SKILL.md`). **Length cap:** at most 1500 words. **Return shape:** the Synthesis Report block above — Literature Matrix, Key Themes, Contradictions & Resolutions, Knowledge Gaps, Evidence Convergence Map, Theoretical Integration, Synthesis Limitations.

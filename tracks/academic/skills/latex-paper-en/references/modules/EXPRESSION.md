@@ -21,5 +21,5 @@ Output format:
 % Rationale: Replace weak verbs with academic alternatives
 ```
 
-Style guide: [STYLE_GUIDE.md](../references/STYLE_GUIDE.md)
+Style guide: [STYLE_GUIDE.md](../STYLE_GUIDE.md)
 

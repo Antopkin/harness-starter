@@ -531,6 +531,18 @@ def render_json_report(result: AuditResult) -> str:
             for c in result.checklist
         ],
     }
+
+    # ScholarEval is optional: the key is present only when the assessment ran.
+    se = result.scholar_eval_result
+    if se is not None:
+        data["scholar_eval"] = {
+            "script_scores": se.script_scores,
+            "llm_scores": se.llm_scores,
+            "merged_scores": se.merged_scores,
+            "readiness_label": se.readiness_label,
+            "evidence": se.evidence,
+        }
+
     return json.dumps(data, indent=2, ensure_ascii=False)
 
 

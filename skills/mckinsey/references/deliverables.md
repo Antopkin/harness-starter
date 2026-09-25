@@ -1,117 +1,117 @@
 # Deliverable Formats
 
-Три формата черновиков. Выбирается по запросу пользователя; если не указан - спросить одной строкой.
+Three draft formats. Chosen from the user's request; if it is not specified, ask in one line.
 
 ---
 
 ## 1. Pyramid Executive Summary
 
-**Когда:** короткий формат на 1 экран / 1 страницу (250-500 слов). Default для слова «executive summary», «короткий вывод», «summary», «суть».
+**When:** a short format for 1 screen / 1 page (250-500 words). The default for the words "executive summary", "short conclusion", "summary", "the gist".
 
-### Структура
+### Structure
 
 ```
-[SCQA opening — 2-3 параграфа unlabeled prose]
+[SCQA opening — 2-3 paragraphs of unlabeled prose]
 
-Situation:    Один факт о текущем состоянии, с которым аудитория согласна
-Complication: Что изменилось / почему статус-кво нежизнеспособен
-Question:     [не озвучивается, но должен возникнуть в голове читателя]
-Answer:       Прямой ответ = governing thought (это последнее предложение opening)
+Situation:    One fact about the current state that the audience agrees with
+Complication: What has changed / why the status quo is not viable
+Question:     [not spoken aloud, but it must arise in the reader's head]
+Answer:       The direct answer = governing thought (the last sentence of the opening)
 
-[Governing thought повторяется как заголовок / явный тезис]
+[The governing thought is repeated as a heading / explicit thesis]
 
-[3 supporting pillars, MECE — параграф или короткий subsection на каждый]
-  Pillar 1: [действие/факт] - [evidence: данные, источник]
-  Pillar 2: [действие/факт] - [evidence]
-  Pillar 3: [действие/факт] - [evidence]
+[3 supporting pillars, MECE — a paragraph or a short subsection for each]
+  Pillar 1: [action/fact] - [evidence: data, source]
+  Pillar 2: [action/fact] - [evidence]
+  Pillar 3: [action/fact] - [evidence]
 
-[So-What conclusion: что это значит для решения / следующих шагов]
+[So-What conclusion: what this means for the decision / next steps]
 ```
 
-### Правила
+### Rules
 
-- **Answer first**: governing thought - в первом-втором абзаце, не в конце
-- **3, не 5**: 3 pillars запоминаются, 5 - нет; если получается 5+, переструктурировать на 2 уровня (3 super-pillars × под-pillars)
-- **MECE pillars**: каждый pillar отвечает на свой аспект «почему answer верен»; если два pillar'а пересекаются - сливать
-- **Evidence per pillar**: каждый pillar подкреплён данными, не общими словами
-- **So-What**: финальный параграф отвечает «что с этим делать» / «что это меняет»
-- **Длина**: 250-500 слов; если выходит больше - вырезать, не оставлять
-- **Без bullet points** в основном тексте (только если evidence - реально список); связные параграфы лучше для executive чтения
+- **Answer first**: the governing thought goes in the first or second paragraph, not at the end
+- **3, not 5**: 3 pillars are remembered, 5 are not; if you end up with 5+, restructure into 2 levels (3 super-pillars × sub-pillars)
+- **MECE pillars**: each pillar answers its own aspect of "why the answer is right"; if two pillars overlap, merge them
+- **Evidence per pillar**: each pillar is backed by data, not by general words
+- **So-What**: the final paragraph answers "what to do with this" / "what this changes"
+- **Length**: 250-500 words; if it comes out longer, cut, do not keep
+- **No bullet points** in the main text (only if the evidence really is a list); connected paragraphs read better for executives
 
-### Пример каркаса (заполнить)
+### Example skeleton (fill in)
 
 ```markdown
-[Situation: «Компания C достигла $50M ARR, расти продолжает, но margin сжимается с 28% до 19% за два года.»]
+[Situation: "Company C has reached $50M ARR and keeps growing, but margin has shrunk from 28% to 19% in two years."]
 
-[Complication: «Текущая структура издержек привязана к фиксированным контрактам с поставщиками, заключённым на пиковом росте; эти контракты истекают через 6-12 месяцев.»]
+[Complication: "The current cost structure is tied to fixed supplier contracts signed at peak growth; these contracts expire in 6-12 months."]
 
-[Answer/governing thought: «Перезаключение трёх ключевых контрактов с переходом на usage-based модель восстановит margin до 26-28% при сохранении операционной устойчивости.»]
+[Answer/governing thought: "Renegotiating three key contracts and moving them to a usage-based model will restore margin to 26-28% while keeping operations stable."]
 
-## Почему это сработает
+## Why this will work
 
-**Контракты дают 70% переменной экономии.** Контракты с X, Y, Z - 18% от COGS; перевод на usage-based ожидаемо сократит их на 25-35% по бенчмарку отрасли [SOURCE].
+**The contracts account for 70% of the variable savings.** The contracts with X, Y, Z are 18% of COGS; moving them to usage-based is expected to cut them by 25-35% on the industry benchmark [SOURCE].
 
-**Операционные риски управляемы.** Альтернативные поставщики готовы; прогнозирование объёма для usage-pricing - на уровне ±15% точности по последним 4 кварталам.
+**The operational risks are manageable.** Alternative suppliers are ready; volume forecasting for usage pricing is accurate to ±15% over the last 4 quarters.
 
-**Окно открыто только до Q3.** Контракты Y и Z истекают в июле-сентябре; начать переговоры стоит за 90 дней до renewal.
+**The window is open only until Q3.** Contracts Y and Z expire in July-September; negotiations should start 90 days before renewal.
 
-**Что дальше:** определить переговорную команду, сформировать BATNA по каждому из трёх контрактов, к 1 июня выйти на первую встречу с X.
+**What next:** name the negotiating team, build a BATNA for each of the three contracts, and hold the first meeting with X by 1 June.
 ```
 
 ---
 
-## 2. Full Report по ветке Issue Tree
+## 2. Full Report on an Issue Tree branch
 
-**Когда:** «полный отчёт», «развёрнуто», «разверни эту ветку», «детально по [ветке X]».
+**When:** "full report", "in detail", "expand this branch", "detailed on [branch X]".
 
-### Структура
+### Structure
 
 ```
-1. Executive summary (короткий pyramid - см. формат выше, 200-300 слов)
+1. Executive summary (a short pyramid - see the format above, 200-300 words)
 
-2. Контекст и постановка
-   - Где эта ветка в общем дереве (root question + место ветки)
-   - Что в scope, что вне scope
+2. Context and problem statement
+   - Where this branch sits in the overall tree (root question + the branch's place)
+   - What is in scope, what is out of scope
 
-3. Анализ
-   - Подвопросы ветки → ответ на каждый
+3. Analysis
+   - The branch's sub-questions → an answer to each
    - Evidence per claim ([SOURCE] / [INFERENCE] / [ASSUMPTION])
-   - Количественные оценки где применимо
+   - Quantitative estimates where applicable
 
 4. Findings + implications
-   - 3-5 ключевых findings
-   - Каждое - через So-What test (Finding → So What → Therefore)
+   - 3-5 key findings
+   - Each one through the So-What test (Finding → So What → Therefore)
 
 5. Recommendations
-   - Главная рекомендация (one sentence)
-   - Поддерживающие действия
-   - Premortem: что может пойти не так через 6 мес
+   - The main recommendation (one sentence)
+   - Supporting actions
+   - Premortem: what could go wrong in 6 months
 
 6. Risks & sensitivity
-   - Что предполагаем; что если предположения неверны
-   - Ключевые downside scenarios
+   - What we assume; what if the assumptions are wrong
+   - Key downside scenarios
 
 7. Next steps
-   - Конкретные ближайшие действия (что, кто, к когда)
+   - Concrete immediate actions (what, who, by when)
 ```
 
-### Правила
+### Rules
 
-- 80%+ проза, не bullet points (bullets - только в Next Steps и в evidence list)
-- Каждая секция начинается с topic sentence, отвечающего на «что эта секция даёт»
-- Цитаты источников - inline `[SOURCE: ...]` или сносками `[1][2]` с приложением
-- Длина: ~1500-3500 слов под одну ветку; если меньше - не делать full report, делать pyramid
+- 80%+ prose, not bullet points (bullets only in Next Steps and in the evidence list)
+- Every section starts with a topic sentence answering "what this section gives you"
+- Source citations inline `[SOURCE: ...]` or as footnotes `[1][2]` with an appendix
+- Length: ~1500-3500 words per branch; if less, do not make a full report, make a pyramid
 
 ---
 
 ## 3. Slide Outline (McKinsey deck style)
 
-**Когда:** «slides», «презентация», «outline для deck», «набросок слайдов».
+**When:** "slides", "presentation", "outline for a deck", "slide sketch".
 
-### Структура
+### Structure
 
 ```
-Slide 1: [Action title - assertion, не topic]
+Slide 1: [Action title - assertion, not topic]
   Body: Evidence/visual that proves the title
 
 Slide 2: [Action title]
@@ -123,42 +123,42 @@ Slide N: [Action title]
   Body: ...
 ```
 
-### Правила
+### Rules
 
-- **Action titles, не topic titles.** Action title - assertion («Перевод на usage-based pricing восстанавливает margin до 26% за 12 месяцев»). Topic title - категория («Pricing analysis»). Topic titles запрещены.
-- **Body proves the title.** Содержимое слайда (chart, table, bullets, quote) должно доказывать заголовок. Если не доказывает - менять одно из двух.
-- **Vertical logic** (внутри одного слайда): title + body согласованы; body не вводит новых assertions, которые в title не отражены.
-- **Horizontal logic** (между слайдами): action titles, прочитанные подряд 1→N, складываются в связный нарратив. Это **Read-Through Test**.
+- **Action titles, not topic titles.** An action title is an assertion ("Moving to usage-based pricing restores margin to 26% within 12 months"). A topic title is a category ("Pricing analysis"). Topic titles are forbidden.
+- **Body proves the title.** The slide content (chart, table, bullets, quote) must prove the title. If it does not, change one of the two.
+- **Vertical logic** (within one slide): title and body agree; the body introduces no new assertions that the title does not reflect.
+- **Horizontal logic** (across slides): the action titles, read in a row 1→N, add up to a coherent narrative. This is the **Read-Through Test**.
 
-### Read-Through Test (обязательный self-check)
+### Read-Through Test (mandatory self-check)
 
-После генерации outline - выписать только заголовки 1→N подряд. Прочитать вслух / про себя:
+After generating the outline, write out only the titles 1→N in a row. Read them aloud or to yourself:
 
-- Складываются ли в убедительный нарратив? (Situation → Complication → Question → Answer → 3 reasons → next steps)
-- Если читать только их - аудитория поймёт основной message?
-- Есть ли логический разрыв между slide N и N+1?
+- Do they add up to a convincing narrative? (Situation → Complication → Question → Answer → 3 reasons → next steps)
+- If the audience reads only these, will it get the main message?
+- Is there a logical gap between slide N and N+1?
 
-Если хоть одно «нет» - переписать заголовки. Тело слайдов трогать не нужно (если они доказывают заголовки).
+If even one answer is "no", rewrite the titles. The slide bodies need no changes (as long as they prove the titles).
 
-### Типичная структура deck (10-15 слайдов)
+### Typical deck structure (10-15 slides)
 
 ```
-1. Title + ключевая мысль (governing thought)
-2. Контекст / situation (1-2 слайда)
-3. Complication / почему действовать сейчас
+1. Title + key thought (governing thought)
+2. Context / situation (1-2 slides)
+3. Complication / why act now
 4. Question / decision needed
-5. Answer / recommendation (одно предложение)
-6-10. Pillars (3 главных + supporting)
+5. Answer / recommendation (one sentence)
+6-10. Pillars (3 main + supporting)
 11. Risks / sensitivity
 12. Implementation roadmap
-13. Next steps / decision needed (что просим у аудитории)
+13. Next steps / decision needed (what we ask of the audience)
 ```
 
 ---
 
-## Общие правила для всех форматов
+## General rules for all formats
 
-- **Specificity Filter**: каждое утверждение должно быть фальсифицируемым. «Рынок растёт» → «Рынок растёт на 12% YoY [SOURCE]».
-- **Source / Inference / Assumption marking**: для нетривиальных claims.
-- **Premortem перед рекомендациями** (встроено в текст или отдельной микро-секцией): «если это провалится через 6 мес - наиболее вероятная причина: ...».
-- **Self-critique в том же ответе**: после генерации - 2-4 строки «где этот draft слабее всего; что критик оспорит».
+- **Specificity Filter**: every statement must be falsifiable. "The market is growing" → "The market is growing 12% YoY [SOURCE]".
+- **Source / Inference / Assumption marking**: for non-trivial claims.
+- **Premortem before recommendations** (built into the text or as a separate micro-section): "if this fails in 6 months, the most likely cause is: ...".
+- **Self-critique in the same answer**: after generating, 2-4 lines on "where this draft is weakest; what a critic will challenge".

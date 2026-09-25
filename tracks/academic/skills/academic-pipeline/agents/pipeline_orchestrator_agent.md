@@ -236,7 +236,7 @@ When a sub-skill stage fails or produces unacceptable output:
 
 ### 4. Transition Management
 
-**Before each transition, verify the output artifact conforms to its schema in `shared/handoff_schemas.md`.** If schema validation fails, request the producing agent to re-generate the artifact before proceeding.
+**Before each transition, verify the output artifact conforms to its schema in `../../shared/handoff_schemas.md`.** If schema validation fails, request the producing agent to re-generate the artifact before proceeding.
 
 **Schema validation step:**
 ```

@@ -189,7 +189,7 @@ Counter-argument: This proposal implicitly assumes that "public universities hav
 1. Public universities themselves face enrollment pressure; merging only adds burden
 2. Private universities' campuses are often leased or in remote locations, unattractive to public universities
 3. If private university faculty cannot pass public university faculty evaluation standards, mass dismissals would follow
-4. Japan's national university corporation merger cases (e.g., Hokkaido United University Institution) show that post-merger integration costs often exceed expected benefits
+4. Japan's national university corporation merger cases (e.g., a regional merger of several national universities) show that post-merger integration costs often exceed expected benefits
 
 A completely opposite argument: rather than pushing public-private mergers, let market mechanisms naturally eliminate schools, with the government's role limited to protecting student rights (such as credit transfer, scholarship transfer) rather than maintaining excessive institutional survival.
 

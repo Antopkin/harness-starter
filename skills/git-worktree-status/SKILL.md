@@ -5,24 +5,35 @@ description: Read-only worktree/branch inventory with a CI status column; comple
 
 # git-worktree-status — read-only worktree inventory + CI
 
-A **strictly read-only** survey of every worktree and branch. It mirrors the
-inventory commands `/git-clean-gone` already runs, then adds **one** new column — CI —
+A **strictly read-only** survey of every worktree and branch. It runs the same
+inventory commands as `/git-clean-gone`, then adds **one** new column — CI —
 sourced verbatim from the foundation. It does **not** delete, prune, or check out
 anything; deletion is `/git-clean-gone`'s job. This skill only reports.
 
-## Inventory (mirror /clean_gone — do not reinvent)
+Column headers, state values and the closing line are printed exactly as written
+below; any other prose follows the language of the user's request.
 
-Run the same read-only commands `/clean_gone` uses
-(`~/.claude/plugins/cache/claude-code-plugins/commit-commands/1.0.0/commands/clean_gone.md`):
+## Inventory (pure git, read-only)
+
+Run these two read-only commands:
 
 ```bash
 git worktree list --porcelain   # worktree paths + the branch checked out in each
 git branch -vv                  # ahead/behind, [gone] markers, '+' = has worktree
 ```
 
-Parse exactly as clean_gone does:
-- `[gone]` marker → upstream deleted on remote (the `grep '\[gone\]'` signal).
-- ahead/behind → the `[ahead N, behind M]` segment from `git branch -vv`.
+Parse them as follows:
+- `git worktree list --porcelain` prints one block per worktree: a `worktree <path>`
+  line, a `HEAD <sha>` line, then `branch refs/heads/<name>` (or `detached`). Strip
+  `refs/heads/` to get the branch name.
+- In `git branch -vv`, the leading `*` marks the current branch and `+` a branch
+  checked out in another worktree; the next field is the branch name, then the SHA,
+  then the optional upstream segment in square brackets.
+- `[gone]` → the upstream segment ends in `: gone]` (for example
+  `[origin/feat-x: gone]`): the upstream was deleted on the remote.
+- ahead/behind → the `ahead N` and `behind M` parts of the same segment (for example
+  `[origin/feat-x: ahead 2, behind 1]`); no counts means in sync, no segment means
+  no upstream.
 
 Then, per worktree path, check the working tree (read-only, no flags that write):
 
@@ -32,7 +43,7 @@ git -C "<worktree-path>" status --porcelain   # non-empty → dirty
 
 ## CI column (foundation, by reference — do not re-implement)
 
-Read `~/.claude/skills/shared/git-host.md` in full. For each
+Read [../shared/git-host.md](../shared/git-host.md) in full. For each
 branch/worktree:
 
 1. Run the **§2–§3 detection block** for that branch (it is idempotent and pure —
@@ -66,10 +77,12 @@ One row per worktree:
 Count branches carrying `[gone]` and finish with:
 
 ```
-N веток [gone] — /git-clean-gone для удаления
+N [gone] branches — /git-clean-gone to delete them
 ```
 
 If `N = 0`, say there are no `[gone]` branches. **Never** delete, prune, or check
 out — surveying is all this skill does.
+
+**Output language:** the language of the user's request, with the labels above kept as written. **Length cap:** at most 150 words outside the table rows. **Return shape:** the five-column table (path, branch, ahead/behind or `[gone]`, dirty?, CI) plus the single closing `[gone]`-count line, and nothing else — no command transcript, no per-worktree commentary; this governs every phase of the skill.
 
 _End of skill._

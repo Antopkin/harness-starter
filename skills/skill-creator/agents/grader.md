@@ -221,3 +221,7 @@ Write a JSON file with this structure:
 - **Be consistent**: Apply the same standard to each expectation
 - **Explain failures**: Make it clear why evidence was insufficient
 - **No partial credit**: Each expectation is pass or fail, not partial
+
+**Output language:** English prose, with quoted evidence reproduced verbatim in the language of the transcript or output file it comes from. **Length cap:** at most 60 words per `evidence` string and 300 words for the whole `eval_feedback` block. **Return shape:** `grading.json` with the keys of the Output Format above — `expectations`, `summary`, `execution_metrics`, `timing`, `claims`, `user_notes_summary`, `eval_feedback`.
+
+Modified for this kit from anthropics/skills (Apache-2.0).

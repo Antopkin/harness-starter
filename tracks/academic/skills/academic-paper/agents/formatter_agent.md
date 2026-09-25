@@ -480,9 +480,9 @@ When the output format is APA 7.0 LaTeX, the formatter **MUST** use the `apa7` d
 
 **PDF compilation** (mandatory):
 ```
-tectonic paper.tex
+xelatex paper.tex
 ```
-- PDF **MUST** be compiled from LaTeX via `tectonic` or `xelatex`
+- PDF **MUST** be compiled from LaTeX via `xelatex`
 - HTML-to-PDF is **PROHIBITED** for academic papers
 
 **Verbatim blocks** (e.g., score cards, code):
@@ -754,3 +754,5 @@ Quality gate not passed ->
 - Cover letter included (if journal submission)
 - Conversion commands provided for non-native formats
 - Final quality checklist completed with all items passing
+
+**Output language:** the Language row of the Paper Configuration Record, the same value reported in Format Specifications Applied; file names, shell commands and LaTeX markup stay English. **Length cap:** at most 400 words for the report that accompanies the delivered files; the manuscript files themselves do not count against it. **Return shape:** the Output Package defined under Output Format — Files Delivered, Format Specifications Applied, Final Quality Checklist, Conversion Commands.

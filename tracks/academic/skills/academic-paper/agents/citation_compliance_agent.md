@@ -407,3 +407,5 @@ Quality gate not passed ->
 - Self-citation ratio below 15% (or flagged)
 - Auto-corrections documented in audit log
 - Ambiguous cases flagged (not silently resolved)
+
+**Output language:** the Body Language of the Paper Configuration Record; every citation string keeps the language and script of its own source. **Length cap:** at most 600 words of prose outside the tables and the Corrected Reference List. **Return shape:** the Citation Audit Report defined under Output Format — Summary, Corrections Made, Items Flagged for Review, Corrected Reference List.

@@ -1,120 +1,125 @@
-# Режимы отказа при заполнении формы
+# Failure modes when filling a form
 
-agent-browser из коробки эти ситуации НЕ чинит сам — ниже как их распознать и что
-делать. Общий принцип: не двигаться дальше по неподтверждённому состоянию и не
-угадывать там, где цена ошибки — испорченная или дублированная отправка.
+agent-browser does NOT fix these situations by itself out of the box; below is how
+to recognise them and what to do. The general principle: do not move on from an
+unconfirmed state, and do not guess where the cost of a mistake is a corrupted or
+duplicated submission.
 
-## 1. Протухший реф `@eN`
+## 1. A stale `@eN` ref
 
-**Симптом:** `Ref not found` / `Element not found: @eN`, или действие уходит не в то
-поле.
+**Symptom:** `Ref not found` / `Element not found: @eN`, or the action goes into the
+wrong field.
 
-**Причина:** рефы назначаются заново на каждом `snapshot` и протухают в момент
-любого изменения страницы — ввод, клик с навигацией, submit, динамический
-ре-рендер, открытие диалога, смена вкладки.
+**Cause:** refs are reassigned on every `snapshot` and go stale the moment the page
+changes in any way: input, a click with navigation, submit, a dynamic re-render, a
+dialog opening, a tab switch.
 
-**Что делать:** пере-`snapshot -i` перед каждым шагом и работай со свежими рефами.
-Устойчивее к протуханию — `find role/label ... <action>`: он пере-резолвит элемент
-на каждом вызове, поэтому не держит устаревший реф.
+**What to do:** re-run `snapshot -i` before every step and work with fresh refs.
+`find role/label ... <action>` is more robust against staleness: it re-resolves the
+element on every call, so it never holds an outdated ref.
 
-## 2. Поле в DOM есть, а в snapshot нет
+## 2. The field is in the DOM but not in the snapshot
 
-**Симптом:** знаешь, что поле существует, но `snapshot -i` его не показывает.
+**Symptom:** you know the field exists, but `snapshot -i` does not show it.
 
-**Причина:** поле за пределами вьюпорта или ещё не отрендерено.
+**Cause:** the field is outside the viewport or not rendered yet.
 
-**Что делать:** `scroll down <px>` и пере-`snapshot -i`; либо `wait --text "<якорь>"`
-/ `wait @eN` до появления, затем snapshot.
+**What to do:** `scroll down <px>` and re-run `snapshot -i`; or `wait --text "<anchor>"`
+/ `wait @eN` until it appears, then snapshot.
 
-## 3. Значение «не прилипло» в состоянии фреймворка (редкий случай)
+## 3. The value did not "stick" in the framework state (a rare case)
 
-**Норма, а не исключение:** `fill` под капотом (Playwright) уже диспатчит
-реалистичное событие `input`. На живом тесте (Chrome Beta + CDP + agent-browser
-0.26.0, форма с полем, чьё JS-состояние обновляется только по `input`) простого
-`fill` хватило: обновились и `.value`, и внутренняя переменная состояния, и видимое
-зеркало. **По умолчанию `fill` триггерит onChange корректно** — не гони eval
-заранее и не пугай им.
+**The norm, not the exception:** under the hood `fill` (Playwright) already
+dispatches a realistic `input` event. In a live test (Chrome + CDP + agent-browser
+0.26.0, a form with a field whose JS state is updated only on `input`), a plain
+`fill` was enough: `.value`, the internal state variable and the visible mirror were
+all updated. **By default `fill` triggers onChange correctly**; do not reach for eval
+in advance and do not scare anyone with it.
 
-**Симптом (редкий):** read-back показал расхождение — визуально текст вписан, но
-значение не осело в состоянии фреймворка (валидация ругается на пустое поле или на
-submit уходит старое). Встречается у специфичных фреймворков, полей с `change`-на-
-blur и кастомной обработкой событий — это КРАЙНИЙ случай.
+**Symptom (rare):** the read-back shows a mismatch: visually the text is entered,
+but the value did not settle in the framework state (validation complains about an
+empty field, or the old value goes out on submit). This happens with particular
+frameworks, fields with `change`-on-blur and custom event handling; it is an EDGE
+case.
 
-**Диагностика и ремедиация (запускается ТОЛЬКО по расхождению в read-back):**
-1. `fill @eN "<значение>"` — базовый путь, обычно достаточно.
-2. **read-back** (`get value @eN` для натива; `eval` по свойству для кастома) —
-   совпало → готово, дальше не лезь.
-3. Расхождение → `focus @eN` + `type @eN "<значение>"` или `keyboard type
-   "<значение>"` — реальные keystroke-события. Снова read-back.
-4. Всё ещё нет → `focus @eN` + `keyboard inserttext "<значение>"`. Снова read-back.
-5. Последний резерв (escape-hatch, НЕ первый выбор) → `eval` с явным
+**Diagnosis and remediation (run ONLY on a read-back mismatch):**
+1. `fill @eN "<value>"`: the basic path, usually enough.
+2. **read-back** (`get value @eN` for a native field; `eval` on the property for a
+   custom one): it matches → done, do not dig further.
+3. Mismatch → `focus @eN` + `type @eN "<value>"` or `keyboard type
+   "<value>"`: real keystroke events. Read back again.
+4. Still not → `focus @eN` + `keyboard inserttext "<value>"`. Read back again.
+5. The last resort (an escape hatch, NOT the first choice) → `eval` with an explicit
    `dispatchEvent`:
 
    ```bash
    cat <<'EOF' | agent-browser --cdp 9222 eval --stdin
    const el = document.querySelector('#bio');
    const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
-   setter.call(el, 'ЗНАЧЕНИЕ');
+   setter.call(el, 'VALUE');
    el.dispatchEvent(new Event('input', { bubbles: true }));
    el.dispatchEvent(new Event('change', { bubbles: true }));
    EOF
    ```
 
-Read-back после ввода обязателен ВСЕГДА — именно он и ловит этот редкий случай.
-Лестница 3–5 — только когда read-back показал, что значение не осело. Не переходи
-к следующему полю, пока значение не подтверждено.
+A read-back after input is ALWAYS mandatory; it is exactly what catches this rare
+case. Steps 3–5 of the ladder apply only when the read-back shows the value did not
+settle. Do not move on to the next field until the value is confirmed.
 
-## 4. Совпадающие accessible-names (дубликаты подписей)
+## 4. Duplicate accessible names (repeated labels)
 
-**Симптом:** два и более поля с одинаковым accessible-name (например, два «Телефон»
-или пустые подписи), либо `find role --name` матчит не то поле.
+**Symptom:** two or more fields with the same accessible name (for example, two
+"Phone" fields or empty labels), or `find role --name` matches the wrong field.
 
-**Причина:** форма не различает поля по подписи; маппинг по имени неоднозначен.
+**Cause:** the form does not distinguish the fields by label; mapping by name is
+ambiguous.
 
-**Что делать:** **human-gate — спроси человека**, какое из полей какое (по порядку,
-по соседней метке, по placeholder), НЕ угадывай. Это правило контракта маппинга
-(`mapping-contract.md`): неоднозначность разрешает человек, а не эвристика.
+**What to do:** **human gate: ask the human** which field is which (by order, by a
+neighbouring label, by placeholder); do NOT guess. This is a rule of the mapping
+contract (`mapping-contract.md`): the human resolves ambiguity, not a heuristic.
 
-## 5. Read-back ложно-зелёный
+## 5. A false-green read-back
 
-**Симптом:** считаешь поле заполненным, но подтверждение слабое — успех `fill` или
-единственный re-snapshot.
+**Symptom:** you consider the field filled, but the confirmation is weak: a
+successful `fill` or a single re-snapshot.
 
-**Причина:** успех `fill` означает лишь, что команда не упала. Re-snapshot может не
-показывать value кастомного виджета вовсе, а `get value` на React-контролируемом
-поле — вернуть DOM-`.value`, рассинхронизированный с тем, что уйдёт на submit.
+**Cause:** a successful `fill` only means the command did not fail. A re-snapshot may
+not show the value of a custom widget at all, and `get value` on a React-controlled
+field may return a DOM `.value` that is out of sync with what will go out on submit.
 
-**Что делать:** read-back = живое чтение, а не доверие к коду возврата `fill`.
-Нативный input/textarea/select → `get value @eN`. Кастом/React/contenteditable →
-**обязательно** `eval` по конкретному свойству/состоянию виджета (`.value`,
-`.textContent`, `aria-checked`). Пере-snapshot как ЕДИНСТВЕННЫЙ источник = ложно-
-зелёный. `diff snapshot` помогает увидеть, что реально изменилось после ввода.
+**What to do:** read-back = a live read, not trust in the return code of `fill`.
+Native input/textarea/select → `get value @eN`. Custom/React/contenteditable →
+`eval` on the specific property or state of the widget (`.value`, `.textContent`,
+`aria-checked`) is **mandatory**. A re-snapshot as the ONLY source = a false green.
+`diff snapshot` helps you see what really changed after input.
 
-## 6. Оверлей перехватывает клик
+## 6. An overlay intercepts the click
 
-**Симптом:** `click` вроде проходит, но ничего не происходит.
+**Symptom:** `click` seems to go through, but nothing happens.
 
-**Причина:** модальное окно, cookie-баннер или тултип поверх формы съедает клик.
+**Cause:** a modal window, a cookie banner or a tooltip over the form swallows the
+click.
 
-**Что делать:** `snapshot -i`, найди кнопку закрытия/согласия баннера, кликни её,
-пере-`snapshot -i`, продолжай.
+**What to do:** `snapshot -i`, find the close or accept button of the banner, click
+it, re-run `snapshot -i`, continue.
 
-## 7. CAPTCHA или антибот на submit
+## 7. CAPTCHA or anti-bot on submit
 
-**Симптом:** перед или на отправке — CAPTCHA, «подтвердите, что вы человек»,
+**Symptom:** before or at submission: a CAPTCHA, "confirm that you are human", a
 Cloudflare/DataDome challenge.
 
-**Что делать:** **СТОП, отдай человеку.** CAPTCHA не обходим и обходить не пытаемся.
-CDP-сессия остаётся detectable по построению (см. `real-browser-substrate.md`) —
-это не чинится патчем, только остановкой. Человек проходит проверку руками в том же
-окне Chrome Beta, затем даёт продолжить.
+**What to do:** **STOP and hand over to the human.** We do not bypass a CAPTCHA and
+do not try to. A CDP session stays detectable by design (see
+`cdp-session-substrate.md`); that is not fixed by a patch, only by stopping. The
+human passes the check by hand in the same Chrome window and then lets you continue.
 
-## Fallback при поломке в зале: ручной режим
+## Fallback when things break live: manual mode
 
-Если петля не идёт (браузер не привязывается, поля не находятся, время поджимает) —
-переключись в **ручной режим**: человек заполняет форму сам, а агент подсказывает
-поле за полем — роль, accessible-name и что именно вписать (из маппинга входа).
-Агент здесь суфлёр, а не исполнитель. Диагностику связки (порт, attach, стейл-
-демоны) — по памятке дня 2 (`browser-use-starter`, раздел диагностики; быстрый
-чек — `curl -s http://localhost:9222/json/version` и
-`agent-browser doctor`).
+If the loop does not work (the browser does not attach, fields are not found, time
+is short), switch to **manual mode**: the human fills the form themselves, and the
+agent prompts field by field with the role, the accessible name and exactly what to
+enter (from the input mapping). The agent is the prompter here, not the executor.
+Diagnose the chain (port, attach, stale daemons) with the checks in
+`cdp-session-substrate.md`: make sure you started Chrome with
+`--remote-debugging-port=9222` yourself, then run
+`curl -s http://localhost:9222/json/version` and `agent-browser doctor`.

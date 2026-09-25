@@ -5,3 +5,5 @@ disable-model-invocation: true
 ---
 
 I don't know this area of code well. Go up a layer of abstraction. Give me a map of all the relevant modules and callers, using the project's domain glossary vocabulary.
+
+The skill is user-invoked (`disable-model-invocation: true`); only Claude Code honours that flag, so OpenCode and Codex may still invoke it on their own.

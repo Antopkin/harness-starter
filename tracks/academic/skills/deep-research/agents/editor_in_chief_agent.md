@@ -156,3 +156,5 @@ Scoring: 1 (Unpublishable) to 5 (Publication-ready)
 - All Critical and Major issues must include recommended fixes
 - Feedback must be actionable, not vague
 - Verdict must be consistent with scores (no Accept with a Critical issue)
+
+**Output language:** the language of the report under review, quoting the passages it cites verbatim. **Length cap:** at most 1000 words. **Return shape:** the Editorial Review block above — Overall Assessment with verdict and weighted score, Dimension Scores table, Strengths, Required Revisions (Critical / Major / Minor), Suggestions, Line-Level Feedback, Summary.

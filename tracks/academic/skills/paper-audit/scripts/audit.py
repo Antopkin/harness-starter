@@ -653,6 +653,7 @@ def run_audit(
     online: bool = False,
     email: str = "",
     scholar_eval: bool = False,
+    llm_json: str | None = None,
 ) -> AuditResult:
     """
     Run a complete paper audit.
@@ -663,6 +664,10 @@ def run_audit(
         pdf_mode: PDF extraction mode — "basic" or "enhanced".
         venue: Target venue (e.g., "neurips", "ieee").
         lang: Force language ("en" or "zh"). Auto-detects if None.
+        llm_json: Path to a JSON file with the four LLM ScholarEval scores
+            (novelty, significance, reproducibility_llm, ethics). Ignored
+            unless scholar_eval is set; an unreadable file degrades the
+            assessment to script-only scores.
 
     Returns:
         AuditResult with all findings.
@@ -784,16 +789,25 @@ def run_audit(
     # Step 7: ScholarEval (optional)
     if scholar_eval and mode in ("self-check", "review"):
         try:
+            import json
+
             from scholar_eval import build_result as build_scholar_result
             from scholar_eval import evaluate_from_audit
+
+            llm_scores = None
+            if llm_json:
+                llm_scores = json.loads(Path(llm_json).read_text(encoding="utf-8"))
 
             issue_dicts = [
                 {"module": i.module, "severity": i.severity, "message": i.message}
                 for i in all_issues
             ]
             script_scores = evaluate_from_audit(issue_dicts)
-            result.scholar_eval_result = build_scholar_result(script_scores)
-            print("[audit] ScholarEval: script-based scores computed")
+            result.scholar_eval_result = build_scholar_result(script_scores, llm_scores)
+            if llm_scores:
+                print("[audit] ScholarEval: script + LLM scores merged")
+            else:
+                print("[audit] ScholarEval: script-based scores computed")
         except Exception as exc:
             print(f"[audit] ScholarEval: failed — {exc}")
 
@@ -923,6 +937,7 @@ def run_reaudit(
     online: bool = False,
     email: str = "",
     scholar_eval: bool = False,
+    llm_json: str | None = None,
 ) -> AuditResult:
     """Run a re-audit comparing current state against a previous report.
 
@@ -953,6 +968,7 @@ def run_reaudit(
         online=online,
         email=email,
         scholar_eval=scholar_eval,
+        llm_json=llm_json,
     )
 
     # Step 2: Parse previous report
@@ -1117,6 +1133,12 @@ Examples:
         help="Enable ScholarEval 8-dimension assessment",
     )
     parser.add_argument(
+        "--llm-json",
+        default=None,
+        help="Path to a JSON file with LLM ScholarEval scores "
+        "(novelty, significance, reproducibility_llm, ethics); used with --scholar-eval",
+    )
+    parser.add_argument(
         "--previous-report",
         default=None,
         help="Path to previous audit report (required for re-audit mode)",
@@ -1151,6 +1173,7 @@ Examples:
                 online=getattr(args, "online", False),
                 email=getattr(args, "email", ""),
                 scholar_eval=getattr(args, "scholar_eval", False),
+                llm_json=getattr(args, "llm_json", None),
             )
         else:
             result = run_audit(
@@ -1165,6 +1188,7 @@ Examples:
                 online=getattr(args, "online", False),
                 email=getattr(args, "email", ""),
                 scholar_eval=getattr(args, "scholar_eval", False),
+                llm_json=getattr(args, "llm_json", None),
             )
 
         report = render_json_report(result) if args.format == "json" else render_report(result)

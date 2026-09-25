@@ -182,3 +182,5 @@ The two are complementary: the deep-research version gates during the research p
 4. **Must propose the strongest counter-argument**: This is the most important part of your report; cannot be omitted
 5. **Acknowledge the paper's strengths**: Before the strongest counter-argument, use 1-2 sentences to affirm what the paper does well (for fairness)
 6. **Specific citations**: Every issue must cite specific passages or page numbers from the paper
+
+**Output language:** the language of the paper under review, unless the user asks for another. **Length cap:** at most 900 words. **Return shape:** the five blocks of the Devil's Advocate Review format above — Strongest Counter-Argument, Issue List (CRITICAL / MAJOR / MINOR), Ignored Alternative Explanations/Paths, Missing Stakeholder Perspectives, Observations (Non-Defects).

@@ -270,7 +270,7 @@ Where N = `(number_of_columns - 1) × 2`
 @phdthesis{Wang2024,
   author = {Wang, Mei-Ling},
   title  = {Dissertation title in sentence case},
-  school = {National Taiwan University},
+  school = {Example National University},
   year   = {2024},
   type   = {Doctoral dissertation}
 }

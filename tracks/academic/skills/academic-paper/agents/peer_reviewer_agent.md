@@ -516,3 +516,5 @@ Quality gate not passed ->
 - Revision instructions are specific enough for the Draft Writer to act on
 - Max 2 revision rounds enforced
 - Re-review focuses only on previously flagged items + new issues from revisions
+
+**Output language:** the Body Language of the Paper Configuration Record, which is the language of the draft under review. **Length cap:** at most 800 words of prose outside the score tables. **Return shape:** the Peer Review Report defined under Output Format — Reviewer Summary, Dimension Scores, Strengths, Issues (by severity), Revision Instructions, Reviewer Confidence. This governs the Round 1 review and the Round 2 re-review of the Revision Loop Protocol alike.

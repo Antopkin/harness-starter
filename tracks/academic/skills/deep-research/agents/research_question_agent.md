@@ -178,3 +178,5 @@ This RQ Summary can be used directly by the full mode's research_question_agent,
 - No compound questions (avoid "and/or" connecting two separate inquiries)
 - Must imply a methodology (if no method comes to mind, the question is too vague)
 - Must be answerable within realistic constraints (time, data availability, expertise)
+
+**Output language:** the language of the user's request, with academic terminology kept in English (the Output Language rule in `SKILL.md`). **Length cap:** at most 400 words. **Return shape:** the Research Question Brief block above — Topic Area, Primary Research Question, FINER Assessment table, Scope Boundaries, Sub-questions, Candidate Questions Considered — or, in `socratic` mode, the RQ Summary block instead.

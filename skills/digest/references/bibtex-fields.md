@@ -1,32 +1,34 @@
-# BibTeX: типы записей, поля и примеры
+# BibTeX: entry types, fields and examples
 
-Единый справочник по оформлению ссылок для навыка `digest` (сюда влит бывший
-`cite`). Слева — обязательные поля (без них запись некорректна), справа — полезные
-опциональные. Ниже — развёрнутые примеры в BibTeX, APA 7 и ГОСТ.
+The single reference on formatting citations for the `digest` skill. On the left are
+the required fields (without them an entry is invalid), on the right the useful
+optional ones. Below are worked examples in BibTeX, APA 7 (the default style) and
+GOST R 7.0.100-2018 (an option for Russian-language reference lists).
 
-## Типы записей и поля
+## Entry types and fields
 
-| Тип | Что это | Обязательные | Частые опциональные |
+| Type | What it is | Required | Common optional |
 |---|---|---|---|
-| `@article` | Статья в журнале | author, title, journal, year | volume, number, pages, doi, month, note |
-| `@inproceedings` | Доклад в сборнике конференции | author, title, booktitle, year | editor, pages, publisher, organization, address, doi |
-| `@book` | Книга целиком | author **или** editor, title, publisher, year | volume/number, series, address, edition, isbn |
-| `@incollection` | Глава в сборнике/книге | author, title, booktitle, publisher, year | editor, pages, series, address, doi |
-| `@misc` | Препринт, веб-ресурс, датасет, ПО | (нет строго обязательных) | author, title, year, howpublished, url, urldate, eprint, archivePrefix, doi, note |
-| `@techreport` | Технический отчёт | author, title, institution, year | number, address, type, url |
-| `@phdthesis` / `@mastersthesis` | Диссертация / магистерская | author, title, school, year | address, type, url |
-| `@online` (biblatex) | Онлайн-ресурс | author/title, year/date, url | urldate, note |
+| `@article` | Journal article | author, title, journal, year | volume, number, pages, doi, month, note |
+| `@inproceedings` | Paper in conference proceedings | author, title, booktitle, year | editor, pages, publisher, organization, address, doi |
+| `@book` | Whole book | author **or** editor, title, publisher, year | volume/number, series, address, edition, isbn |
+| `@incollection` | Chapter in an edited volume/book | author, title, booktitle, publisher, year | editor, pages, series, address, doi |
+| `@misc` | Preprint, web resource, dataset, software | (none strictly required) | author, title, year, howpublished, url, urldate, eprint, archivePrefix, doi, note |
+| `@techreport` | Technical report | author, title, institution, year | number, address, type, url |
+| `@phdthesis` / `@mastersthesis` | PhD / master's thesis | author, title, school, year | address, type, url |
+| `@online` (biblatex) | Online resource | author/title, year/date, url | urldate, note |
 
-Замечания:
-- В `@misc` формально обязательных полей нет, но осмысленная запись требует хотя бы
-  author (или organization), title, year и url/eprint.
-- Препринт arXiv: `@misc` с полями `eprint = {2401.01234}`,
+Notes:
+- `@misc` formally has no required fields, but a meaningful entry needs at least
+  author (or organization), title, year and url/eprint.
+- arXiv preprint: `@misc` with the fields `eprint = {2401.01234}`,
   `archivePrefix = {arXiv}`, `primaryClass = {cs.CL}`.
-- Имена: `author = {Фамилия, Имя and Фамилия, Имя}`. Порядок — как в источнике.
-- Кириллица: оборачивай в `{}` слова, где важен регистр, чтобы стиль его не «съел».
-- `doi`: только код, `10.1234/abcd`, без префикса `https://doi.org/`.
+- Names: `author = {Surname, Name and Surname, Name}`. Order as in the source.
+- Cyrillic and other case-sensitive text: wrap words whose case matters in `{}` so the
+  style does not "eat" it.
+- `doi`: the code only, `10.1234/abcd`, without the `https://doi.org/` prefix.
 
-## Пример 1 — статья в журнале
+## Example 1: journal article
 
 **BibTeX:**
 ```bibtex
@@ -47,11 +49,11 @@ Ivanova, A., & Petrov, S. (2023). A comparative study of retrieval methods.
 *Journal of Information Science, 49*(3), 412–430.
 https://doi.org/10.1177/01655515211012345
 
-**ГОСТ Р 7.0.100–2018:**
+**GOST R 7.0.100-2018:**
 Ivanova, A. A comparative study of retrieval methods / A. Ivanova, S. Petrov //
 Journal of Information Science. — 2023. — Vol. 49, no. 3. — P. 412–430.
 
-## Пример 2 — доклад на конференции
+## Example 2: conference paper
 
 **BibTeX:**
 ```bibtex
@@ -67,16 +69,16 @@ Journal of Information Science. — 2023. — Vol. 49, no. 3. — P. 412–430.
 ```
 
 **APA 7:**
-Smith, J., & Lee, M. (2024). Prompting strategies for long-context models. В
-*Proceedings of the 2024 Conference on Empirical Methods* (сс. 1123–1138).
+Smith, J., & Lee, M. (2024). Prompting strategies for long-context models. In
+*Proceedings of the 2024 Conference on Empirical Methods* (pp. 1123–1138).
 Association for Computational Linguistics. https://doi.org/10.18653/v1/2024.emnlp-main.88
 
-**ГОСТ:**
+**GOST:**
 Smith, J. Prompting strategies for long-context models / J. Smith, M. Lee //
 Proceedings of the 2024 Conference on Empirical Methods. — [S. l.] : Association for
 Computational Linguistics, 2024. — P. 1123–1138.
 
-## Пример 3 — книга
+## Example 3: book
 
 **BibTeX:**
 ```bibtex
@@ -93,19 +95,18 @@ Computational Linguistics, 2024. — P. 1123–1138.
 **APA 7:**
 Kahneman, D. (2011). *Thinking, fast and slow*. Farrar, Straus and Giroux.
 
-**ГОСТ:**
+**GOST:**
 Kahneman, D. Thinking, Fast and Slow / D. Kahneman. — New York : Farrar, Straus and
 Giroux, 2011. — 499 p.
 
-## Пример 4 — глава в сборнике
+## Example 4: chapter in an edited volume (a Russian-language source)
 
 **BibTeX:**
 ```bibtex
 @incollection{orlov2022ethics,
   author    = {Orlov, Dmitry},
-  title     = {Этика автономных агентов},
-  booktitle = {Философия искусственного интеллекта},
-  editor    = {Соколова, Мария},
+  title     = {Этика ИИ},
+  booktitle = {Философия ИИ},
   publisher = {Наука},
   address   = {Москва},
   year      = {2022},
@@ -113,11 +114,11 @@ Giroux, 2011. — 499 p.
 }
 ```
 
-**ГОСТ:**
-Орлов, Д. Этика автономных агентов / Д. Орлов // Философия искусственного
-интеллекта / под ред. М. Соколовой. — Москва : Наука, 2022. — С. 77–104.
+**GOST:**
+Орлов, Д. Этика ИИ / Д. Орлов // Философия ИИ. — Москва : Наука, 2022. —
+С. 77–104.
 
-## Пример 5 — препринт arXiv (@misc)
+## Example 5: arXiv preprint (@misc)
 
 **BibTeX:**
 ```bibtex
@@ -136,7 +137,7 @@ Giroux, 2011. — 499 p.
 Chen, W., & Garcia, L. (2024). *Self-verifying agents for long-horizon tasks*.
 arXiv. https://arxiv.org/abs/2403.04567
 
-## Пример 6 — веб-ресурс (@misc с датой обращения)
+## Example 6: web resource (@misc with an access date)
 
 **BibTeX:**
 ```bibtex
@@ -149,17 +150,21 @@ arXiv. https://arxiv.org/abs/2403.04567
 }
 ```
 
-**ГОСТ (электронный ресурс):**
+**GOST (electronic resource):**
 Ethics and governance of artificial intelligence for health [Электронный ресурс] /
 World Health Organization. — 2023. — URL: https://www.who.int/publications/...
 (дата обращения: 13.07.2026).
 
-## Мини-памятка по различиям стилей
+## A short cheat sheet on how the styles differ
 
-- **APA 7** — автор-год, инициалы, курсив у названия журнала/книги, DOI как полный
-  URL `https://doi.org/…`. Sentence case у названия статьи.
-- **ГОСТ Р 7.0.100–2018** — области через ` . — `, ответственность через `/`,
-  редакторы через `/ под ред.`, страницы `С.`/`P.`, для онлайна — `[Электронный
-  ресурс]` и `(дата обращения: …)`.
-- **BibTeX** — ты описываешь поля, а стиль (`.bst` / biblatex-стиль) сам решает, как
-  их отрисовать. Поэтому важнее всего заполнить поля полно и честно.
+- **APA 7** (the default): author-date, initials, the journal or book title in
+  italics, the DOI as a full URL `https://doi.org/…`. Sentence case for the article
+  title.
+- **GOST R 7.0.100-2018** (for Russian-language reference lists): areas separated by
+  ` . — `, responsibility after `/`, editors after a second `/` with the Russian
+  abbreviation for "edited by", pages as `P.` (or the Russian page mark for a Russian
+  source, as in Example 4); for online sources, the electronic-resource mark and the
+  access date shown in Example 6.
+- **BibTeX**: you describe the fields, and the style (`.bst` or a biblatex style)
+  decides how to render them. So what matters most is filling the fields completely
+  and honestly.
