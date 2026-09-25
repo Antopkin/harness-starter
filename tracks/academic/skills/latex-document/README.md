@@ -576,59 +576,106 @@ Tests found and fixed 2 real bugs in `compile_latex.sh`:
 
 ```
 latex-document/
-├── SKILL.md                              # Skill definition (329 lines)
+├── SKILL.md                              # Skill definition
 ├── README.md                             # You are here
 ├── setup.sh                              # One-click installer
 ├── requirements.txt                      # Python: matplotlib, numpy, pandas
+├── .chktexrc                             # chktex configuration for latex_lint.sh
 │
 ├── assets/
-│   └── templates/                        # the .tex templates copied here (see the note at the top)
-│       ├── resume-*.tex (x6)
-│       ├── thesis.tex, academic-paper.tex, academic-cv.tex
-│       ├── lecture-notes.tex, homework.tex, lab-report.tex
-│       ├── book.tex, poster.tex, poster-landscape.tex
-│       ├── exam.tex, cheatsheet*.tex (x3)
-│       ├── fillable-form.tex, conditional-document.tex, mail-merge-letter.tex
-│       ├── letter.tex, cover-letter.tex, invoice.tex
-│       ├── report.tex, presentation.tex
-│       └── references.bib
+│   └── templates/                        # 17 .tex templates (see the note at the top)
+│       ├── book.tex
+│       ├── cheatsheet-code.tex
+│       ├── cheatsheet-exam.tex
+│       ├── cheatsheet.tex
+│       ├── conditional-document.tex
+│       ├── cover-letter.tex
+│       ├── exam.tex
+│       ├── fillable-form.tex
+│       ├── homework.tex
+│       ├── invoice.tex
+│       ├── lab-report.tex
+│       ├── lecture-notes.tex
+│       ├── letter.tex
+│       ├── mail-merge-letter.tex
+│       ├── poster-landscape.tex
+│       ├── poster.tex
+│       └── report.tex
 │
-├── scripts/                              # 22 automation scripts (6,600+ lines)
-│   ├── compile_latex.sh          (525)   # .tex -> PDF + PNG
-│   ├── mail_merge.py             (574)   # Template + data -> N PDFs
-│   ├── generate_chart.py         (459)   # 9 chart types (matplotlib)
-│   ├── validate_latex.py         (426)   # 6-check syntax validator
-│   ├── latex_diff.sh             (409)   # latexdiff + git integration
-│   ├── csv_to_latex.py           (364)   # CSV -> LaTeX tables
-│   ├── plantuml_to_pdf.sh        (362)   # .puml -> PDF/PNG/SVG
-│   ├── latex_citation_extract.sh (342)   # Citation analysis
-│   ├── convert_document.sh       (316)   # Pandoc format conversion
-│   ├── latex_package_check.sh    (265)   # Pre-flight package checker
-│   ├── fetch_bibtex.sh           (251)   # DOI/arXiv -> BibTeX
-│   ├── graphviz_to_pdf.sh        (250)   # .dot -> PDF/PNG
-│   ├── pdf_extract_pages.sh      (247)   # Page extraction
-│   ├── install_deps.sh           (237)   # Cross-platform deps
-│   ├── latex_analyze.sh          (216)   # Document statistics
-│   ├── pdf_encrypt.sh            (215)   # AES-256 encryption
-│   ├── mermaid_to_image.sh       (178)   # .mmd -> PNG/PDF
-│   ├── latex_lint.sh             (173)   # chktex wrapper
-│   ├── pdf_optimize.sh           (157)   # Compress + linearize
-│   ├── latex_wordcount.sh        (149)   # Word count
-│   ├── pdf_to_images.sh          (144)   # PDF -> page images
-│   └── pdf_merge.sh              (136)   # Merge PDFs
+├── scripts/                              # 22 automation scripts
+│   ├── compile_latex.sh                  # .tex -> PDF + PNG
+│   ├── convert_document.sh               # Pandoc format conversion
+│   ├── csv_to_latex.py                   # CSV -> LaTeX tables
+│   ├── fetch_bibtex.sh                   # DOI/arXiv -> BibTeX
+│   ├── generate_chart.py                 # 9 chart types (matplotlib)
+│   ├── graphviz_to_pdf.sh                # .dot -> PDF/PNG
+│   ├── install_deps.sh                   # Cross-platform deps
+│   ├── latex_analyze.sh                  # Document statistics
+│   ├── latex_citation_extract.sh         # Citation analysis
+│   ├── latex_diff.sh                     # latexdiff + git integration
+│   ├── latex_lint.sh                     # chktex wrapper
+│   ├── latex_package_check.sh            # Pre-flight package checker
+│   ├── latex_wordcount.sh                # Word count
+│   ├── mail_merge.py                     # Template + data -> N PDFs
+│   ├── mermaid_to_image.sh               # .mmd -> PNG/PDF
+│   ├── pdf_encrypt.sh                    # AES-256 encryption
+│   ├── pdf_extract_pages.sh              # Page extraction
+│   ├── pdf_merge.sh                      # Merge PDFs
+│   ├── pdf_optimize.sh                   # Compress + linearize
+│   ├── pdf_to_images.sh                  # PDF -> page images
+│   ├── plantuml_to_pdf.sh                # .puml -> PDF/PNG/SVG
+│   └── validate_latex.py                 # 6-check syntax validator
 │
 ├── references/                           # 26 deep-dive guides
-│   ├── *.md (x26)
-│   └── profiles/ (x4)                   # OCR profiles
+│   ├── accessibility-guide.md
+│   ├── advanced-features.md
+│   ├── beamer-guide.md
+│   ├── bibliography-guide.md
+│   ├── charts-and-graphs.md
+│   ├── cheatsheet-guide.md
+│   ├── code-patterns.md
+│   ├── collaboration-guide.md
+│   ├── debugging-guide.md
+│   ├── font-guide.md
+│   ├── format-conversion.md
+│   ├── graphviz-plantuml.md
+│   ├── interactive-features.md
+│   ├── long-form-best-practices.md
+│   ├── mermaid-diagrams.md
+│   ├── packages.md
+│   ├── pdf-conversion.md
+│   ├── pdf-extraction-prompts.md
+│   ├── pdf-operations.md
+│   ├── poster-design-guide.md
+│   ├── python-charts.md
+│   ├── qa-test-report.md
+│   ├── resume-ats-guide.md
+│   ├── script-tools.md
+│   ├── tables-and-images.md
+│   ├── visual-packages.md
+│   └── profiles/                         # 4 OCR profiles
+│       ├── business-document.md
+│       ├── general-notes.md
+│       ├── legal-document.md
+│       └── math-notes.md
 │
 └── tests/                                # 5 test suites + runner
-    ├── test_python_scripts.py   (1224)
-    ├── test_compile_latex.sh     (844)
-    ├── test_analysis_tools.sh   (1093)
-    ├── test_pdf_utils.sh         (834)
-    ├── test_templates.sh         (276)
-    ├── run_all_tests.sh          (191)
-    └── fixtures/
+    ├── README.md                         # How to run the suites
+    ├── run_all_tests.sh                  # Runs every suite
+    ├── test_analysis_tools.sh
+    ├── test_compile_latex.sh
+    ├── test_pdf_utils.sh
+    ├── test_python_scripts.py
+    ├── test_templates.sh
+    └── fixtures/                         # Inputs for the suites
+        ├── references.bib
+        ├── simple_diagram.puml
+        ├── simple_graph.dot
+        ├── simple_mermaid.mmd
+        ├── test_document.tex
+        ├── test_packages.tex
+        ├── test_v1.tex
+        └── test_v2.tex
 ```
 
 ---

@@ -1,17 +1,16 @@
 # Digest: Wei et al., 2022 — Chain-of-Thought Prompting Elicits Reasoning in Large Language Models
 
 A real output of the `digest` skill, built on the arXiv preprint 2201.11903 with a
-docx file as the source. No `docx` skill was installed, so the text was extracted with
-`pandoc -t plain` (graceful fallback); the anchor table was checked by a literal
-search for each quote in the extracted text, and `digest` formatted the reference and
-the BibTeX itself. This example was produced with an earlier fallback (`pandoc -t plain`,
-with the headings rebuilt by hand); the skill now uses `pandoc -t markdown`, which keeps
-the heading levels.
+docx file as the source (Wei et al. 2022, arXiv:2201.11903). No `docx` skill was
+installed, so the text was extracted with `pandoc -t markdown` (graceful fallback),
+which keeps the heading levels as `#` marks; every locator below follows that heading
+structure. The anchor table was checked by a literal search for each quote in the
+extracted text, and `digest` formatted the reference and the BibTeX itself.
 
 **Biblio:** Wei, J., Wang, X., Schuurmans, D., Bosma, M., Ichter, B., Xia, F., Chi, E., Le, Q., & Zhou, D. (2022). Chain-of-Thought Prompting Elicits Reasoning in Large Language Models. 36th Conference on Neural Information Processing Systems (NeurIPS 2022). arXiv:2201.11903 [cs.CL]. https://arxiv.org/abs/2201.11903
-**Source format:** docx (text extracted with pandoc; no docx skill → graceful fallback)  ·  **Read:** §Abstract; §1 Introduction (paras. 1–4); §2 Chain-of-Thought Prompting (paras. 1–2)  ·  **Date:** 2026-07-15
+**Source format:** docx (text extracted with `pandoc -t markdown`; no docx skill → graceful fallback)  ·  **Read:** §Abstract; §1 Introduction (paras. 1–4); §2 Chain-of-Thought Prompting (paras. 1–2)  ·  **Date:** 2026-07-15
 
-> **Extraction limitation.** No `docx` skill is installed, so the text was obtained by graceful fallback, with the command `pandoc … -t plain`. The anchor unit in this format is a section (heading) plus a paragraph number within the section. The extracted fragment covers only the title, the abstract, the Introduction and the beginning of section 2; the later sections (experiment details, per-benchmark result tables, error analysis, limitations) are missing from the extracted text. The digest reflects exactly what the extraction contains and does not fill in the missing sections from outside memory.
+> **Extraction limitation.** No `docx` skill is installed, so the text was obtained by graceful fallback, with the command `pandoc … -t markdown`. The anchor unit in this format is a section (heading) plus a paragraph number within the section; the headings come straight from the `#` marks of the extraction (`## Abstract`, `## 1 Introduction`, `## 2 Chain-of-Thought Prompting`), and paragraphs are the blank-line-separated blocks under each heading. The extracted fragment covers only the title, the abstract, the Introduction and the beginning of section 2; the later sections (experiment details, per-benchmark result tables, error analysis, limitations) are missing from the extracted text. The digest reflects exactly what the extraction contains and does not fill in the missing sections from outside memory.
 
 ## The gist in one line
 If the few-shot examples show the model not just input-answer pairs but a chain of intermediate reasoning steps (a chain of thought), a large enough language model reproduces such a chain and solves arithmetic, commonsense and symbolic tasks noticeably better, without any fine-tuning.
@@ -41,8 +40,8 @@ The extracted fragment has no separate limitations section: not stated (the extr
 
 | Claim | Locator | Verbatim quote | Section | Checked |
 |---|---|---|---|---|
-| A chain of thought is a series of intermediate steps | §Abstract, para. 1 | “We explore how generating a chain of thought — a series of intermediate” | Abstract | ✓ |
-| It significantly improves LLMs' ability to reason | §Abstract, para. 1 | “reasoning steps — significantly improves the ability of large language” | Abstract | ✓ |
+| A chain of thought is a series of intermediate steps | §Abstract, para. 1 | “We explore how generating a chain of thought --- a series of intermediate” | Abstract | ✓ |
+| It significantly improves LLMs' ability to reason | §Abstract, para. 1 | “reasoning steps --- significantly improves the ability of large language” | Abstract | ✓ |
 | The method is called chain-of-thought prompting | §Abstract, para. 1 | “models via a simple method called chain-of-thought prompting, where a” | Abstract | ✓ |
 | A few CoT demonstrations are given as exemplars | §Abstract, para. 1 | “few chain of thought demonstrations are provided as exemplars in” | Abstract | ✓ |
 | Experiments on three large LLMs | §Abstract, para. 1 | “Experiments on three large language models show that” | Abstract | ✓ |
@@ -59,17 +58,17 @@ The extracted fragment has no separate limitations section: not stated (the extr
 | CoT definition: steps leading to the final answer | §1 Introduction, para. 3 | “natural language reasoning steps that lead to the final output, and we” | 1 Introduction | ✓ |
 | CoT with PaLM 540B beats standard prompting | §1 Introduction, para. 4 | “chain-of-thought prompting with PaLM 540B outperforms standard prompting” | 1 Introduction | ✓ |
 | Prompting-only needs no large training set | §1 Introduction, para. 4 | “prompting-only approach is important because it does not require a large” | 1 Introduction | ✓ |
-| Goal: get the LM to generate a chain of thought | §2 Chain-of-Thought Prompting, para. 1 | “generate a similar chain of thought — a coherent series of intermediate” | 2 Chain-of-Thought Prompting | ✓ |
+| Goal: get the LM to generate a chain of thought | §2 Chain-of-Thought Prompting, para. 1 | “generate a similar chain of thought --- a coherent series of intermediate” | 2 Chain-of-Thought Prompting | ✓ |
 | Only sufficiently large models produce CoT | §2 Chain-of-Thought Prompting, para. 1 | “show that sufficiently large language models can generate chains of” | 2 Chain-of-Thought Prompting | ✓ |
 | Property 1: more computation for hard problems | §2 Chain-of-Thought Prompting, para. 2 | “into intermediate steps, which means that additional computation can be” | 2 Chain-of-Thought Prompting | ✓ |
 | Property 2: an interpretable window into the model | §2 Chain-of-Thought Prompting, para. 2 | “of thought provides an interpretable window into the behavior of the” | 2 Chain-of-Thought Prompting | ✓ |
 | Property 3: applies to a wide class of tasks | §2 Chain-of-Thought Prompting, para. 2 | “Third, chain-of-thought reasoning can be used for tasks such as math” | 2 Chain-of-Thought Prompting | ✓ |
 | Property 4: elicited in off-the-shelf large models | §2 Chain-of-Thought Prompting, para. 2 | “Finally, chain-of-thought reasoning can be readily elicited in” | 2 Chain-of-Thought Prompting | ✓ |
 
-**Self-check log.** Rows: 24. Confirmed: 24 × ✓. ⚠ flags: 0. Method: re-opening the extracted source text and a literal substring search (`grep -F`) for each of the 24 quotes, across the sections Abstract, 1 Introduction, 2 Chain-of-Thought Prompting. The check is portable: only re-reading the same text, with no external scripts and no Python inside the skill's logic (grep served as the equivalent of re-reading the line).
+**Self-check log.** Rows: 24. Confirmed: 24 × ✓. ⚠ flags: 0. Method: re-opening the extracted source text and a literal substring search for each of the 24 quotes inside the paragraph its locator names, across the sections Abstract, 1 Introduction, 2 Chain-of-Thought Prompting; only whitespace was normalised, because pandoc wraps lines inside a paragraph. The quotes keep pandoc's own spelling of dashes (`---` for an em dash), so they match the extraction character for character. The check is portable: it only re-reads the same text, and no Python is part of the skill's logic.
 
 ## Gaps and questions
-- **Extraction limitation (no docx skill).** The text came from `pandoc -t plain`; the heading hierarchy was reconstructed from flat output, and paragraph numbers follow the extracted text. How accurately paragraphs are split depends on how pandoc flattened the docx.
+- **Extraction limitation (no docx skill).** The text came from `pandoc -t markdown`; the heading hierarchy is taken from its `#` marks, and paragraph numbers follow the blank-line-separated blocks of the extracted text. How accurately paragraphs are split depends on how the docx itself marks paragraphs.
 - **The source is fragmentary.** The extraction contains only the Abstract, §1 and the beginning of §2. The sections on experimental setup, full accuracy tables for all benchmarks (beyond the mention of GSM8K), ablations and the authors' limitations are not stated in the extracted text.
 - **Result numbers.** Specific accuracy values (percentages) are missing from the extracted fragment; it only says "state-of-the-art" and "new state-of-the-art". Absolute metrics: [verify] against the full text of the paper.
 - Next (→ lit-search): the full text of the NeurIPS version for the Results/Limitations sections; check pages and DOI for the BibTeX.
