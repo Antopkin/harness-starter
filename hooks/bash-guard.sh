@@ -97,23 +97,30 @@ fi
 # names exclude counts. So does a pattern made only of *, ?, [ and ] after
 # normalisation (*, **, ?*), which matches every path. A :(...) magic without
 # top is read like the bare pathspec after it, so :(icase). counts as . does.
-# Owner decisions of 2026-09-25, applied before the per-word pass. A heredoc
-# body is data when its delimiter is quoted (<<'X', <<"X", <<-'X') and no word
-# of the marker line names a shell or an interpreter (sh, bash, zsh, dash, ksh,
-# fish, ssh, eval, source, ., xargs, env, sudo, python*, node, deno, bun, perl,
-# ruby, php, osascript, awk, sed). Every word of the line is checked, not only
-# the one before <<, so cat <<'X' | bash counts as an interpreter too. Such a
-# body is dropped, which lets git commit -F - <<'MSG' carry a message that
-# names the very commands it explains. The marker line is scanned in full, text
-# after the marker included, and so is everything after the terminator line.
-# The body of an unquoted delimiter is scanned, since the shell expands $(...)
-# in it, and the body an interpreter reads is scanned with its quotes, commas
-# and brackets turned into spaces, so os.system('...') or a ["rm", ...] list is
-# read as the command it runs. In a git commit segment the value of -m, -F,
-# --message and --file is data up to its own end (its closing quote, or the
-# end of an unquoted word): text after it is scanned as usual, and whatever
-# follows a $( or a backtick inside the value is read as a command, heredoc
-# rules included. Backslash-newline joins are made after this step, so a
+# Owner decisions of 2026-09-25, applied before the per-word pass. The first
+# design named the interpreters that make a heredoc body code, and an audit
+# walked past that list twelve ways, so the rule is now an allowlist of sinks.
+# A heredoc body is data only when the << (or <<-) is real (outside quotes, a
+# comment and arithmetic, and not <<<), its delimiter is quoted (<<'X', <<"X")
+# and it feeds a sink: (a) git commit or git tag with -F - (--file -, --file=-,
+# or a short cluster ending in F and then -) in the same simple command, or
+# (b) a bare cat that is the only command of a $(...) inside a double-quoted
+# argument of git commit (-m, -F), git tag or gh pr, issue or release, as in
+# -m "$(cat <<'EOF' ... EOF)". The marker line must end at the delimiter (for
+# (b) only the closing ) and " may follow it), and a command that defines a git
+# or cat function, or an alias, has no data bodies at all. That lets a commit
+# message name the very commands it explains. Every other body is scanned, a
+# second time with its quotes, commas and brackets turned into spaces, so
+# os.system('...') or a ["rm", ...] list is read as the command it runs. The
+# marker line and everything after the terminator are always scanned. An
+# unquoted # at the start of a word begins a comment, which opens no heredoc,
+# quote or substitution, and words are split on < and > as well, so the text of
+# a here-string such as bash<<<'...' is read. In a git commit segment the value
+# of -m, -F, --message and --file is data up to its own end (its closing quote,
+# or the end of an unquoted word), unless it starts with an unquoted #, which
+# makes it a comment. Text after the value is scanned as usual, and whatever
+# follows a $( or a backtick inside it is read as a command, heredoc rules
+# included. Backslash-newline joins are made after this step, so a
 # continuation cannot hide behind a heredoc terminator.
 # The price of scanning every `rm` and `git` word is the same bargain as the
 # rest of this file: an echo, or a commit message passed any other way, that
@@ -207,6 +214,7 @@ function scan(s,   seg, nseg, i, n, w, u, k, b, j, o, verb, dry, m, a, c, p, sta
   gsub(/&&|\|\||[;|&()`]/, "\n", s)
   nseg = split(s, seg, "\n")
   for (i = 1; i <= nseg; i++) {
+    gsub(/[<>]/, " ", seg[i])
     n = split(seg[i], w)
     for (k = 1; k <= n; k++) u[k] = unq(w[k])
     for (k = 1; k <= n; k++) {
@@ -312,52 +320,74 @@ function joinbs(t,   nl, L, i, ln, bs, joined) {
   }
   return joined
 }
-# 1 when b (a basename) is a shell or an interpreter that runs what it reads.
-function interp(b) { return (b ~ /^(sh|bash|zsh|dash|ksh|fish|ssh|eval|source|[.]|xargs|env|sudo|node|deno|bun|perl|ruby|php|osascript|awk|sed)$/ || b ~ /^python/) }
-# A commit value v is data: it is emitted as _, and the text after its first $(
-# or backtick is queued in SUBQ to be read as a command.
-function blank(v,   p, q) {
+# Queue the text after the first $( or backtick of the word v as a job (JQ) to
+# be read as a command. When ok is set and the $( sits inside double quotes,
+# the job is marked (JS): a bare cat heredoc there is sink (b). Returns the
+# offset of the $( or backtick, 0 when there is none.
+function subq(v, ok,   p, q) {
   p = index(v, "$("); q = index(v, "`")
-  if (q && (!p || q < p)) SUBQ = SUBQ substr(v, q + 1) "\n"
-  else if (p) SUBQ = SUBQ substr(v, p + 2) "\n"
-  return "_"
+  if (q && (!p || q < p)) { JQ[++NJ] = substr(v, q + 1); JS[NJ] = 0; return q }
+  if (!p) return 0
+  Q = ""; qwalk(substr(v, 1, p - 1))
+  JQ[++NJ] = substr(v, p + 2); JS[NJ] = (ok && Q == "d")
+  return p
 }
-# End of the raw word WB: note an interpreter on the line (LI), follow the
-# segment through git, its global options and commit (ST), and emit the word to
-# OUT, a -m/-F/--message/--file value blanked.
+# A commit value v is data: it is emitted as _ and its substitutions are queued.
+function blank(v) { subq(v, 1); return "_" }
+# End of the raw word WB: note a bare cat (CT), follow the segment through git,
+# its global options and commit or tag, or through gh pr/issue/release (ST),
+# note a -F - (FD), and emit the word to OUT, a -m/-F/--message/--file value
+# blanked and the substitution of a gh or tag argument queued.
 function wdone(   w, a, b, c, p, ch, o) {
   if (WB == "") return
   w = WB; WB = ""; a = unq(w); o = w
-  b = a; sub(/.*\//, "", b); if (interp(b)) LI = 1
-  if (ST == 0) { if (a !~ /^[A-Za-z_][A-Za-z0-9_]*=/) ST = (b == "git") ? 1 : 9 }
+  b = a; sub(/.*\//, "", b)
+  if (++NW == 1) CT = (a == "cat"); else if (a != "-") CT = 0
+  if (ST == 0) { if (a !~ /^[A-Za-z_][A-Za-z0-9_]*=/) { GX = (a == "git"); ST = (b == "git") ? 1 : (a == "gh") ? 4 : 9 } }
   else if (ST == 1) {
     if (SK) SK = 0
     else if (substr(a, 1, 1) == "-") { if (a == "-C" || a == "-c" || a == "--git-dir" || a == "--work-tree" || a == "--namespace" || a == "--config-env" || a == "--attr-source" || a == "--super-prefix") SK = 1 }
-    else ST = (a == "commit") ? 2 : 9
+    else ST = (a == "commit") ? 2 : (a == "tag") ? 3 : 9
   } else if (ST == 2) {
-    if (VN) { if (VN == 2) o = blank(w); VN = 0 }
+    if (VN) { if (VN > 1) o = blank(w); if (VN == 3 && a == "-") FD = 1; VN = 0 }
     else if (a == "--") ST = 9
     else if (a ~ /^--/) {
       p = index(a, "=")
-      if (p) { c = substr(a, 1, p - 1); if (isprefix(c, "--message", 4) || isprefix(c, "--file", 5)) o = c "=" blank(substr(w, index(w, "=") + 1)) }
+      if (p) { c = substr(a, 1, p - 1); if (isprefix(c, "--message", 4) || isprefix(c, "--file", 5)) o = c "=" blank(substr(w, index(w, "=") + 1)); if (a == "--file=-") FD = 1 }
+      else if (a == "--file") VN = 3
       else if (isprefix(a, "--message", 4) || isprefix(a, "--file", 5)) VN = 2
       else if (cvlong(a)) VN = 1
     } else if (a ~ /^-./) {
       for (p = 2; p <= length(a); p++) {
         ch = substr(a, p, 1)
-        if (ch == "m" || ch == "F") { if (p == length(a)) VN = 2; else o = substr(a, 1, p) blank(substr(a, p + 1)); break }
+        if (ch == "m" || ch == "F") { if (p == length(a)) VN = (ch == "F") ? 3 : 2; else o = substr(a, 1, p) blank(substr(a, p + 1)); break }
         if (index("Cct", ch)) { if (p == length(a)) VN = 1; break }
         if (index("uS", ch)) break
       }
     }
-  }
+  } else if (ST == 3 || ST == 5) {
+    if (ST == 3) {
+      if (VN) { if (VN == 3 && a == "-") FD = 1; VN = 0 }
+      else if (a == "--file=-") FD = 1
+      else if (a == "--file") VN = 3
+      else if (a ~ /^-[^-]/) {
+        for (p = 2; p <= length(a); p++) {
+          ch = substr(a, p, 1)
+          if (index("Fmu", ch)) { if (p == length(a)) VN = (ch == "F") ? 3 : 1; break }
+        }
+      }
+    }
+    if (index(w, "$(") || index(w, "`")) { p = subq(w, 1); o = substr(w, 1, p - 1) "_" }
+  } else if (ST == 4) ST = (a == "pr" || a == "issue" || a == "release") ? 5 : 9
   OUT = OUT o
 }
-# The command text s with its data taken out: the bodies of quoted heredocs no
-# interpreter reads, and the values of git commit -m/-F. Bodies that stay code
-# are added to EXTRA; for an interpreter, quotes, commas and brackets turn to spaces.
-function prep(s,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data) {
-  OUT = ""; WB = ""; PQ = ""; ST = 0; SK = 0; VN = 0; LI = 0; NH = 0
+# The command text s with its data taken out: the bodies of quoted heredocs
+# that feed a sink, and the values of git commit -m/-F. Bodies that stay code
+# are added to EXTRA twice, the second time with quotes, commas and brackets
+# turned to spaces. sb is set when s is the text of a $( inside double quotes.
+function prep(s, sb,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data, bb, t, rest, sk, found) {
+  OUT = ""; WB = ""; PQ = ""; ST = 0; SK = 0; VN = 0; NH = 0; AR = 0
+  FD = 0; GX = 0; NW = 0; CT = 0; SB = sb
   n = length(s); i = 1
   while (i <= n) {
     ch = substr(s, i, 1)
@@ -372,8 +402,15 @@ function prep(s,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data) {
     if (ch == sq) { PQ = "s"; WB = WB ch; i++; continue }
     if (ch == "\"") { PQ = "d"; WB = WB ch; i++; continue }
     if (ch == "$" && substr(s, i + 1, 1) == sq) { PQ = "a"; WB = WB ch sq; i += 2; continue }
+    # An unquoted # at the start of a word runs to the end of the line.
+    if (ch == "#" && (WB == "" || WB ~ /[<>]$/)) {
+      wdone(); e = index(substr(s, i), "\n")
+      if (e) { OUT = OUT substr(s, i, e - 1); i += e - 1 } else { OUT = OUT substr(s, i); i = n + 1 }
+      continue
+    }
     if (ch == " " || ch == "\t") { wdone(); OUT = OUT ch; i++; continue }
-    if (ch == "<" && substr(s, i + 1, 1) == "<" && substr(s, i + 2, 1) != "<") {
+    if (ch == "<" && substr(s, i + 1, 2) == "<<") { WB = WB "<<<"; i += 3; continue }
+    if (ch == "<" && substr(s, i + 1, 1) == "<" && !AR) {
       wdone(); j = i + 2; dash = 0; d = ""; dq = 0
       if (substr(s, j, 1) == "-") { dash = 1; j++ }
       while (j <= n && (substr(s, j, 1) == " " || substr(s, j, 1) == "\t")) j++
@@ -385,31 +422,45 @@ function prep(s,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data) {
           if (!k) { d = d substr(s, j + 1); j = n + 1; break }
           d = d substr(s, j + 1, k - 1); j += k + 1; continue
         }
-        if (c == "\\") { dq = 1; d = d substr(s, j + 1, 1); j += 2; continue }
+        if (c == "\\") { d = d substr(s, j + 1, 1); j += 2; continue }
         if (c == "$" && (substr(s, j + 1, 1) == sq || substr(s, j + 1, 1) == "\"")) { j++; continue }
         d = d c; j++
       }
       OUT = OUT substr(s, i, j - i)
-      if (d != "") { NH++; HD[NH] = d; HQ[NH] = dq; HT[NH] = dash }
+      if (d != "") {
+        NH++; HD[NH] = d; HT[NH] = dash
+        e = index(substr(s, j), "\n"); rest = e ? substr(s, j, e - 1) : substr(s, j)
+        sk = ""
+        if (FD && GX && (ST == 2 || ST == 3)) { if (rest ~ /^[ \t]*$/) sk = "a" }
+        else if (SB && CT && rest ~ /^[ \t]*([)][ \t]*("[ \t]*)?)?$/) sk = "b"
+        HS[NH] = (dq && !NODATA) ? sk : ""; HC[NH] = index(rest, ")")
+      }
       i = j; continue
     }
     if (ch == "\n") {
-      wdone(); ST = 0; SK = 0; VN = 0; OUT = OUT ch; i++
+      wdone(); ST = 0; SK = 0; VN = 0; FD = 0; NW = 0; CT = 0; SB = 0; OUT = OUT ch; i++
       for (k = 1; k <= NH; k++) {
-        data = (HQ[k] && !LI)
+        bb = ""; found = 0
         while (i <= n) {
           e = index(substr(s, i), "\n")
           if (e) { ln = substr(s, i, e - 1); i += e } else { ln = substr(s, i); i = n + 1 }
           cmp = ln; if (HT[k]) sub(/^\t+/, "", cmp)
-          if (cmp == HD[k]) break
-          if (data) continue
-          if (LI) { gsub(sq, " ", ln); gsub(/"/, " ", ln); gsub(/,/, " ", ln); gsub(/\[/, " ", ln); gsub(/\]/, " ", ln) }
-          EXTRA = EXTRA ln "\n"
+          if (cmp == HD[k]) { found = 1; break }
+          bb = bb ln "\n"
         }
+        # Sink (b) also needs the substitution to close right after the body.
+        data = (HS[k] != "" && found)
+        if (data && HS[k] == "b" && !HC[k]) { rest = substr(s, i); sub(/^[ \t\n]*/, "", rest); if (substr(rest, 1, 1) != ")") data = 0 }
+        if (!data) { t = bb; gsub(sq, " ", t); gsub(/"/, " ", t); gsub(/,/, " ", t); gsub(/\[/, " ", t); gsub(/\]/, " ", t); EXTRA = EXTRA bb t }
       }
-      NH = 0; LI = 0; continue
+      NH = 0; continue
     }
-    if (index(";&|()`", ch)) { wdone(); ST = 0; SK = 0; VN = 0; OUT = OUT ch; i++; continue }
+    if (index(";&|()`", ch)) {
+      wdone(); ST = 0; SK = 0; VN = 0; FD = 0; NW = 0; CT = 0; SB = 0
+      if (ch == "(") { if (AR) AR++; else if (substr(s, i + 1, 1) == "(") AR = 1 }
+      else if (ch == ")" && AR) AR--
+      OUT = OUT ch; i++; continue
+    }
     WB = WB ch; i++
   }
   wdone()
@@ -417,12 +468,11 @@ function prep(s,   i, n, ch, c, j, k, d, dq, dash, e, ln, cmp, data) {
 }
 { raw = raw $0 "\n" }
 END {
-  EXTRA = ""; SUBQ = ""; t = raw
-  for (r = 0; t != "" && r < 16; r++) {
-    o = prep(t); t = SUBQ; SUBQ = ""
-    scan(o); scan(joinbs(o))
-  }
-  if (t != "") { scan(t); scan(joinbs(t)) }
+  # A command that defines a git or cat function, or an alias, has no data.
+  NODATA = (raw ~ /(^|[^A-Za-z0-9_])(git|cat)[ \t]*[(][ \t]*[)]/ || raw ~ /function[ \t]+(git|cat)/ || raw ~ /(^|[^A-Za-z0-9_])alias[ \t]/)
+  EXTRA = ""; NJ = 1; JQ[1] = raw; JS[1] = 0
+  for (h = 1; h <= NJ && h <= 64; h++) { o = prep(JQ[h], JS[h]); scan(o); scan(joinbs(o)) }
+  while (h <= NJ) { scan(JQ[h]); scan(joinbs(JQ[h])); h++ }
   scan(EXTRA); scan(joinbs(EXTRA))
 }') || { echo "BLOCKED: bash-guard per-word check failed to run" >&2; exit 2; }
 if [ -n "$VERDICT" ]; then

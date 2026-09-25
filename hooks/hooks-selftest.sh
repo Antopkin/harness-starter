@@ -365,7 +365,8 @@ check "restore '?*' BLOCK"           bash "git $RSR '?*'"                       
 check "checkout -- ':!README' BLOCK" bash "git $CO -- ':!README.md'"                block
 
 echo "== BASH guard (heredocs, commit values, reset --help) =="
-# A quoted heredoc body is data unless a shell or interpreter reads it; the
+# A quoted heredoc body is data only when it feeds a sink (git commit/tag -F -,
+# or a bare cat in a quoted $(...) argument of git commit, git tag or gh); the
 # value of commit -m/-F is data up to its own end; git reset --help is allowed.
 RMRF="$RMR $RF /tmp/x"; HEL="--h""el"
 check "bash <<'X' rm body BLOCK"     bash "bash <<'X'${NL}$RMRF${NL}X"              block
@@ -383,6 +384,27 @@ check "commit heredoc docs ALLOW"    bash "git commit -q -F - <<'MSG'${NL}docs: 
 check "commit -m -n in text ALLOW"   bash "git commit -m \"document the $CN flag of grep\"" allow
 check "commit -m push text ALLOW"    bash "git commit -m \"say why git $PSH $FRC is risky\"" allow
 check "commit -m \$(cat heredoc) ALLOW" bash "git commit -m \"\$(cat <<'EOF'${NL}why git $PSH $FRC is risky${NL}EOF${NL})\"" allow
+# The sink allowlist: every other reader of a quoted body gets it scanned, and
+# a <<, a quote or a value inside a comment or arithmetic opens nothing.
+check "<< inside a comment BLOCK"    bash "true # <<'X'${NL}$RMRF${NL}X"              block
+check "<< in arithmetic BLOCK"       bash "echo \$(( 1 << \"2\" ))${NL}$RMRF"         block
+check "marker line ends in | BLOCK"  bash "cat <<'X' |${NL}$RMRF${NL}X${NL}sh"        block
+check "unquoted \$(cat <<) BLOCK"    bash "\$(cat <<'X'${NL}$RMRF${NL}X${NL})"        block
+check "backtick cat << BLOCK"        bash "\`cat <<'X'${NL}$RMRF${NL}X${NL}\`"        block
+check "cat <<'X' | \$SHELL BLOCK"    bash "cat <<'X' | \$SHELL${NL}$RMRF${NL}X"       block
+check "function reads body BLOCK"    bash "f() { sh; }${NL}f <<'X'${NL}$RMRF${NL}X"   block
+check "cat <<'X' | tcsh BLOCK"       bash "cat <<'X' | tcsh${NL}$RMRF${NL}X"          block
+check "gawk system() body BLOCK"     bash "gawk -f /dev/stdin <<'X'${NL}BEGIN{system(\"$RMRF\")}${NL}X" block
+check "nodejs execSync body BLOCK"   bash "nodejs <<'X'${NL}require('child_process').execSync('$RMRF')${NL}X" block
+check "commit -m #' comment BLOCK"   bash "git commit -m #'${NL}$RMRF${NL}'"          block
+check "bash<<<'rm' no space BLOCK"   bash "bash<<<'$RMRF'"                            block
+check "cat <<'X' > file BLOCK"       bash "cat <<'X' > /tmp/s.sh && bash /tmp/s.sh${NL}$RMRF${NL}X" block
+check "bash -c \"\$(cat <<)\" BLOCK" bash "bash -c \"\$(cat <<'X'${NL}$RMRF${NL}X${NL})\"" block
+check "git() then commit -F - BLOCK" bash "git() { sh; }${NL}git commit -F - <<'X'${NL}$RMRF${NL}X" block
+check "commit -F - <<'X' | BLOCK"    bash "git commit -F - <<'X' |${NL}$RMRF${NL}X${NL}sh" block
+check "gh --body \$(cat) ALLOW"      bash "gh pr create --title t --body \"\$(cat <<'EOF'${NL}why git $PSH $FRC is risky${NL}EOF${NL})\"" allow
+check "commit -m \$(cat) tidy ALLOW" bash "git commit -m \"\$(cat <<'EOF'${NL}fix: tidy${NL}${NL}- $RMR stale dirs, not -r -f${NL}EOF${NL})\"" allow
+check "tag -F - heredoc ALLOW"       bash "git tag -a v1 -F - <<'M'${NL}why git $PSH $FRC is risky${NL}M" allow
 check "reset --help ALLOW"           bash "git $RST --help"                         allow
 
 echo "== skip-ci guard =="
