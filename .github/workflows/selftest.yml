@@ -1,6 +1,7 @@
 # Self-test of the guard hooks and the OpenCode bridge on Linux and macOS.
-# Ubuntu's awk is mawk and macOS ships BSD awk, so running the same suite on
-# both is the real test of the awk program inside hooks/bash-guard.sh.
+# The ubuntu-latest runner's awk is GNU awk and macOS ships BSD awk; the ubuntu
+# leg also re-runs the suite under mawk, so all three awks test the POSIX awk
+# program inside hooks/bash-guard.sh.
 name: selftest
 
 on:
@@ -58,6 +59,25 @@ jobs:
       - name: OpenCode guard bridge test
         shell: bash
         run: node hooks/opencode-guard-bridge.test.mjs
+
+      # The runner's own awk is GNU awk, so mawk goes into a shim dir put first
+      # on PATH and both tests run again against it.
+      - name: Re-run the tests under mawk
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        env:
+          SHIM: ${{ runner.temp }}/mawk-shim
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y mawk
+          mkdir -p "$SHIM"
+          ln -sf "$(command -v mawk)" "$SHIM/awk"
+          export PATH="$SHIM:$PATH"
+          command -v awk
+          awk -W version
+          bash hooks/hooks-selftest.sh
+          node hooks/opencode-guard-bridge.test.mjs
 
       # The sync script reads agents/ and writes .opencode/ relative to its
       # working directory, so it runs inside a copy and never touches the checkout.

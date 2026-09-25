@@ -25,7 +25,7 @@ host detection (§2–§3) and CI-status parsing (§4). Run the detection block 
 if you restate it, finalize and worktree-status diverge.
 
 **Commit discipline (do not duplicate):**
-[contexts/git-workflow.md](contexts/git-workflow.md) — conventional
+[contexts/git-workflow.md](../../contexts/git-workflow.md) — conventional
 commits ≤72 subject, add files **by name**, no push to
 main, never `--no-verify`. For staging+committing, invoke the **`/commit`** skill
 (from the `commit-commands` Claude Code plugin) rather than re-describing it; where
