@@ -106,6 +106,8 @@ The overlay's rules addendum, `tracks/academic/AGENTS.academic.md`, is not copie
 
 The role files in `agents/` describe focused subagents (a reader, a reviewer, an editor, a research analyst, engineering specialists). Their `tools:` and `model:` frontmatter fields are Claude Code mechanics and can be ignored elsewhere. The guards in `hooks/` block edits to secret and protected files (`.env*`, `.git/`, `secrets/`, credential and token files), destructive git commands, recursive forced deletes, a commit that skips CI while it touches code, and API keys pasted into a prompt. In Claude Code, and through the bridge in OpenCode, they also stop the Read and Grep tools from opening `.env*` files (except `.env.example` and `.env.sample`) or the Claude credential store; the Bash guard refuses any shell command that names the credential store, but a shell read such as `cat .env` is not guarded. The Bash guard reads the words of a command as written: it does not expand command substitution or aliases, so a command such as `$(which rm)` goes past it.
 
+Three refinements matter in daily work. A heredoc body counts as data only when it feeds an allowlisted sink: `git commit` or `git tag` reading the message with `-F -`, or `cat` inside a quoted `"$( )"` message argument of `git` or `gh`. So a commit message that describes a dangerous command gets past the per-word pass, while any other heredoc body is scanned as commands; the checks for `--no-verify`, `sudo` and the credential store still read every word. `git reset --help`, spelled out exactly, is allowed. The read guard splits a Grep glob list the way Claude Code does, on whitespace and then on commas, checks every part, and refuses a part that starts with `!`; it also refuses a Grep with no glob whose root is the home directory or a parent of it, because Claude Code's Grep always searches hidden files and would reach the credential store.
+
 - **Claude Code**
   - Agent roles:
     ```
@@ -134,7 +136,7 @@ The role files in `agents/` describe focused subagents (a reader, a reviewer, an
   - Agent roles: Codex has no subagent files; when a task calls for a role, read `agents/<role>.md` as a persona file and follow it.
   - Guards: this starter does not wire Codex hooks yet; the rules apply as AGENTS.md prose. Tell the user that in Codex nothing mechanically stops a destructive command, so the approval prompts of Codex itself are the last line of defence.
 
-The details of every guard, and what to do when one blocks you, are in `contexts/hooks-overview.md`.
+The details of every guard, its known limits, and what to do when one blocks you, are in `contexts/hooks-overview.md`. CI runs the same tests: `.github/workflows/selftest.yml` runs the hooks self-test, the bridge test and an agents-sync smoke run on every pull request, so if you change a guard, run `bash hooks/hooks-selftest.sh` before you open one.
 
 ### Step 5. Set up memory
 

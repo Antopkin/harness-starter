@@ -61,6 +61,8 @@ The rules and skills are the same for every tool; only the file layout differs, 
 | **OpenCode** | `AGENTS.md` natively | reads `.claude/skills/` and `.agents/skills/`, so no copy of its own is needed | synced into `.opencode/agent/` | the guard bridge plugin, with known gaps | the built-in `skill` tool |
 | **Codex** | `AGENTS.md` natively | `.agents/skills/` | a role file read as a persona | this starter does not wire Codex hooks yet; the rules apply as AGENTS.md prose | automatic pick-up plus the `/skills` list |
 
+The guards come with tests, and CI runs them. `.github/workflows/selftest.yml` runs on every pull request and on pushes to main, on ubuntu-latest and macos-latest, with read-only permissions and no secrets: the hooks self-test, the OpenCode guard-bridge test under Node 22 and an agents-sync smoke run in a temporary copy, and on ubuntu a second run of both tests under mawk, because the Bash guard's awk program must stay POSIX. If you contribute, run `bash hooks/hooks-selftest.sh` before you open a pull request; it should pass under bash 5 and under the bash 3.2 that ships with macOS. The rules of every guard and their known limits are in `contexts/hooks-overview.md`.
+
 ## Tracks
 
 **[`tracks/academic/`](tracks/academic/README.md)** is an academic overlay on top of the base: an addendum of source-integrity rules (`AGENTS.academic.md`), 12 academic skills for research, paper writing, simulated peer review, integrity audits, LaTeX and transcripts, two MCP servers (paper search across dozens of scholarly databases and a personal Zotero library) and step-by-step recipes in `runbooks/`.
