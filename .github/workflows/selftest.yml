@@ -1,0 +1,79 @@
+# Self-test of the guard hooks and the OpenCode bridge on Linux and macOS.
+# Ubuntu's awk is mawk and macOS ships BSD awk, so running the same suite on
+# both is the real test of the awk program inside hooks/bash-guard.sh.
+name: selftest
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  selftest:
+    name: selftest (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Ensure jq
+        shell: bash
+        run: |
+          if ! command -v jq >/dev/null 2>&1; then
+            if [ "$RUNNER_OS" = "Linux" ]; then
+              sudo apt-get update
+              sudo apt-get install -y jq
+            else
+              echo "jq is missing on $RUNNER_OS" >&2
+              exit 1
+            fi
+          fi
+          command -v jq
+          jq --version
+
+      - name: Show the awk flavour
+        shell: bash
+        run: |
+          command -v awk || true
+          awk --version 2>/dev/null || awk -W version 2>/dev/null || true
+
+      # The self-test sets a local git identity in each throwaway repo it
+      # commits to, so the runner needs no global one.
+      - name: Hooks self-test
+        shell: bash
+        run: bash hooks/hooks-selftest.sh
+
+      - name: OpenCode guard bridge test
+        shell: bash
+        run: node hooks/opencode-guard-bridge.test.mjs
+
+      # The sync script reads agents/ and writes .opencode/ relative to its
+      # working directory, so it runs inside a copy and never touches the checkout.
+      - name: Agents sync smoke test
+        shell: bash
+        env:
+          COPY: ${{ runner.temp }}/agents-sync-copy
+        run: |
+          set -euo pipefail
+          mkdir -p "$COPY"
+          cp -R "$GITHUB_WORKSPACE/." "$COPY/"
+          cd "$COPY"
+          python3 hooks/opencode-agents-sync.py --apply
+          count=$(find .opencode/agent -type f | wc -l | tr -d ' ')
+          echo "generated agent files: $count"
+          if [ "$count" -ne 21 ]; then
+            echo "expected exactly 21 files in .opencode/agent, found $count" >&2
+            exit 1
+          fi
