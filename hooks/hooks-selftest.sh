@@ -12,10 +12,10 @@
 #
 # The wired commands refer to "$CLAUDE_PROJECT_DIR/hooks/...", so the script
 # exports CLAUDE_PROJECT_DIR as the repo root, just as Claude Code does. It needs
-# jq and git itself; the guards are also run once with jq removed from PATH, and
-# once with a jq that fails, to prove they fail closed. Dangerous test tokens
-# and fake keys are assembled from
-# fragments so this file never contains a contiguous dangerous command or key.
+# jq and git itself. The tests also check tool-call refusals and prompt scanning
+# with jq missing from PATH or failing. Dangerous test tokens and fake keys are
+# assembled from fragments so this file never contains a contiguous dangerous
+# command or key.
 set -u
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 export CLAUDE_PROJECT_DIR="$ROOT"
@@ -42,6 +42,12 @@ done
 # A jq that is present but fails, first on PATH.
 mkdir -p "$TMP/badjq"
 printf '#!/bin/sh\nexit 126\n' > "$TMP/badjq/jq"; chmod +x "$TMP/badjq/jq"
+# Fail grep at the first filter or at the final credential-name check.
+mkdir -p "$TMP/badgrep"
+REAL_GREP=$(command -v grep)
+export REAL_GREP
+printf '%s\n' '#!/bin/sh' 'case $* in *"$GREP_FAILURE"*) exit 2 ;; esac' 'exec "$REAL_GREP" "$@"' > "$TMP/badgrep/grep"
+chmod +x "$TMP/badgrep/grep"
 
 run_hooks() {  # <hooks_file> <json> [PATH] -> echoes 2 if any hook exits 2, else 0
   hf="$1"; json="$2"; path="${3:-$PATH}"; result=0
@@ -73,6 +79,7 @@ payload() {  # <kind> <input>
     greptype) jq -n --arg p "$2" '{tool_name:"Grep", tool_input:{pattern:"x", path:$p, type:"py"}}' ;;
     grepcwd)  jq -n --arg c "$2" '{tool_name:"Grep", tool_input:{pattern:"x"}, cwd:$c}' ;;
     grephome) jq -n --arg p "$HOME" --arg g "$2" '{tool_name:"Grep", tool_input:{pattern:"x", path:$p, glob:$g}}' ;;
+    grepjson) jq -n --arg p "$2" '{tool_name:"Grep", tool_input:{pattern:"x", path:$p, glob:"*.json"}}' ;;
     prompt) jq -n --arg p "$2" '{hook_event_name:"UserPromptSubmit", prompt:$p}' ;;
     *)      jq -n --arg c "$2" '{tool_name:"Bash", tool_input:{command:$c}}' ;;
   esac
@@ -80,7 +87,7 @@ payload() {  # <kind> <input>
 hooks_for() {  # <kind> -> hooks file
   case "$1" in
     file|notebook) echo "$TMP/file_hooks.txt" ;;
-    read|grep|grepglob|greptype|grepcwd|grephome) echo "$TMP/read_hooks.txt" ;;
+    read|grep|grepglob|greptype|grepcwd|grephome|grepjson) echo "$TMP/read_hooks.txt" ;;
     prompt) echo "$TMP/prompt_hooks.txt" ;;
     skipci) echo "$TMP/skipci_hooks.txt" ;;
     *) echo "$TMP/bash_hooks.txt" ;;
@@ -102,6 +109,14 @@ for k in bash file read prompt; do
   if [ "$n" -gt 0 ]; then PASS=$((PASS+1)); printf 'PASS  %s hooks wired: %s\n' "$k" "$n"
   else FAIL=$((FAIL+1)); printf 'FAIL  no %s hook wired in %s\n' "$k" "$SETTINGS"; fi
 done
+rc=2
+jq -e '
+  ([.hooks | .. | objects | select(has("onFailure"))] | length) == 3 and
+  ([.hooks.PreToolUse[].hooks[] | select(.onFailure == "block")
+    | .command | split("/") | last] | sort) ==
+  ["bash-guard.sh\"", "file-guard.sh\"", "read-guard.sh\""]
+' "$SETTINGS" >/dev/null && rc=0
+report "exact fail-closed wiring" allow "$rc"
 
 # skip-ci fixtures: two throwaway repos (one code-staged, one docs-staged)
 REPO_PY="$TMP/repo_py"; REPO_MD="$TMP/repo_md"
@@ -154,6 +169,12 @@ check ".envrc"                   file ".envrc"                                bl
 check ".GIT/config upper-case"   file ".GIT/config"                           block
 check "API_TOKEN.JSON upper"     file "config/API_TOKEN.JSON"                 block
 check ".Env.Example ALLOW"       file "app/.Env.Example"                      allow
+check "sample in .git"           file ".git/hooks/.env.sample"               block
+check "sample in secrets"        file "secrets/.env.example"                 block
+check "sample in dotenv dir"     file ".ENV.local/.env.example"              block
+check "ordinary file in dotenv dir" file "example-project/.envrc/config"      block
+check "sample-named directory"  notebook "example-project/.env.sample/demo.ipynb" block
+check "optional lockfile"       file "example-project/poetry.lock"           allow
 # last hardening round: notebook_path, the worktree gitfile, a narrower token rule
 check "notebook .env BLOCK"      notebook "$ROOT/.env"                        block
 check "notebook under .git BLOCK" notebook ".git/hooks/nb.ipynb"              block
@@ -168,8 +189,20 @@ check "tokenizer.json ALLOW"     file "models/tokenizer.json"                 al
 check "tokens.json ALLOW"        file "design/tokens.json"                    allow
 check ".env.sample ALLOW"        file ".env.sample"                           allow
 check "src/app.py ALLOW"         file "src/app.py"                            allow
+report "file guard grep filter error" block "$(GREP_FAILURE=-Evi run_hooks \
+  "$TMP/file_hooks.txt" "$(payload file 'example-project/README.md')" "$TMP/badgrep:$PATH")"
+report "file guard grep credential check error" block "$(GREP_FAILURE=credential run_hooks \
+  "$TMP/file_hooks.txt" "$(payload file 'example-project/settings.json')" "$TMP/badgrep:$PATH")"
 
 echo "== READ guard =="
+# Use a synthetic home for all sensitive-root checks and empty backup fixtures
+# with distinct suffixes so the guard can only discover them by name.
+READ_HOME=$(cd "$TMP" && pwd -P)/example-home
+mkdir -p "$READ_HOME/example-project" "$READ_HOME/.codex" "$READ_HOME/.claude/backups/example-project"
+ln -s "$READ_HOME" "$TMP/home-alias"
+ln -s "$READ_HOME/.codex" "$TMP/codex-alias"
+touch "$READ_HOME/$CJ.corrupted.1700012345678" \
+  "$READ_HOME/.claude/backups/example-project/$CJ.2026-01-02T03-04-05Z.bak"
 check "Read credential store"    read "$TMP/fakehome/$CJ"                     block
 check "Read upper-case variant"  read "$TMP/fakehome/.CLAUDE.JSON"            block
 check "Grep credential store"    grep "$TMP/fakehome/$CJ"                     block
@@ -191,8 +224,9 @@ check "Grep glob {.env,x} BLOCK"      grepglob "{.env,*.md}"                  bl
 check "Grep glob .env{..} BLOCK"      grepglob "**/.env{.bak,.local}"         block
 check "Grep glob [.]env BLOCK"        grepglob "[.]env"                       block
 check "Grep glob *.local BLOCK"       grepglob "src/*.local"                  block
-check "Grep glob store ? BLOCK"       grepglob "{a,b/.claude.js?n}"           block
-check "Grep glob backup BLOCK"        grepglob ".CLAUDE.json.b*"              block
+check "Grep glob store ? BLOCK"      grepglob "{a,b/.claude.js?n}"          block
+check "Grep glob backup BLOCK"       grepglob ".CLAUDE.json.b*"             block
+check "Grep project backup wildcard BLOCK" grepglob "*.b*"                  block
 check "Grep glob * BLOCK (cost)"      grepglob "*"                            block
 check "Grep glob .env.example ALLOW"  grepglob ".env.example"                 allow
 check "Grep glob .env.sample ALLOW"   grepglob "**/.env.sample"               allow
@@ -209,19 +243,62 @@ check "Grep glob *.md,*.txt ALLOW"    grepglob "*.md,*.txt"                   al
 check "Read .env.sample ALLOW"        read "$ROOT/.env.sample"                allow
 # A Grep with no glob (or only a type filter) rooted at home or a parent of it
 # reaches the credential store under ripgrep's --hidden; a project dir is fine.
-check "Grep no glob at HOME BLOCK"    grep     "$HOME"                        block
-check "Grep no glob at / BLOCK"       grep     "/"                            block
-check "Grep type at HOME BLOCK"       greptype "$HOME"                        block
-check "Grep cwd HOME no path BLOCK"   grepcwd  "$HOME"                        block
-check "Grep no glob under HOME ALLOW" grep     "$HOME/some-project"           allow
-check "Grep glob at HOME ALLOW"       grephome "*.md"                         allow
-check "Read file at HOME ALLOW"       read     "$HOME/notes.md"               allow
+HOME="$READ_HOME" check "Grep no glob at HOME BLOCK"    grep     "$READ_HOME"   block
+HOME="$READ_HOME" check "Grep no glob at / BLOCK"       grep     "/"            block
+HOME="$READ_HOME" check "Grep type at HOME BLOCK"       greptype "$READ_HOME"   block
+HOME="$READ_HOME" check "Grep cwd HOME no path BLOCK"   grepcwd  "$READ_HOME"   block
+HOME="$READ_HOME" check "Grep no glob under HOME ALLOW" grep     "$READ_HOME/example-project" allow
+HOME="$READ_HOME" check "Grep glob at HOME ALLOW"       grephome "*.md"         allow
+HOME="$READ_HOME" check "Read file at HOME ALLOW"       read     "$READ_HOME/notes.md" allow
+
+HOME="$READ_HOME" check "project JSON" grepglob "*.json"                     allow
+HOME="$READ_HOME" check "recursive project JSON" grepglob "**/*.json"         allow
+HOME="$READ_HOME" check "home JSON" grephome "*.json"                         block
+HOME="$READ_HOME" check "ancestor JSON" grepjson "$TMP"                      block
+HOME="$READ_HOME" check "normalized home JSON" grepjson "$READ_HOME//example-project/../." block
+HOME="$READ_HOME" check "tilde home JSON" grepjson "~/"                      block
+HOME="$READ_HOME" check "symlink home JSON" grepjson "$TMP/home-alias"         block
+HOME="$READ_HOME" check "data-volume home JSON" grepjson "/System/Volumes/Data$READ_HOME" block
+HOME="$READ_HOME" check "backups JSON" grepjson "$READ_HOME/.claude/backups/example-project" block
+HOME="$READ_HOME" check "backups without glob" grep "$READ_HOME/.claude/backups" block
+HOME="$READ_HOME" check "timestamped backup glob" grephome "*.corrupted.17000*" block
+HOME="$READ_HOME" check "Claude root JSON" grepjson "$READ_HOME/.claude"       block
+HOME="$READ_HOME" check "Claude root without glob" grep "$READ_HOME/.claude"  block
+HOME="$READ_HOME" check "Codex root JSON" grepjson "$READ_HOME/.codex"         block
+HOME="$READ_HOME" check "Codex root without glob" grep "$READ_HOME/.codex"    block
+HOME="$READ_HOME" check "Codex root symlink JSON" grepjson "$TMP/codex-alias"  block
+report "Claude backup custom suffix" block "$(HOME="$READ_HOME" run_hooks "$TMP/read_hooks.txt" \
+  "$(jq -n --arg d "$READ_HOME/.claude" '{tool_name:"Grep", tool_input:{path:$d, glob:"*.2026-01-02T*.bak"}}')")"
+report "Codex auth wildcard" block "$(HOME="$READ_HOME" run_hooks "$TMP/read_hooks.txt" \
+  "$(jq -n --arg d "$READ_HOME/.codex" '{tool_name:"Grep", tool_input:{path:$d, glob:"a?th.json"}}')")"
+HOME="$READ_HOME" check "project dotenv suffix glob" grepglob "*.production" block
+report "relative Grep root at home" block "$(HOME="$READ_HOME" run_hooks "$TMP/read_hooks.txt" \
+  "$(jq -n --arg cwd "$READ_HOME/example-project" '{cwd:$cwd, tool_name:"Grep", tool_input:{path:"..", glob:"*.json"}}')")"
+report "Grep process cwd at home" block "$(cd "$READ_HOME" && HOME="$READ_HOME" run_hooks \
+  "$TMP/read_hooks.txt" '{"tool_name":"Grep","tool_input":{"glob":"*.json"}}')"
+report "home typed Grep with glob" block "$(HOME="$READ_HOME" run_hooks "$TMP/read_hooks.txt" \
+  "$(jq -n --arg cwd "$READ_HOME" '{cwd:$cwd, tool_name:"Grep", tool_input:{type:"json", glob:"*.md"}}')")"
+check "Codex login path" read "$READ_HOME/.CoDeX/Auth.Json"                   block
+check "Codex project auth file" read "$READ_HOME/example-project/auth.json"   allow
+report "Read relative Codex login path" block "$(run_hooks "$TMP/read_hooks.txt" \
+  "$(jq -n --arg cwd "$READ_HOME/.codex" '{cwd:$cwd, tool_name:"Read", tool_input:{file_path:"auth.json"}}')")"
+report "Grep relative Codex login path" block "$(run_hooks "$TMP/read_hooks.txt" \
+  "$(jq -n --arg cwd "$READ_HOME/.codex" '{cwd:$cwd, tool_name:"Grep", tool_input:{path:"auth.json", pattern:"x"}}')")"
+check "Read aliased Codex login path" read "$TMP/codex-alias/auth.json"       block
+check "Grep aliased Codex login path" grep "$TMP/codex-alias/auth.json"       block
+check "Read aliased Codex ordinary file" read "$TMP/codex-alias/notes.md"     allow
 
 echo "== BASH guard (dangerous) =="
 check "git -C reset --hard"      bash "git -C /p $RST $HRD"                   block
 check "push args --force"        bash "git $PSH origin main $FRC"             block
 check "commit --no-verify"       bash "git commit $NV"                        block
 check "rm -rf"                   bash "$RMR $RF /tmp/x"                       block
+rc=0
+hint=$(printf '%s' "$(payload bash "$RMR $RF /tmp/example-project")" |
+  "$SH" -c "$(sed -n '1p' "$TMP/bash_hooks.txt")" 2>&1 >/dev/null) || rc=$?
+verdict=2
+if [ "$rc" -eq 2 ] && printf '%s\n' "$hint" | grep -Fq 'then rmdir the empty directories'; then verdict=0; fi
+report "recursive-delete recovery hint" allow "$verdict"
 check "rm -fr (order gap)"       bash "$RMR $FRO /tmp/x"                      block
 check "rm -R -f (case/spaced)"   bash "$RMR $RSEP $FSEP /tmp/x"               block
 check "plain reset --hard"       bash "git $RST $HRD"                         block
@@ -507,22 +584,31 @@ GHPAT="github_""pat_""11ABCDEFG0123456789_abcdefghijklmnopqrstuvwxyz012345"
 GHP="gh""p_""abcdefghijklmnopqrstuvwxyz0123"
 AWSK="AK""IA""QWERTYUIOPASDFGH"
 PEM="-----BEGIN ""RSA PRIVATE ""KEY-----"
+KEY_BODY="$(printf '%s' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' | base64 | tr -d '\n=')01234"
 check "key sk-ant BLOCK"         prompt "my key $SK ok"                       block
 check "key github_pat BLOCK"     prompt "token $GHPAT"                        block
 check "key ghp_ BLOCK"           prompt "use $GHP please"                     block
 check "key AKIA BLOCK"           prompt "aws $AWSK end"                       block
-check "PEM header BLOCK"         prompt "$PEM${NL}MIIEow"                     block
+check "PEM body"                prompt "$PEM$NL$KEY_BODY"                    block
+check "PEM header BLOCK"        prompt "$PEM${NL}MII""Eow"                   block
+check "PEM header in prose"     prompt "The $PEM header starts a key."       allow
+check "PEM header before prose" prompt "$PEM${NL}Please see the docs."       allow
 check "plain prompt ALLOW"       prompt "please refactor the parser"          allow
 check "masked key ALLOW"         prompt "the format is sk-ant-XXXX"           allow
 PGP="-----BEGIN ""PGP PRIVATE ""KEY BLOCK-----"
-SKP="sk-""proj-""Ab12Cd34Ef56Gh78Ij90Kl12"
+PROJ_PREFIX="sk-""proj-"
+PROJ_FIRST="Ab12Cd34Ef56"; PROJ_LAST="Gh78Ij90Kl12"
+PROJ_BODY="$PROJ_FIRST$PROJ_LAST"
+SKP="$PROJ_PREFIX$PROJ_BODY"
 GOOG="AI""za""SyA1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6q"
 GLP="gl""pat-""xY12zW34vU56tS78rQ90"
 ASIAK="AS""IA""ZXCVBNMASDFGHJKL"
 HFT="hf""_""aBcDeFgHiJkLmNoPqRsTuVwXyZ012345"
 MSKP="sk-""proj-""XXXXXXXXXXXXXXXXXXXXXXXX"
 MAWS="AK""IA""XXXXXXXXXXXXXXXX"
-check "PGP header BLOCK"         prompt "$PGP${NL}lQOYBF"                     block
+check "PGP body with metadata"  prompt "$PGP${NL}Comment: example.com$NL$NL$KEY_BODY" block
+check "PGP header BLOCK"        prompt "$PGP${NL}lQO""YBF"                   block
+check "PGP short body after metadata" prompt "$PGP$NL${NL}Version: example$NL${NL}lQO""YBF" block
 check "key sk-proj BLOCK"        prompt "openai $SKP end"                     block
 check "key AIza BLOCK"           prompt "google $GOOG end"                    block
 check "key glpat BLOCK"          prompt "gitlab $GLP end"                     block
@@ -545,7 +631,66 @@ check "Stripe rk_live BLOCK"     prompt "stripe $RKS end"                     bl
 check "AWS doc EXAMPLE ALLOW"    prompt "the docs use $AWSDOC as a sample"    allow
 check "EXAMPLE then real BLOCK"  prompt "like $AWSDOC, mine is $AWSK"         block
 check "api key in prose ALLOW"   prompt "where do I put the api key for the service?" allow
-check_nojq "key guard new shape blocks" prompt "stripe $STR end"             block
+report "key in metadata only" allow "$(run_hooks "$TMP/prompt_hooks.txt" \
+  "$(jq -n --arg key "$SKP" '{transcript_path:$key}')")"
+report "nested prompt metadata" allow "$(run_hooks "$TMP/prompt_hooks.txt" \
+  "$(jq -n --arg key "$SKP" '{metadata:{prompt:$key}, prompt:"hello"}')")"
+check "empty prompt"            prompt ""                                  allow
+check "escaped prompt quotes"   prompt "example \"quoted\" and \\\"$SKP\\\"" block
+check "key joined to a word"    prompt "risk-admin-${ADM#sk-admin-}"        allow
+check "Markdown italic key"     prompt "_$SKP""_"                            block
+check "Markdown italic masked key" prompt "_$MSKP""_"                       allow
+check "Markdown bold key"       prompt "__$SKP""__"                          block
+check "Markdown bold masked key" prompt "__$MSKP""__"                        allow
+check "Markdown bold italic key" prompt "___$SKP""___"                       block
+check "Markdown bold italic masked key" prompt "___$MSKP""___"               allow
+check "Markdown bold split key" prompt "__$PROJ_PREFIX$NL$PROJ_BODY""__"     block
+check "key split by newline"    prompt "$PROJ_PREFIX$NL$PROJ_BODY"          block
+check "key split by tab"        prompt "$(printf '%s\t%s' "$PROJ_PREFIX" "$PROJ_BODY")" block
+check "key split by literal escape" prompt "$PROJ_PREFIX\\n$PROJ_BODY"     block
+check "newline inside key body" prompt "$PROJ_PREFIX$PROJ_FIRST$NL  $PROJ_LAST" block
+check "literal newline inside key body" prompt "$PROJ_PREFIX$PROJ_FIRST\\n$PROJ_LAST" block
+check "spaces inside key body"  prompt "$PROJ_PREFIX$PROJ_FIRST $PROJ_LAST"   allow
+check "masked split key"        prompt "$PROJ_PREFIX$NL${MSKP#"$PROJ_PREFIX"}" allow
+check "classic GitHub split token" prompt "gh""p_$NL${GHP#ghp_}"            block
+check "classic GitHub split username" prompt "format: gh""p_${NL}example_project_account" allow
+check "classic GitHub split underscore" prompt "gh""p_$NL${GHP#ghp_}_example" allow
+check "fine-grained GitHub split minimum" prompt "github_""pat_$NL""AbCdEfGhIjKlMnOpQrStU" allow
+check "Hugging Face split minimum" prompt "hf""_$NL${HFT#hf_}"             block
+check "Hugging Face short split body" prompt "hf""_$NL$PROJ_BODY"           allow
+check "raw invisible in key"    prompt "${PROJ_PREFIX%?}$(printf '\342\200\213')-$PROJ_BODY" block
+escaped_prompt=$(printf '{"prompt":"%s\\u2060%s"}' "$PROJ_PREFIX" "$PROJ_BODY")
+report "JSON invisible in key" block "$(run_hooks "$TMP/prompt_hooks.txt" "$escaped_prompt")"
+escaped_prompt=$(printf '{"prompt":"\\u0073%s"}' "${SKP#?}")
+report "JSON ASCII escape in key prefix" block "$(run_hooks "$TMP/prompt_hooks.txt" "$escaped_prompt")"
+check "non-AWS EXAMPLE suffix"  prompt "${SKP}EXAMPLE"                       block
+SLACK_BODY="1234567890-""AbCdEfGhIjKl"
+SLACK_B="xox""b-$SLACK_BODY"
+SLACK_E="xox""e-$SLACK_BODY"
+SLACK_REFRESH_P="xox""e.xox""p-$SLACK_BODY"
+SLACK_REFRESH_B="xox""e.xox""b-$SLACK_BODY"
+SLACK_APP="xa""pp-$SLACK_BODY"
+check "Slack bot token"         prompt "$SLACK_B"                           block
+check "Slack expiring token"    prompt "$SLACK_E"                           block
+check "Slack user refresh"      prompt "$SLACK_REFRESH_P"                   block
+check "Slack bot refresh"       prompt "$SLACK_REFRESH_B"                   block
+check "Slack app token"         prompt "$SLACK_APP"                         block
+check "Slack prefix in prose"   prompt "Where is the xox""b- documentation?" allow
+check "Slack prose xoxb"        prompt "Where is the xox""b- 10-character documentation?" allow
+check "Slack prose xoxa"        prompt "Does xox""a- 10-character shorthand still work?" allow
+check "Slack prose xoxp"        prompt "See xox""p- 10-character examples."  allow
+check "Slack prose xoxr"        prompt "See xox""r- 10-character notation."  allow
+check "Slack prose xoxs"        prompt "Does xox""s- 10-character shorthand still work?" allow
+check "Slack prose xoxe"        prompt "See xox""e- 10-character examples."  allow
+check "Slack prose xoxe.xoxp"   prompt "See xox""e.xox""p- 10-character notation." allow
+check "Slack prose xoxe.xoxb"   prompt "See xox""e.xox""b- 10-character examples." allow
+check "Slack prose xapp"        prompt "Does xa""pp- 1-step-2-factor setup work?" allow
+check "Slack split malformed app" prompt "xa""pp-$NL""AbCd-12345"           allow
+SLACK_IDS="12345678901-""23456789012"
+SLACK_VALUE="AbCdEfGhIjKl""MnOpQrStUvWx"
+check "Slack split bot token"    prompt "xox""b- $SLACK_IDS-$SLACK_VALUE"    block
+check "Slack wrapped bot token"  prompt "xox""b-$SLACK_IDS-$NL$SLACK_VALUE"  block
+check "Slack split app token"    prompt "xa""pp-$NL""1-A0000000001-12345678901-$(printf '%064d' 7)" block
 
 echo "== without jq on PATH =="
 check_nojq "bash guards fail closed"   bash   "ls -la"                        block
@@ -553,12 +698,18 @@ check_nojq "file guard fails closed"   file   "docs/a.md"                     bl
 check_nojq "read guard fails closed"   read   "$ROOT/README.md"               block
 check_nojq "key guard still blocks"    prompt "my key $SK ok"                 block
 check_nojq "key guard still allows"    prompt "hello"                         allow
+check_nojq "raw key joined to a word"  prompt "risk-admin-${ADM#sk-admin-}"    block
+check_nojq "key guard new shape blocks" prompt "stripe $STR end"              block
 
 echo "== with a failing jq on PATH =="
 check_badjq "bash guards fail closed"    bash   "ls -la"                      block
 check_badjq "skip-ci guard fails closed" skipci "ls -la"                      block
 check_badjq "file guard fails closed"    file   "docs/a.md"                   block
 check_badjq "read guard fails closed"    read   "$ROOT/README.md"             block
+check_badjq "key guard still blocks"     prompt "my key $SK ok"              block
+check_badjq "key guard still allows"     prompt "hello"                      allow
+check_badjq "failed jq key joined to a word" prompt "risk-admin-${ADM#sk-admin-}" block
+check_badjq "key guard new shape blocks" prompt "stripe $STR end"            block
 
 echo "------------------------------------------------------------"
 echo "RESULT: PASS=$PASS FAIL=$FAIL"

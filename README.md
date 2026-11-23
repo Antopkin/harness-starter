@@ -1,6 +1,10 @@
 # harness-starter: a starter harness for coding agents
 
-Install jq first (brew install jq / apt install jq). The guards that protect your secrets and your git history parse their input with jq, and without it they refuse to run. The `fill-form` skill also needs the agent-browser CLI and a Chrome started with `--remote-debugging-port=9222`.
+Claude Code 2.1.295 or later is required for the Bash, file and read guards to block tool calls when a guard fails to start, times out or exits unexpectedly. [Claude Code 2.1.295 release notes](https://github.com/anthropics/claude-code/releases/tag/v2.1.295)
+
+Install `jq` first (`brew install jq` or `apt install jq`). The Bash, file, read and skip-CI guards block tool calls if `jq` is missing or fails. The `fill-form` skill also needs the agent-browser CLI and a Chrome started with `--remote-debugging-port=9222`.
+
+The pasted-key guard uses `jq` to decode the top-level prompt and checks [supported token formats](contexts/hooks-overview.md#on-prompt-submit) for one break after the prefix or one line wrap inside the body. If `jq` is missing or fails, it scans the raw input for contiguous keys and private-key headers without decoding the JSON.
 
 A harness is what turns a coding agent from a chatbot into a disciplined worker. It consists of four things: **rules** (how to behave), **skills** (ready-made procedures for frequent tasks), **agent roles** (focused subagents the main session can delegate to) and **memory** (facts that survive session restarts), with **guards** that enforce the most important rules. This repository is a ready starter set of all of them, working in **Claude Code, OpenCode and Codex** from a single file layout.
 

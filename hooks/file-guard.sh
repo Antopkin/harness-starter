@@ -23,17 +23,33 @@ P=$(jq -r '.tool_input | [.file_path?, .notebook_path?] | map(select(type == "st
 [ -z "$P" ] && exit 0
 [ "$P" = "null" ] && exit 0
 
+grep_match() {
+  case $1 in
+    0) return 0 ;;
+    1) return 1 ;;
+    *) echo "guard: grep failed while checking the file path" >&2; exit 2 ;;
+  esac
+}
+
+matches() {
+  printf '%s\n' "$1" | grep -qEi "$2"
+  grep_match "$?"
+}
+
 # Every match below is case-insensitive: macOS volumes are case-insensitive by
 # default, so .ENV and .Git/config open the very same files.
-# Allow .env.example and .env.sample explicitly, BEFORE the .env* block (order matters).
-if printf '%s\n' "$P" | grep -qEi '(^|/)\.env\.(example|sample)$'; then
-  exit 0
+# The sample exception applies only to the basename. Protected ancestors
+# are checked for every path, including paths ending in a sample.
+non_samples=$(printf '%s\n' "$P" | grep -Evi '(^|/)\.env\.(example|sample)$')
+if grep_match "$?" && matches "$non_samples" '(^|/)\.env[^/]*$'; then
+  echo "BLOCKED: protected file: $P" >&2
+  exit 2
 fi
 
-# Block: .env* (.env, .env.local, .envrc ...), anything under .git/, a
+# Block: .env* directories, anything under .git/, a
 # worktree's .git file itself, and anything under a secrets/ directory.
-BLOCK='(^|/)\.env[^/]*$|(^|/)\.git/|(^|/)\.git$|(^|/)secrets/'
-if printf '%s\n' "$P" | grep -qEi "$BLOCK"; then
+BLOCK='(^|/)\.env[^/]*/|(^|/)\.git/|(^|/)\.git$|(^|/)secrets/'
+if matches "$P" "$BLOCK"; then
   echo "BLOCKED: protected file: $P" >&2
   exit 2
 fi
@@ -44,8 +60,8 @@ fi
 # gh-tokens.json). So a note such as memory/reference_token_rotation.md, a
 # tokenizer.json and a design-token tokens.json stay editable.
 NAME=${P##*/}
-if printf '%s\n' "$NAME" | grep -qEi '\.(txt|json|env|pem|key)$' \
-   && printf '%s\n' "$NAME" | grep -qEi 'credential|secret|(^|[_.-])token[_.-]|[_.-]tokens[_.-]'; then
+if matches "$NAME" '\.(txt|json|env|pem|key)$' \
+   && matches "$NAME" 'credential|secret|(^|[_.-])token[_.-]|[_.-]tokens[_.-]'; then
   echo "BLOCKED: protected file: $P" >&2
   exit 2
 fi

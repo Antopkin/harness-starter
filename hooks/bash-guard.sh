@@ -634,6 +634,9 @@ END {
 }') || { echo "BLOCKED: bash-guard per-word check failed to run" >&2; exit 2; }
 if [ -n "$VERDICT" ]; then
   echo "BLOCKED: dangerous command ($VERDICT): $CMD" >&2
+  if [ "$VERDICT" = "rm recursive and forced" ]; then
+    echo "Delete the files by name with plain rm (no -r, no -f), then rmdir the empty directories. For a whole tree, ask the owner." >&2
+  fi
   exit 2
 fi
 
