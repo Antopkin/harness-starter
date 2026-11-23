@@ -31,11 +31,11 @@
 #
 # A Grep glob is also read the way the glob engine reads it: its braces are
 # expanded ({a,b} gives a and b) and the last segment of each expansion is
-# tried as a shell pattern, case-insensitively, against .env, .env.local,
-# .claude.json and .claude.json.backup. Any match is refused, so {.env,x},
-# [.]env and *.local are caught. The price: a glob of * or ** alone matches .env
-# and is refused too; name the files you want (*.md, src/**/*.py) instead. A
-# glob with more than 512 brace expansions is refused as too complex to check.
+# tried as a case-insensitive shell pattern against dotenv and credential-store
+# names. Broad JSON globs are allowed at project roots. At sensitive roots,
+# tests also use the protected names at that location, including actual Claude
+# backup names. A glob such as * is refused everywhere because it matches .env.
+# More than 512 brace expansions are refused as too complex to check.
 # This needs bash (the wiring runs the script with bash).
 #
 # Claude Code splits a Grep glob on whitespace, then each piece on commas unless
@@ -56,34 +56,94 @@
 command -v jq >/dev/null 2>&1 || { echo "guard inactive: install jq (brew install jq / apt install jq)" >&2; exit 2; }
 
 IN=$(cat)
-P=$(printf '%s' "$IN" | jq -r '.tool_input | (.file_path, .path, .glob) | select(type == "string" and . != "")' 2>/dev/null) || { echo "guard: cannot parse hook input" >&2; exit 2; }
+P=$(printf '%s' "$IN" | jq -r '.tool_input | (.file_path, .path) | select(type == "string" and . != "")' 2>/dev/null) || { echo "guard: cannot parse hook input" >&2; exit 2; }
 G=$(printf '%s' "$IN" | jq -r '.tool_input.glob | select(type == "string" and . != "")' 2>/dev/null) || { echo "guard: cannot parse hook input" >&2; exit 2; }
+CWD=$(printf '%s' "$IN" | jq -r '.cwd | select(type == "string" and . != "")' 2>/dev/null) || { echo "guard: cannot parse hook input" >&2; exit 2; }
+CWD=${CWD:-$PWD}
 
-# A Grep with no glob, or one narrowed only by a file type, runs ripgrep with
-# --hidden, so rooted at the home directory (or a parent of it) it reaches the
-# credential store no matter what the pattern is. Its root is the path, or the
-# hook's cwd when no path is given. Refuse that; a project directory (any
-# descendant of home) is fine, and a glob that names files is handled below.
-TOOL=$(printf '%s' "$IN" | jq -r '.tool_name | select(type == "string")' 2>/dev/null) || { echo "guard: cannot parse hook input" >&2; exit 2; }
-if [ "$TOOL" = "Grep" ]; then
-  TYPE=$(printf '%s' "$IN" | jq -r '.tool_input.type | select(type == "string" and . != "")' 2>/dev/null)
-  if [ -z "$G" ] || [ -n "$TYPE" ]; then
-    ROOT=$(printf '%s' "$IN" | jq -r '.tool_input.path | select(type == "string" and . != "")' 2>/dev/null)
-    [ -z "$ROOT" ] && ROOT=$(printf '%s' "$IN" | jq -r '.cwd | select(type == "string" and . != "")' 2>/dev/null)
-    if [ -n "$ROOT" ] && [ -n "$HOME" ]; then
-      case $ROOT in "~") ROOT=$HOME ;; "~/"*) ROOT="$HOME/${ROOT#"~/"}" ;; esac
-      r=${ROOT%/}; h=${HOME%/}; reaches=0
-      [ -z "$r" ] && r=/
-      if [ "$r" = "/" ] || [ "$r" = "$h" ]; then reaches=1
-      else case "$h/" in "$r/"*) reaches=1 ;; esac
-      fi
-      if [ "$reaches" -eq 1 ]; then
-        echo "BLOCKED: a Grep with no glob (or only a type filter) rooted at $ROOT searches the home directory with --hidden and would reach the credential store. Root it at a project directory, or add a glob that names the files you want." >&2
-        exit 2
-      fi
+absolute_path() {
+  case $1 in
+    \~) printf '%s' "$HOME" ;;
+    \~/*) printf '%s' "$HOME/${1:2}" ;;
+    /*) printf '%s' "$1" ;;
+    *) printf '%s' "$CWD/$1" ;;
+  esac
+}
+
+physical_dir() (
+  unset CDPATH
+  cd -P -- "$1" 2>/dev/null && pwd -P
+)
+
+normalize_dir() {
+  local path=$1 clean='' segment IFS=/
+  set -f
+  for segment in $path; do
+    case $segment in
+      ''|.) ;;
+      ..) clean=${clean%/*} ;;
+      *) clean=$clean/$segment ;;
+    esac
+  done
+  printf '%s' "${clean:-/}"
+}
+
+CLAUDE=0; CODEX=0; HOME_DIRS=(); BACKUP_DIRS=()
+# Record which stores a root can reach, including the macOS data-volume alias.
+# The caller enables case-insensitive matching.
+check_root() {
+  local dir=$1 home
+  [ "$dir" = / ] && CLAUDE=1
+  [ -n "$HOME" ] || return 0
+  for home in "$HOME" "/System/Volumes/Data$HOME"; do
+    home=$(normalize_dir "$home")
+    if [[ $dir == / || $home == "$dir" || $home == "$dir"/* ]]; then
+      CLAUDE=1; CODEX=1
+      HOME_DIRS+=("$home")
+      BACKUP_DIRS+=("$home/.claude/backups")
+    elif [[ $dir == "$home/.claude" ]]; then
+      CLAUDE=1
+      BACKUP_DIRS+=("$dir/backups")
+    elif [[ $dir == "$home/.claude/backups" || $dir == "$home/.claude/backups"/* ]]; then
+      CLAUDE=1
+      BACKUP_DIRS+=("$dir")
+    elif [[ $dir == "$home/.codex" ]]; then
+      CODEX=1
     fi
+  done
+}
+
+# A broad Grep runs ripgrep with --hidden. Resolve its root both lexically and
+# physically so relative paths, dot segments and directory symlinks count.
+GREP=$(printf '%s' "$IN" | jq -r 'if ((.tool_name // "") | ascii_downcase) == "grep" or .tool_input.pattern != null then "1" else empty end' 2>/dev/null) || { echo "guard: cannot parse hook input" >&2; exit 2; }
+if [ -n "$GREP" ] || [ -n "$G" ]; then
+  ROOT=$(printf '%s' "$IN" | jq -r '.tool_input.path | select(type == "string" and . != "")' 2>/dev/null) || { echo "guard: cannot parse hook input" >&2; exit 2; }
+  TYPE=$(printf '%s' "$IN" | jq -r '.tool_input.type | select(type == "string" and . != "")' 2>/dev/null) || { echo "guard: cannot parse hook input" >&2; exit 2; }
+  r=$(absolute_path "${ROOT:-$CWD}")
+  shopt -s nocasematch
+  lexical=$(normalize_dir "$r")
+  check_root "$lexical"
+  if physical=$(physical_dir "$r") && [ "$physical" != "$lexical" ]; then
+    check_root "$physical"
+  fi
+  shopt -u nocasematch
+  if [ -n "$GREP" ] && { [ "$CLAUDE" -eq 1 ] || [ "$CODEX" -eq 1 ]; } && { [ -z "$G" ] || [ -n "$TYPE" ]; }; then
+    echo "BLOCKED: a Grep with no glob (or with a type filter) rooted at $r can search hidden credential files. Use a project directory or a glob that names the files you want." >&2
+    exit 2
   fi
 fi
+
+# Keep each original target and check its basename in the resolved parent.
+# Fall back to lexical normalization when the parent does not exist.
+P=$(printf '%s\n' "$P" | while IFS= read -r target; do
+  [ -n "$target" ] || continue
+  printf '%s\n' "$target"
+  absolute=$(absolute_path "$target")
+  parent=${absolute%/*}; parent=${parent:-/}
+  resolved=$(physical_dir "$parent") || resolved=$(normalize_dir "$parent")
+  normalized=${resolved%/}/${absolute##*/}
+  [ "$normalized" = "$target" ] || printf '%s\n' "$normalized"
+done)
 
 # Split the glob as Claude Code does. Whitespace is JavaScript's \s, so the
 # Unicode spaces (U+00A0, U+1680, U+2000-200A, U+2028/9, U+202F, U+205F,
@@ -112,11 +172,11 @@ if [ -n "$G" ]; then
       '!'*) echo "BLOCKED: negated Grep glob $a would search every other file, hidden ones included" >&2; exit 2 ;;
     esac
   done
-  P=$(printf '%s\n' "$P" "${PARTS[@]}")
+  P=$(printf '%s\n' "$P" "$G" "${PARTS[@]}")
 fi
 [ -z "$P" ] && exit 0
 
-if printf '%s\n' "$P" | grep -qEi '(^|/)\.claude\.json([.]|$)'; then
+if printf '%s\n' "$P" | grep -qEi '(^|/)(\.claude\.json([.]|$)|\.codex/auth\.json$)'; then
   echo "BLOCKED: protected file: $P" >&2
   exit 2
 fi
@@ -147,11 +207,39 @@ if [ -n "$G" ]; then
   for a in "$G" "${PARTS[@]}"; do
     expand "$a" || { echo "BLOCKED: Grep glob too complex to check: $G" >&2; exit 2; }
   done
+  NAMES=(.env .env.local .env.production .env.development .env.test .envrc .claude.json.backup)
+  [ "$CODEX" -eq 1 ] && NAMES+=(auth.json)
+
+  # Collect names only. Search the home directory non-recursively and descend
+  # only into the Claude backup tree (or the subtree rooted at the Grep path).
+  shopt -s nullglob nocaseglob
+  for dir in "${HOME_DIRS[@]}"; do
+    for entry in "$dir"/.claude.json.*; do NAMES+=("${entry##*/}"); done
+  done
+  for dir in "${BACKUP_DIRS[@]}"; do
+    [ -d "$dir" ] || continue
+    listed=0
+    while IFS= read -r -d '' entry; do
+      if [ -z "$entry" ]; then listed=1; break; fi
+      NAMES+=("${entry##*/}")
+    done < <(find -H "$dir" -iname '.claude.json.*' -print0 2>/dev/null && printf '\0')
+    if [ "$listed" -eq 0 ]; then
+      echo "guard: cannot list Claude backup names" >&2
+      exit 2
+    fi
+  done
+  shopt -u nullglob nocaseglob
+
+  STORE='^\.claude\.json([.]|$)'
   shopt -s nocasematch
   for e in "${EXP[@]}"; do
     seg=${e##*/}
     [ -z "$seg" ] && continue
-    for f in .env .env.local .claude.json .claude.json.backup; do
+    if [[ $seg =~ $STORE ]] || { [[ .claude.json == $seg ]] && { [ "$CLAUDE" -eq 1 ] || [[ $seg != '*.json' ]]; }; }; then
+      echo "BLOCKED: Grep glob $G names the credential store or a backup" >&2
+      exit 2
+    fi
+    for f in "${NAMES[@]}"; do
       # $seg unquoted on purpose: it is matched as a shell pattern.
       if [[ $f == $seg ]]; then
         echo "BLOCKED: Grep glob $G matches the protected file $f" >&2

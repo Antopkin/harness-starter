@@ -2,7 +2,8 @@
 
 > **For the human (read these lines and you are done).**
 > What this is and why is in `README.md` next to this file; this file is the installation guide.
-> Install jq first (brew install jq / apt install jq): the guards need it.
+> Install `jq` first (`brew install jq` or `apt install jq`) for the tool-call guards.
+> For Claude Code, use version 2.1.295 or later so a Bash, file or read guard failure blocks the tool call.
 > Open your agent (Claude Code, OpenCode or Codex) right in this folder and tell it:
 > **"read INSTALL.md and set up the harness for my tool"**. It does the rest itself.
 
@@ -50,11 +51,13 @@ harness-starter/       ← repository root
 
 If a file from this list is missing, do not invent it; tell the user what is missing and carry on with what is there.
 
-**Check jq.** Run `jq --version`. jq is required: the guards that parse JSON (`bash-guard.sh`, `file-guard.sh`, `read-guard.sh`, `skip-ci-guard.sh`) start with a jq check and, without jq, block every call they see with "guard inactive: install jq"; a jq that fails blocks the call too. If jq is missing, ask the user to install it (brew install jq / apt install jq) before you go on. Only `pasted-key-guard.sh` works without jq.
+**Check jq.** Run `jq --version`. The Bash, file, read and skip-CI guards block tool calls if `jq` is missing or fails. If `jq` is missing, they print `guard inactive: install jq`. Ask the user to install it (`brew install jq` or `apt install jq`) before you go on. The pasted-key guard uses `jq` to decode the top-level prompt and applies the [documented split-token rules](contexts/hooks-overview.md#on-prompt-submit). If `jq` is missing or fails, the guard scans the raw input for contiguous keys and private-key headers without decoding the JSON.
 
 ### Step 1. Work out your tool
 
 Work out which of the three tools you are running in; your environment and system prompt make it clear: **Claude Code**, **OpenCode** or **Codex**. It decides _where_ the rules file goes and _how_ the tool finds skills, roles and guards. The three tools do this differently, so in steps 2 to 4 take the branch for your tool. The content of the rules and skills is the same for all; only the file layout differs.
+
+For Claude Code, run `claude --version` before making installation changes. If the version is older than 2.1.295, stop and tell the user to update to 2.1.295 or later, then rerun setup. This release added `onFailure: "block"`, which the Bash, file and read guards use to block tool calls when a guard fails to start, times out or exits unexpectedly.
 
 ### Step 2. Install the rules
 
@@ -117,7 +120,6 @@ Three refinements matter in daily work. A heredoc body counts as data only when 
     ```
     bash hooks/hooks-selftest.sh
     ```
-  - Known gap, tell the user: Claude Code blocks a call only when a guard exits with code 2. A guard that times out, is killed or exits with any other code is treated as non-blocking, so a hung guard fails open in Claude Code.
 - **OpenCode**
   - Agent roles: sync them into `.opencode/agent/` of this project (the script never touches your home folder):
     ```

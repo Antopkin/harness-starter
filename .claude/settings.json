@@ -14,7 +14,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/bash-guard.sh\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/bash-guard.sh\"",
+            "onFailure": "block"
           },
           {
             "type": "command",
@@ -27,7 +28,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/file-guard.sh\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/file-guard.sh\"",
+            "onFailure": "block"
           }
         ]
       },
@@ -36,7 +38,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/read-guard.sh\""
+            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/read-guard.sh\"",
+            "onFailure": "block"
           }
         ]
       }
